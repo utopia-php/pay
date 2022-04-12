@@ -1,0 +1,31 @@
+{
+    "name": "utopia-php/pay",
+    "description": "A simple library to manage payments using multiple payment provider adapters",
+    "type": "library",
+    "keywords": ["php","framework", "utopia", "payment"],
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "authors": [
+        {
+            "name": "Eldad Fux",
+            "email": "eldad@appwrite.io"
+        },
+        {
+            "name": "Damodar Lohani",
+            "email": "damodar@appwrite.io"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"Utopia\\Pay\\": "src/Pay"}
+    },
+    "autoload-dev": {
+        "psr-4": {"Utopia\\Tests\\": "tests/Pay"}
+    },
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.4",
+        "vimeo/psalm": "4.0.1"
+    }
+}
