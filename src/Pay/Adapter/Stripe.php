@@ -88,7 +88,10 @@ class Stripe extends Adapter {
      * Delete customer by ID
      */
     public function deleteCustomer(string $customerId) : bool {
-        return true;
+        $path = '/customers/' . $customerId;
+        $result = $this->execute('DELETE', $path, [], []);
+        var_dump($result);
+        return $result['deleted'] ?? false;
     }
     
     private function execute(string $method, string $path, array $requestBody, array $headers) {
@@ -99,7 +102,7 @@ class Stripe extends Adapter {
         $optArray = array(
             CURLOPT_URL => $this->baseUrl . $path,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => $method === 'POST',
+            CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_POSTFIELDS => \http_build_query($requestBody),
             CURLOPT_HEADEROPT => \CURLHEADER_UNIFIED,
             CURLOPT_USERPWD => $this->publishableKey . ':',
