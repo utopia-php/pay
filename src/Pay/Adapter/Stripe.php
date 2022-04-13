@@ -11,7 +11,7 @@ class Stripe extends Adapter {
     private string $publishableKey;
 
 
-    public function __construct(string $secretKey, string $publishableKey)
+    public function __construct(string $publishableKey, string $secretKey)
     {
         $this->secretKey = $secretKey;
         $this->publishableKey = $publishableKey;
@@ -178,7 +178,7 @@ class Stripe extends Adapter {
         return $result['deleted'] ?? false;
     }
     
-    private function execute(string $method, string $path, array $requestBody = [], array $headers = ['content-type: application/x-www-form-urlencodd']) {
+    private function execute(string $method, string $path, array $requestBody = [], array $headers = ['content-type: application/x-www-form-urlencoded']) {
         $responseHeaders = [];
         $ch = \curl_init();
 
