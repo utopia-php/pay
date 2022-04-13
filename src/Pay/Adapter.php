@@ -8,16 +8,25 @@ abstract class Adapter {
      * @var bool
      */
     protected bool $testMode;
+
+    /**
+     * @var string
+     */
+    protected string $currency;
   
     /**
      * Set test mode
      */
-    abstract public function setTestMode(bool $testMode);
+    public function setTestMode(bool $testMode) {
+      $this->testMode = $testMode;
+    }
   
     /**
      * Get whether it's in test mode
      */
-    abstract public function getTestMode() : bool; 
+    public function getTestMode() : bool {
+      return $this->testMode;
+    } 
   
     /**
      * Get name of the payment gateway
@@ -27,12 +36,16 @@ abstract class Adapter {
     /**
      * Set the currency for payments
      */
-    abstract public function setCurrency(string $currency) : bool;
+    public function setCurrency(string $currency) {
+      $this->currency = $currency;
+    }
   
     /**
      * Get currently set currency for payments
      */
-    abstract public function getCurrency() : string;
+    public function getCurrency() : string {
+      return $this->currency;
+    }
   
     /**
      * Make a purchase request
@@ -62,7 +75,7 @@ abstract class Adapter {
      * 
      * @throws Exception
      */
-    abstract public function createCustomer(string $name, string $email, string $paymentMethod = 'cc') : string;
+    abstract public function createCustomer(string $name, string $email, string $paymentMethod = 'cc') : array;
   
     /**
      * Get customer details by ID

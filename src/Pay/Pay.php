@@ -29,7 +29,7 @@ class Pay {
   /**
    * Set the currency for payments
    */
-  public function setCurrency(string $currency) : bool {
+  public function setCurrency(string $currency) {
     return $this->adapter->setCurrency($currency);
   }
 
@@ -78,7 +78,7 @@ class Pay {
    * 
    * @throws Exception
    */
-  public function createCustomer(string $name, string $email, string $paymentMethod) : string {
+  public function createCustomer(string $name, string $email, string $paymentMethod) : array {
     return $this->adapter->createCustomer($name, $email, $paymentMethod);
   }
 
