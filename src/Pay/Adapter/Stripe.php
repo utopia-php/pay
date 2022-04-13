@@ -37,15 +37,20 @@ class Stripe extends Adapter {
         if(!empty($cardId)) {
             $requestBody['source'] = $cardId;
         }
-        $res = $this->execute('POST', '/charges', $requestBody, array('content-type: application/x-www-form-urlencoded'));
+        $res = $this->execute('POST', '/charges', $requestBody);
         return $res;
     }
   
     /**
      * Refund payment
      */
-    public function refund(string $paymentId, float $amount) : bool {
-        return true;
+    public function refund(string $paymentId, float $amount) : array {
+        $path = '/refunds';
+        $requestBody = [
+            'charge' => $paymentId,
+            'amount' => $amount,
+        ];
+        return $this->execute('POST', $path, $requestBody);
     }
   
     /**
@@ -55,11 +60,56 @@ class Stripe extends Adapter {
         return true;
     }
   
+
+    /**
+     * Add a credit card for customer
+     */
+    public function createCard(string $customerId, string $cardId): array {
+        $path = '/customers/' . $customerId . '/sources';
+        return $this->execute('POST', $path, ['customer' => $customerId, 'source' => $cardId]);
+    }
+
+    /**
+     * List cards
+     */
+    public function listCards(string $customerId): array {
+        $path = '/customers/' . $customerId . '/sources';
+        return $this->execute('GET', $path);
+    }
+
+    /**
+     * Update card
+     */
+    public function updateCard(string $customerId, string $cardId, $name = null, $expMonth = null, $expYear = null,  $billingDetails = null ): array {
+        $path = '/customers/' . $customerId . '/sources/' . $cardId;
+        $requestBody = [];
+        if(!empty($name)) {
+            $requestBody['name'] = $name;
+        }
+        if(!empty($expMonth)) {
+            $requestBody['exp_month'] = $expMonth;
+        }
+        if(!empty($expYear)) {
+            $requestBody['exp_year'] = $expYear;
+        }
+        return $this->execute('PUT', $path, $requestBody);
+    }
+
+    /**
+     * Get a card
+     */
+    public function getCard(string $customerId, string $cardId): array {
+        $path = '/customers/' . $customerId . '/sources/' . $cardId;
+        return $this->execute('GET', $path);
+    }
+
     /**
      * Delete a credit card record
      */
-    public function deleteCard(string $cardId) : bool {
-        return true;
+    public function deleteCard(string $customerId, string $cardId) : bool {
+        $path = '/customers/' . $customerId . '/sources/' . $cardId;
+        $res =  $this->execute('DELETE', $path);
+        return $res['deleted'] ?? false;
     }
   
     /**
@@ -80,8 +130,16 @@ class Stripe extends Adapter {
         if(!empty($billingDetails)) {
             $requestBody['billing_details'] = $billingDetails;
         }
-        $result = $this->execute('POST', $path, $requestBody, array('Content-Type: application/x-www-form-urlencoded'));
+        $result = $this->execute('POST', $path, $requestBody);
         return $result;
+    }
+
+    /**
+     * List customers
+     */
+    public function listCustomers(): array
+    {
+        return $this->execute('GET', '/customers');
     }
   
     /**
@@ -96,8 +154,19 @@ class Stripe extends Adapter {
     /**
      * Update customer details
      */
-    public function updateCustomer(string $customerId, string $name, string $email,  array $billingDetails = [], string $paymentMethod) : bool {
-        return true;
+    public function updateCustomer(string $customerId, string $name, string $email,  array $billingDetails = [], string $paymentMethod = null) : array {
+        $path = '/customers/' . $customerId;
+        $requestBody = [
+            'name' => $name,
+            'email' => $email,
+        ];
+        if(!empty($paymentMethod)) {
+            $requestBody['payment_method'] = $paymentMethod;
+        }
+        if(!empty($billingDetails)) {
+            $requestBody['billing_details'] = $billingDetails;
+        }
+        return $this->execute('PUT', $path, $requestBody);
     }
   
     /**
@@ -105,12 +174,11 @@ class Stripe extends Adapter {
      */
     public function deleteCustomer(string $customerId) : bool {
         $path = '/customers/' . $customerId;
-        $result = $this->execute('DELETE', $path, [], []);
-        var_dump($result);
+        $result = $this->execute('DELETE', $path);
         return $result['deleted'] ?? false;
     }
     
-    private function execute(string $method, string $path, array $requestBody, array $headers) {
+    private function execute(string $method, string $path, array $requestBody = [], array $headers = ['content-type: application/x-www-form-urlencodd']) {
         $responseHeaders = [];
         $ch = \curl_init();
 
