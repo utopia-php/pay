@@ -27,8 +27,18 @@ class Stripe extends Adapter {
     /**
      * Make a purchase request
      */
-    public function purchase(float $amount, string $customerId, string $cardId) : string {
-        return '';
+    public function purchase(float $amount, string $customerId, string $cardId = null, array $additonalParams = []) : array {
+        $requestBody = [
+            'customer' => $customerId,
+            'amount' => $amount,
+            'currency' => $this->currency,
+        ];
+        $requestBody = array_merge($requestBody, $additonalParams);
+        if(!empty($cardId)) {
+            $requestBody['source'] = $cardId;
+        }
+        $res = $this->execute('POST', '/charges', $requestBody, array('content-type: application/x-www-form-urlencoded'));
+        return $res;
     }
   
     /**
@@ -58,12 +68,18 @@ class Stripe extends Adapter {
      * 
      * @throws Exception
      */
-    public function createCustomer(string $name, string $email, string $paymentMethod = 'cc') : array {
+    public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null) : array {
         $path = '/customers';
         $requestBody = [
             'name' => $name,
             'email' => $email,
         ];
+        if(!empty($paymentMethod)) {
+            $requestBody['payment_method'] = $paymentMethod;
+        }
+        if(!empty($billingDetails)) {
+            $requestBody['billing_details'] = $billingDetails;
+        }
         $result = $this->execute('POST', $path, $requestBody, array('Content-Type: application/x-www-form-urlencoded'));
         return $result;
     }
@@ -80,7 +96,7 @@ class Stripe extends Adapter {
     /**
      * Update customer details
      */
-    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod) : bool {
+    public function updateCustomer(string $customerId, string $name, string $email,  array $billingDetails = [], string $paymentMethod) : bool {
         return true;
     }
   

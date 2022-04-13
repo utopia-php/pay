@@ -45,8 +45,8 @@ class Pay {
    * Returns payment ID on successfull payment
    * 
    */
-  public function purchase(float $amount, string $customerId, string $cardId) : string {
-    return $this->adapter->purchase($amount, $customerId, $cardId);
+  public function purchase(float $amount, string $customerId, string $cardId = null, array $additionalParams = []) : array {
+    return $this->adapter->purchase($amount, $customerId, $cardId, $additionalParams);
   }
 
   /**
@@ -78,8 +78,8 @@ class Pay {
    * 
    * @throws Exception
    */
-  public function createCustomer(string $name, string $email, string $paymentMethod) : array {
-    return $this->adapter->createCustomer($name, $email, $paymentMethod);
+  public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null) : array {
+    return $this->adapter->createCustomer($name, $email, $billingDetails, $paymentMethod);
   }
 
   /**
@@ -92,8 +92,8 @@ class Pay {
   /**
    * Update customer details
    */
-  public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod) : bool {
-    return $this->adapter->updateCustomer($customerId, $name, $email, $paymentMethod);
+  public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod) : bool {
+    return $this->adapter->updateCustomer($customerId, $name, $email, $billingDetails, $paymentMethod);
   }
 
   /**

@@ -50,7 +50,7 @@ abstract class Adapter {
     /**
      * Make a purchase request
      */
-    abstract public function purchase(float $amount, string $customerId, string $cardId) : string;
+    abstract public function purchase(float $amount, string $customerId, string $cardId, array $additionalParams = []) : array;
   
     /**
      * Refund payment
@@ -75,7 +75,7 @@ abstract class Adapter {
      * 
      * @throws Exception
      */
-    abstract public function createCustomer(string $name, string $email, string $paymentMethod = 'cc') : array;
+    abstract public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null) : array;
   
     /**
      * Get customer details by ID
@@ -85,7 +85,7 @@ abstract class Adapter {
     /**
      * Update customer details
      */
-    abstract public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod) : bool;
+    abstract public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod) : bool;
   
     /**
      * Delete customer by ID
