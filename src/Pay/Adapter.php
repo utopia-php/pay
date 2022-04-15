@@ -72,7 +72,7 @@ abstract class Adapter {
      * Update credit card
      */
 
-    abstract public function updateCard(string $customerId, string $cardId, $name = null,  $expMonth = null, $expYear = null, $billingDetails = null): array;
+    abstract public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array $billingDetails = null): array;
 
     /**
      * Get credit card

@@ -66,7 +66,7 @@ class Stripe extends Adapter {
      */
     public function createCard(string $customerId, string $cardId): array {
         $path = '/customers/' . $customerId . '/sources';
-        return $this->execute('POST', $path, ['customer' => $customerId, 'source' => $cardId]);
+        return $this->execute('POST', $path, ['source' => $cardId]);
     }
 
     /**
@@ -80,7 +80,7 @@ class Stripe extends Adapter {
     /**
      * Update card
      */
-    public function updateCard(string $customerId, string $cardId, $name = null, $expMonth = null, $expYear = null,  $billingDetails = null ): array {
+    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array  $billingDetails = null ): array {
         $path = '/customers/' . $customerId . '/sources/' . $cardId;
         $requestBody = [];
         if(!empty($name)) {
@@ -92,7 +92,7 @@ class Stripe extends Adapter {
         if(!empty($expYear)) {
             $requestBody['exp_year'] = $expYear;
         }
-        return $this->execute('PUT', $path, $requestBody);
+        return $this->execute('POST', $path, $requestBody);
     }
 
     /**
@@ -189,7 +189,7 @@ class Stripe extends Adapter {
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_POSTFIELDS => \http_build_query($requestBody),
             CURLOPT_HEADEROPT => \CURLHEADER_UNIFIED,
-            CURLOPT_USERPWD => $this->publishableKey . ':',
+            CURLOPT_USERPWD => $this->secretKey . ':',
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_HEADERFUNCTION => function($curl, $header) use (&$responseHeaders) {
                 $len = strlen($header);
