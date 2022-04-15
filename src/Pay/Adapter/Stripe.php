@@ -11,10 +11,11 @@ class Stripe extends Adapter {
     private string $publishableKey;
 
 
-    public function __construct(string $publishableKey, string $secretKey)
+    public function __construct(string $publishableKey, string $secretKey, string $currency = 'USD')
     {
         $this->secretKey = $secretKey;
         $this->publishableKey = $publishableKey;
+        $this->currency = $currency;
     }
 
     /**
@@ -27,7 +28,7 @@ class Stripe extends Adapter {
     /**
      * Make a purchase request
      */
-    public function purchase(float $amount, string $customerId, string $cardId = null, array $additonalParams = []) : array {
+    public function purchase(int $amount, string $customerId, string $cardId = null, array $additonalParams = []) : array {
         $requestBody = [
             'customer' => $customerId,
             'amount' => $amount,
@@ -44,22 +45,14 @@ class Stripe extends Adapter {
     /**
      * Refund payment
      */
-    public function refund(string $paymentId, float $amount) : array {
+    public function refund(string $paymentId, int $amount = null) : array {
         $path = '/refunds';
-        $requestBody = [
-            'charge' => $paymentId,
-            'amount' => $amount,
-        ];
+        $requestBody = ['charge' => $paymentId];
+        if($amount != null) {
+            $requestBody['amount'] = $amount;
+        }
         return $this->execute('POST', $path, $requestBody);
     }
-  
-    /**
-     * Cancel payment
-     */
-    public function cancel(string $paymentId) : bool {
-        return true;
-    }
-  
 
     /**
      * Add a credit card for customer

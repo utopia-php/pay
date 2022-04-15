@@ -116,6 +116,29 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testCreateCard */
+    public function testPurchase(array $data) {
+        $customerId = $data['customerId'];
+        $purchase = $this->stripe->purchase(5000, $customerId);
+        $this->assertNotEmpty($purchase['id']);
+        $this->assertEquals('charge', $purchase['object']);
+        $this->assertEquals(5000, $purchase['amount_captured']);
+        $this->assertEquals(0, $purchase['amount_refunded']);
+        $this->assertTrue($purchase['captured']);
+        $data['paymentId'] = $purchase['id'];
+        return $data;
+    }
+
+    /** @depends testPurchase */
+    public function testRefund(array $data) {
+        $purchase = $this->stripe->refund($data['paymentId'], 3000);
+        $this->assertNotEmpty($purchase['id']);
+        $this->assertEquals('refund', $purchase['object']);
+        $this->assertEquals('succeeded', $purchase['status']);
+        $this->assertEquals(3000, $purchase['amount_refunded']);
+        $this->assertTrue($purchase['captured']);
+    }
+
+    /** @depends testCreateCard */
     public function testDeleteCard(array $data) {
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deleteCard($customerId, $data['cardId']);

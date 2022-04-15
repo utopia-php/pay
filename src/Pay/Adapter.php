@@ -50,17 +50,12 @@ abstract class Adapter {
     /**
      * Make a purchase request
      */
-    abstract public function purchase(float $amount, string $customerId, string $cardId, array $additionalParams = []) : array;
+    abstract public function purchase(int $amount, string $customerId, string $cardId, array $additionalParams = []) : array;
   
     /**
      * Refund payment
      */
-    abstract public function refund(string $paymentId, float $amount) : array;
-  
-    /**
-     * Cancel payment
-     */
-    abstract public function cancel(string $paymentId) : bool;
+    abstract public function refund(string $paymentId, int $amount = null) : array;
 
     /**
      * Add a credit card for a customer
