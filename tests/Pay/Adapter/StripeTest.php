@@ -44,14 +44,25 @@ class StripeTest extends TestCase {
         return $data;
     }
 
+    /** @depends testCreateCustomer */
+    public function testUpdateCustomer(array $data): array {
+        $customerId = $data['customerId'];
+        $customer = $this->stripe->updateCustomer($customerId, 'Test Updated', 'testcustomerupdated@email.com');
+        var_dump($customer);
+        $this->assertNotEmpty($customer['id']);
+        $this->assertEquals($customer['name'], 'Test Updated');
+        $this->assertEquals($customer['email'], 'testcustomerupdated@email.com');
+        return $data;
+    }
+
     public function testListCustomers() {
         $response = $this->stripe->listCustomers();
         $this->assertIsArray($response['data']);
         $this->assertNotEmpty($response['data']);
         $customers = $response['data'];
         $this->assertNotEmpty($customers[0]['id']);
-        $this->assertEquals($customers[0]['name'], 'Test customer');
-        $this->assertEquals($customers[0]['email'], 'testcustomer@email.com');
+        $this->assertEquals($customers[0]['name'], 'Test Updated');
+        $this->assertEquals($customers[0]['email'], 'testcustomerupdated@email.com');
     }
     
 

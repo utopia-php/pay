@@ -166,7 +166,7 @@ class Stripe extends Adapter {
         if(!empty($billingDetails)) {
             $requestBody['billing_details'] = $billingDetails;
         }
-        return $this->execute('PUT', $path, $requestBody);
+        return $this->execute('POST', $path, $requestBody);
     }
   
     /**
