@@ -21,14 +21,14 @@ class Stripe extends Adapter {
     /**
      * Get name of the payment gateway
      */
-    public function getName() : string {
+    public function getName(): string {
         return 'Stripe';
     }
   
     /**
      * Make a purchase request
      */
-    public function purchase(int $amount, string $customerId, string $cardId = null, array $additonalParams = []) : array {
+    public function purchase(int $amount, string $customerId, string $cardId = null, array $additonalParams = []): array {
         $requestBody = [
             'customer' => $customerId,
             'amount' => $amount,

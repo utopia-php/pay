@@ -31,7 +31,7 @@ abstract class Adapter {
     /**
      * Get name of the payment gateway
      */
-    abstract public function getName() : string;
+    abstract public function getName(): string;
   
     /**
      * Set the currency for payments
@@ -50,29 +50,27 @@ abstract class Adapter {
     /**
      * Make a purchase request
      */
-    abstract public function purchase(int $amount, string $customerId, string $cardId, array $additionalParams = []) : array;
+    abstract public function purchase(int $amount, string $customerId, string $cardId, array $additionalParams = []): array;
   
     /**
      * Refund payment
      */
-    abstract public function refund(string $paymentId, int $amount = null) : array;
+    abstract public function refund(string $paymentId, int $amount = null): array;
 
     /**
      * Add a credit card for a customer
      */
-
     abstract public function createCard(string $customerId, string $cardId): array;
 
     /**
      * Update credit card
      */
-
     abstract public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array $billingDetails = null): array;
 
     /**
      * Get credit card
      */
-    abstract public function getCard(string $customerId, string $cardId) : array;
+    abstract public function getCard(string $customerId, string $cardId): array;
 
     /**
      * List cards
@@ -82,7 +80,7 @@ abstract class Adapter {
     /**
      * Remove a credit card for a customer
      */
-    abstract public function deleteCard(string $customerId, string $cardId) : bool;
+    abstract public function deleteCard(string $customerId, string $cardId): bool;
   
     /**
      * Add new customer in the gateway database
@@ -90,7 +88,7 @@ abstract class Adapter {
      * 
      * @throws Exception
      */
-    abstract public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null) : array;
+    abstract public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array;
   
     /**
      * List customers
@@ -100,16 +98,16 @@ abstract class Adapter {
     /**
      * Get customer details by ID
      */
-    abstract public function getCustomer(string $customerId) : array;
+    abstract public function getCustomer(string $customerId): array;
   
     /**
      * Update customer details
      */
-    abstract public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod) : array;
+    abstract public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod): array;
   
     /**
      * Delete customer by ID
      */
-    abstract public function deleteCustomer(string $customerId) : bool;
+    abstract public function deleteCustomer(string $customerId): bool;
     
   }

@@ -120,7 +120,8 @@ class Pay
   /**
    * List customers
    */
-  public function listCustomers(): array {
+  public function listCustomers(): array 
+  { 
     return $this->adapter->listCustomers();
   }
 
