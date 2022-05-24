@@ -172,52 +172,9 @@ class Stripe extends Adapter {
     }
     
     private function execute(string $method, string $path, array $requestBody = [], array $headers = ['content-type: application/x-www-form-urlencoded']) {
-        $responseHeaders = [];
-        $ch = \curl_init();
-
-        // define options
-        $optArray = array(
-            CURLOPT_URL => $this->baseUrl . $path,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => $method,
-            CURLOPT_POSTFIELDS => \http_build_query($requestBody),
-            CURLOPT_HEADEROPT => \CURLHEADER_UNIFIED,
-            CURLOPT_USERPWD => $this->secretKey . ':',
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_HEADERFUNCTION => function($curl, $header) use (&$responseHeaders) {
-                $len = strlen($header);
-                $header = explode(':', strtolower($header), 2);
-    
-                if (count($header) < 2) { // ignore invalid headers
-                    return $len;
-                }
-    
-                $responseHeaders[strtolower(trim($header[0]))] = trim($header[1]);
-    
-                return $len;
-            }
-        );
-
-        // apply those options
-        \curl_setopt_array($ch, $optArray);
+        $response = $this->call($method, $this->baseUrl . $path, \http_build_query($requestBody), $headers, [CURLOPT_USERPWD => $this->secretKey . ':']);
         
-
-        $responseBody   = curl_exec($ch);
-        $responseType   = $responseHeaders['content-type'] ?? '';
-        $responseStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        
-        switch($responseType) {
-            case 'application/json':
-                $responseBody = json_decode($responseBody, true);
-            break;
-        }
-
-        if (curl_errno($ch)) {
-            throw new \Exception(curl_error($ch), $responseStatus, $responseBody);
-        }
-        
-        curl_close($ch);
-        return $responseBody;
+        return $response['body'];
     }
 
 }
