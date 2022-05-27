@@ -142,9 +142,10 @@ class StripeTest extends TestCase {
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deleteCard($customerId, $data['cardId']);
         $this->assertTrue($deleted);
-        $res = $this->stripe->getCard($customerId, $data['cardId']);
-        $this->assertEquals('resource_missing', $res['error']['code']);
-        return $data;
+
+        $this->expectException("Exception");
+        $this->expectExceptionCode(404);
+        $this->stripe->getCard($customerId, $data['cardId']);        
     }
 
     /** @depends testUpdateCustomer */
