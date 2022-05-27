@@ -72,7 +72,7 @@ class StripeTest extends TestCase {
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
         $this->assertEquals(2023, $card['exp_year']);
-        $this->assertEquals(4, $card['exp_month']);
+        $this->assertEquals(date('m'), $card['exp_month']);
         $data['cardId'] = $card['id'];
         return $data;
     }
@@ -86,7 +86,7 @@ class StripeTest extends TestCase {
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
         $this->assertEquals(2023, $card['exp_year']);
-        $this->assertEquals(4, $card['exp_month']);
+        $this->assertEquals(date('m'), $card['exp_month']);
         return $data;
     }
 
@@ -98,18 +98,18 @@ class StripeTest extends TestCase {
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
         $this->assertEquals(2023, $card['exp_year']);
-        $this->assertEquals(4, $card['exp_month']);
+        $this->assertEquals(date('m'), $card['exp_month']);
         return $data;
     }
 
     /** @depends testCreateCard */
     public function testUpdateCard(array $data) {
         $customerId = $data['customerId'];
-        $card = $this->stripe->updateCard($customerId, $data['cardId'], 'Test Customer', 5, 2024);
+        $card = $this->stripe->updateCard($customerId, $data['cardId'], 'Test Customer', 5, 2025);
         $this->assertNotEmpty($card['id']);
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2024, $card['exp_year']);
+        $this->assertEquals(2025, $card['exp_year']);
         $this->assertEquals(5, $card['exp_month']);
         $this->assertEquals('Test Customer', $card['name']);
         return $data;
@@ -134,8 +134,7 @@ class StripeTest extends TestCase {
         $this->assertNotEmpty($purchase['id']);
         $this->assertEquals('refund', $purchase['object']);
         $this->assertEquals('succeeded', $purchase['status']);
-        $this->assertEquals(3000, $purchase['amount_refunded']);
-        $this->assertTrue($purchase['captured']);
+        $this->assertEquals(3000, $purchase['amount']);
     }
 
     /** @depends testCreateCard */
