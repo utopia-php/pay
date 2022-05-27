@@ -118,7 +118,7 @@ abstract class Adapter
   /**
    * Update customer details
    */
-  abstract public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod): array;
+  abstract public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array;
 
   /**
    * Delete customer by ID
