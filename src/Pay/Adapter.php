@@ -5,6 +5,16 @@ namespace Utopia\Pay;
 abstract class Adapter
 {
 
+  const METHOD_GET = 'GET';
+  const METHOD_POST = 'POST';
+  const METHOD_PUT = 'PUT';
+  const METHOD_PATCH = 'PATCH';
+  const METHOD_DELETE = 'DELETE';
+  const METHOD_HEAD = 'HEAD';
+  const METHOD_OPTIONS = 'OPTIONS';
+  const METHOD_CONNECT = 'CONNECT';
+  const METHOD_TRACE = 'TRACE';
+
   /**
    * @var bool
    */
@@ -115,36 +125,58 @@ abstract class Adapter
    */
   abstract public function deleteCustomer(string $customerId): bool;
 
-  protected function call(string $method, string $url, mixed $body, array $headers = [], array $options = []): mixed
+  protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): mixed
   {
 
     $responseHeaders = [];
     $ch = \curl_init();
 
-    // define options
-    $optArray = array_merge(array(
-      CURLOPT_URL => $url,
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_CUSTOMREQUEST => $method,
-      CURLOPT_POSTFIELDS => $body,
-      CURLOPT_HEADEROPT => \CURLHEADER_UNIFIED,
-      CURLOPT_HTTPHEADER => $headers,
-      CURLOPT_HEADERFUNCTION => function ($curl, $header) use (&$responseHeaders) {
-        $len = strlen($header);
-        $header = explode(':', strtolower($header), 2);
+    switch ($headers['content-type']) {
+      case 'application/json':
+        $query = json_encode($params);
+        break;
 
-        if (count($header) < 2) { // ignore invalid headers
-          return $len;
-        }
+      case 'multipart/form-data':
+        $query = $this->flatten($params);
+        break;
 
-        $responseHeaders[strtolower(trim($header[0]))] = trim($header[1]);
+      default:
+        $query = \http_build_query($params);
+        break;
+    }
 
+
+    foreach ($headers as $i => $header) {
+      $headers[] = $i . ':' . $header;
+      unset($headers[$i]);
+    }
+
+    curl_setopt($ch, CURLOPT_HEADEROPT, \CURLHEADER_UNIFIED);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_USERAGENT, php_uname('s') . '-' . php_uname('r') . ':php-' . phpversion());
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$responseHeaders) {
+      $len = strlen($header);
+      $header = explode(':', strtolower($header), 2);
+
+      if (count($header) < 2) { // ignore invalid headers
         return $len;
       }
-    ), $options);
 
-    // apply those options
-    \curl_setopt_array($ch, $optArray);
+      $responseHeaders[strtolower(trim($header[0]))] = trim($header[1]);
+
+      return $len;
+    });
+    if ($method != self::METHOD_GET || $method != self::METHOD_DELETE) {
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
+    }
+
+    foreach ($options as $key => $value) {
+      curl_setopt($ch, $key, $value);
+    }
 
 
     $responseBody   = curl_exec($ch);
@@ -161,7 +193,39 @@ abstract class Adapter
       throw new \Exception(curl_error($ch), $responseStatus, $responseBody);
     }
 
+    if ($responseStatus >= 400) {
+      if(is_array($responseBody)) {
+        throw new \Exception('Error: ' . json_encode($responseBody), $responseStatus);
+      }
+
+      throw new \Exception('Error: ' . $responseBody, $responseStatus);
+    }
+
     curl_close($ch);
-    return ['headers' => $responseHeaders, 'body' => $responseBody];
+    return $responseBody;
+  }
+
+  /**
+   * Flatten params array to PHP multiple format
+   *
+   * @param array $data
+   * @param string $prefix
+   * @return array
+   */
+  protected function flatten(array $data, $prefix = '')
+  {
+    $output = [];
+
+    foreach ($data as $key => $value) {
+      $finalKey = $prefix ? "{$prefix}[{$key}]" : $key;
+
+      if (is_array($value)) {
+        $output += $this->flatten($value, $finalKey); // @todo: handle name collision here if needed
+      } else {
+        $output[$finalKey] = $value;
+      }
+    }
+
+    return $output;
   }
 }

@@ -4,7 +4,8 @@ namespace Utopia\Pay\Adapter;
 
 use Utopia\Pay\Adapter;
 
-class Stripe extends Adapter {
+class Stripe extends Adapter
+{
 
     private string $baseUrl = 'https://api.stripe.com/v1';
     private string $secretKey;
@@ -21,109 +22,118 @@ class Stripe extends Adapter {
     /**
      * Get name of the payment gateway
      */
-    public function getName(): string {
+    public function getName(): string
+    {
         return 'Stripe';
     }
-  
+
     /**
      * Make a purchase request
      */
-    public function purchase(int $amount, string $customerId, string $cardId = null, array $additonalParams = []): array {
+    public function purchase(int $amount, string $customerId, string $cardId = null, array $additonalParams = []): array
+    {
         $requestBody = [
             'customer' => $customerId,
             'amount' => $amount,
             'currency' => $this->currency,
         ];
         $requestBody = array_merge($requestBody, $additonalParams);
-        if(!empty($cardId)) {
+        if (!empty($cardId)) {
             $requestBody['source'] = $cardId;
         }
-        $res = $this->execute('POST', '/charges', $requestBody);
+        $res = $this->execute(self::METHOD_POST, '/charges', $requestBody);
         return $res;
     }
-  
+
     /**
      * Refund payment
      */
-    public function refund(string $paymentId, int $amount = null) : array {
+    public function refund(string $paymentId, int $amount = null): array
+    {
         $path = '/refunds';
         $requestBody = ['charge' => $paymentId];
-        if($amount != null) {
+        if ($amount != null) {
             $requestBody['amount'] = $amount;
         }
-        return $this->execute('POST', $path, $requestBody);
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
     /**
      * Add a credit card for customer
      */
-    public function createCard(string $customerId, string $cardId): array {
+    public function createCard(string $customerId, string $cardId): array
+    {
         $path = '/customers/' . $customerId . '/sources';
-        return $this->execute('POST', $path, ['source' => $cardId]);
+        return $this->execute(self::METHOD_POST, $path, ['source' => $cardId]);
     }
 
     /**
      * List cards
      */
-    public function listCards(string $customerId): array {
+    public function listCards(string $customerId): array
+    {
         $path = '/customers/' . $customerId . '/sources';
-        return $this->execute('GET', $path);
+        return $this->execute(self::METHOD_GET, $path);
     }
 
     /**
      * Update card
      */
-    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array  $billingDetails = null ): array {
+    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array  $billingDetails = null): array
+    {
         $path = '/customers/' . $customerId . '/sources/' . $cardId;
         $requestBody = [];
-        if(!empty($name)) {
+        if (!empty($name)) {
             $requestBody['name'] = $name;
         }
-        if(!empty($expMonth)) {
+        if (!empty($expMonth)) {
             $requestBody['exp_month'] = $expMonth;
         }
-        if(!empty($expYear)) {
+        if (!empty($expYear)) {
             $requestBody['exp_year'] = $expYear;
         }
-        return $this->execute('POST', $path, $requestBody);
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
     /**
      * Get a card
      */
-    public function getCard(string $customerId, string $cardId): array {
+    public function getCard(string $customerId, string $cardId): array
+    {
         $path = '/customers/' . $customerId . '/sources/' . $cardId;
-        return $this->execute('GET', $path);
+        return $this->execute(self::METHOD_GET, $path);
     }
 
     /**
      * Delete a credit card record
      */
-    public function deleteCard(string $customerId, string $cardId) : bool {
+    public function deleteCard(string $customerId, string $cardId): bool
+    {
         $path = '/customers/' . $customerId . '/sources/' . $cardId;
-        $res =  $this->execute('DELETE', $path);
+        $res =  $this->execute(self::METHOD_DELETE, $path);
         return $res['deleted'] ?? false;
     }
-  
+
     /**
      * Add new customer in the gateway database
-     * returns the id of the newly created customer
+     * returns the newly created customer
      * 
      * @throws Exception
      */
-    public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null) : array {
+    public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array
+    {
         $path = '/customers';
         $requestBody = [
             'name' => $name,
             'email' => $email,
         ];
-        if(!empty($paymentMethod)) {
+        if (!empty($paymentMethod)) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if(!empty($billingDetails)) {
+        if (!empty($billingDetails)) {
             $requestBody['billing_details'] = $billingDetails;
         }
-        $result = $this->execute('POST', $path, $requestBody);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
         return $result;
     }
 
@@ -132,49 +142,50 @@ class Stripe extends Adapter {
      */
     public function listCustomers(): array
     {
-        return $this->execute('GET', '/customers');
+        return $this->execute(self::METHOD_GET, '/customers');
     }
-  
+
     /**
      * Get customer details by ID
      */
-    public function getCustomer(string $customerId) : array {
+    public function getCustomer(string $customerId): array
+    {
         $path = '/customers/' . $customerId;
-        $result = $this->execute('GET', $path, [], []);
+        $result = $this->execute(self::METHOD_GET, $path);
         return $result;
     }
-  
+
     /**
      * Update customer details
      */
-    public function updateCustomer(string $customerId, string $name, string $email,  array $billingDetails = [], string $paymentMethod = null) : array {
+    public function updateCustomer(string $customerId, string $name, string $email,  array $billingDetails = [], string $paymentMethod = null): array
+    {
         $path = '/customers/' . $customerId;
         $requestBody = [
             'name' => $name,
             'email' => $email,
         ];
-        if(!empty($paymentMethod)) {
+        if (!empty($paymentMethod)) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if(!empty($billingDetails)) {
+        if (!empty($billingDetails)) {
             $requestBody['billing_details'] = $billingDetails;
         }
-        return $this->execute('POST', $path, $requestBody);
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
-  
+
     /**
      * Delete customer by ID
      */
-    public function deleteCustomer(string $customerId) : bool {
+    public function deleteCustomer(string $customerId): bool
+    {
         $path = '/customers/' . $customerId;
-        $result = $this->execute('DELETE', $path);
+        $result = $this->execute(self::METHOD_DELETE, $path);
         return $result['deleted'] ?? false;
     }
-    
-    private function execute(string $method, string $path, array $requestBody = [], array $headers = ['content-type: application/x-www-form-urlencoded']) {
-        $response = $this->call($method, $this->baseUrl . $path, \http_build_query($requestBody), $headers, [CURLOPT_USERPWD => $this->secretKey . ':']);
-        
-        return $response['body'];
-    }
 
+    private function execute(string $method, string $path, array $requestBody = [], array $headers = ['content-type' => 'application/x-www-form-urlencoded']): array
+    {
+        return $this->call($method, $this->baseUrl . $path, $requestBody, $headers, [CURLOPT_USERPWD => $this->secretKey . ':']);
+    }
 }
