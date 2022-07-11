@@ -124,7 +124,7 @@ abstract class Adapter
    */
     abstract public function deleteCustomer(string $customerId): bool;
 
-    protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): mixed
+    protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): array
     {
 
         $responseHeaders = [];
