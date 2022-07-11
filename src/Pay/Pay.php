@@ -4,9 +4,10 @@ namespace Utopia\Pay;
 
 class Pay
 {
-  /**
-   * @var Adapter
-   */
+    /**
+     *
+     * @var Adapter
+     */
     protected Adapter $adapter;
 
     /**
@@ -184,10 +185,10 @@ class Pay
 
     /**
      * Create Customer
-     * 
+     *
      * Add new customer in the gateway database
      * returns the details of the newly created customer
-     * 
+     *
      * @param string $name
      * @param string $email
      * @param array $billingDetails
