@@ -9,154 +9,228 @@ class Pay
    */
     protected Adapter $adapter;
 
+    /**
+     * @param Adapter $adapter
+     */
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
     }
 
+    /**
+     * Set Test Mode
+     *
+     * @param boolean $testMode
+     * @return void
+     */
     public function setTestMode(bool $testMode)
     {
         return $this->adapter->setTestMode($testMode);
     }
 
+    /**
+     * Get Test Mode
+     *
+     * @return boolean
+     */
     public function getTestMode(): bool
     {
         return $this->adapter->getTestMode();
     }
 
-  /**
-   * Get name of the payment gateway
-   */
+    /**
+     * Get Name
+     *
+     * @return string
+     */
     public function getName(): string
     {
         return $this->adapter->getName();
     }
 
-  /**
-   * Set the currency for payments
-   */
+    /**
+     * Set Currency
+     *
+     * @param string $currency
+     * @return void
+     */
     public function setCurrency(string $currency)
     {
         return $this->adapter->setCurrency($currency);
     }
 
-  /**
-   * Get currently set currency for payments
-   */
+    /**
+     * Get Curreycy
+     * Get currently set currency for payments
+     *
+     * @return string
+     */
     public function getCurrency(): string
     {
         return $this->adapter->getCurrency();
     }
 
-  /**
-   * Make a purchase request
-   * Returns payment ID on successfull payment
-   *
-   */
+    /**
+     * Purchase
+     * Make a purchase request
+     * Returns payment ID on successfull payment
+     *
+     * @param float $amount
+     * @param string $customerId
+     * @param string|null $cardId
+     * @param array $additionalParams
+     * @return array
+     */
     public function purchase(float $amount, string $customerId, string $cardId = null, array $additionalParams = []): array
     {
         return $this->adapter->purchase($amount, $customerId, $cardId, $additionalParams);
     }
 
-  /**
-   * Refund payment
-   */
+    /**
+     * Refund Payment
+     *
+     * @param string $paymentId
+     * @param float $amount
+     * @return array
+     */
     public function refund(string $paymentId, float $amount): array
     {
         return $this->adapter->refund($paymentId, $amount);
     }
 
-  /**
-   * Cancel payment
-   */
+    /**
+     * Cancel Payment
+     *
+     * @param string $paymentId
+     * @return boolean
+     */
     public function cancel(string $paymentId): bool
     {
         return $this->adapter->cancel($paymentId);
     }
 
-  /**
-   * Delete a credit card record
-   */
+    /**
+     * Delete Card
+     *
+     * @param string $customerId
+     * @param string $cardId
+     * @return boolean
+     */
     public function deleteCard(string $customerId, string $cardId): bool
     {
         return $this->adapter->deleteCard($customerId, $cardId);
     }
 
-
-  /**
-   * Add a credit card for a customer
-   */
-
+    /**
+     * Create Card
+     *
+     * @param string $customerId
+     * @param string $cardId
+     * @return array
+     */
     public function createCard(string $customerId, string $cardId): array
     {
         return $this->adapter->createCard($customerId, $cardId);
     }
 
-  /**
-   * Update credit card
-   */
-
-    public function updateCard(string $customerId, string $cardId, $name = null, $expMonth = null, $expYear = null, $billingDetails = null): array
+    /**
+     * Update Card
+     *
+     * @param string $customerId
+     * @param string $cardId
+     * @param string $name
+     * @param int $expMonth
+     * @param int $expYear
+     * @param array $billingDetails
+     * @return array
+     */
+    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array $billingDetails = null): array
     {
         return $this->adapter->updateCard($customerId, $cardId, $name, $expMonth, $expYear, $billingDetails);
     }
 
-  /**
-   * Get credit card
-   */
+    /**
+     * Get Card
+     *
+     * @param string $customerId
+     * @param string $cardId
+     * @return array
+     */
     public function getCard(string $customerId, string $cardId): array
     {
         return $this->adapter->getCard($customerId, $cardId);
     }
 
-  /**
-   * List cards
-   */
+    /**
+     * List Cards
+     *
+     * @param string $customerId
+     * @return array
+     */
     public function listCards(string $customerId): array
     {
         return $this->adapter->listCards($customerId);
     }
 
-  /**
-   * List customers
-   */
+    /**
+     * List Customers
+     *
+     * @return array
+     */
     public function listCustomers(): array
     {
         return $this->adapter->listCustomers();
     }
 
-  /**
-   * Add new customer in the gateway database
-   * returns the id of the newly created customer
-   *
-   * $data will contain email, name and payment_method
-   *
-   * @throws Exception
-   */
-    public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array
+    /**
+     * Create Customer
+     * 
+     * Add new customer in the gateway database
+     * returns the details of the newly created customer
+     * 
+     * @param string $name
+     * @param string $email
+     * @param array $billingDetails
+     * @param string|null $paymentMethod
+     * @return array
+     */
+    public function createCustomer(string $name, string $email, array $billingDetails = [], ?string $paymentMethod = null): array
     {
         return $this->adapter->createCustomer($name, $email, $billingDetails, $paymentMethod);
     }
 
-  /**
-   * Get customer details by ID
-   */
+    /**
+     * Get Customer
+     *
+     * @param string $customerId
+     * @return array
+     */
     public function getCustomer(string $customerId): array
     {
         return $this->adapter->getCustomer($customerId);
     }
 
-  /**
-   * Update customer details
-   */
+    /**
+     * Update Customer
+     *
+     * @param string $customerId
+     * @param string $name
+     * @param string $email
+     * @param array $billingDetails
+     * @param string $paymentMethod
+     * @return array
+     */
     public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod): array
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $billingDetails, $paymentMethod);
     }
 
-  /**
-   * Delete customer by ID
-   */
+    /**
+     * Delete Customer
+     *
+     * @param string $customerId
+     * @return boolean
+     */
     public function deleteCustomer(string $customerId): bool
     {
         return $this->adapter->deleteCustomer($customerId);

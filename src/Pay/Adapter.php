@@ -124,6 +124,8 @@ abstract class Adapter
    */
     abstract public function deleteCustomer(string $customerId): bool;
 
+    abstract public function cancel(string $paymentId): bool;
+
     protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): array
     {
 
