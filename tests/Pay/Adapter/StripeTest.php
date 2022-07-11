@@ -5,15 +5,14 @@ namespace Utopia\Tests;
 use Utopia\Pay\Adapter\Stripe;
 use PHPUnit\Framework\TestCase;
 
-
-class StripeTest extends TestCase {
-
+class StripeTest extends TestCase
+{
     private Stripe $stripe;
 
     protected function setUp(): void
     {
-        $secretKey = $_SERVER['STRIPE_SECRET'] ?? 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
-        $publishableKey = $_SERVER['STRIPE_PUBLISHABLE'] ?? '';
+        $secretKey = getenv('STRIPE_SECRET') ? getenv('STRIPE_SECRET') : 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
+        $publishableKey = getenv('STRIPE_PUBLISHABLE') ? getenv('STRIPE_PUBLISHABLE')  : '';
         $this->stripe = new Stripe(
             $publishableKey,
             $secretKey
@@ -35,7 +34,8 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testCreateCustomer */
-    public function testGetCustomer(array $data): array {
+    public function testGetCustomer(array $data): array
+    {
         $customerId = $data['customerId'];
         $customer = $this->stripe->getCustomer($customerId);
         $this->assertNotEmpty($customer['id']);
@@ -45,7 +45,8 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testCreateCustomer */
-    public function testUpdateCustomer(array $data): array {
+    public function testUpdateCustomer(array $data): array
+    {
         $customerId = $data['customerId'];
         $customer = $this->stripe->updateCustomer($customerId, 'Test Updated', 'testcustomerupdated@email.com');
         $this->assertNotEmpty($customer['id']);
@@ -54,7 +55,8 @@ class StripeTest extends TestCase {
         return $data;
     }
 
-    public function testListCustomers() {
+    public function testListCustomers()
+    {
         $response = $this->stripe->listCustomers();
         $this->assertIsArray($response['data']);
         $this->assertNotEmpty($response['data']);
@@ -65,7 +67,8 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testUpdateCustomer */
-    public function testCreateCard(array $data) {
+    public function testCreateCard(array $data)
+    {
         $customerId = $data['customerId'];
         $card = $this->stripe->createCard($customerId, 'tok_visa');
         $this->assertNotEmpty($card['id']);
@@ -76,9 +79,10 @@ class StripeTest extends TestCase {
         $data['cardId'] = $card['id'];
         return $data;
     }
-    
+
     /** @depends testCreateCard */
-    public function testListCards(array $data) {
+    public function testListCards(array $data)
+    {
         $customerId = $data['customerId'];
         $cards = $this->stripe->listCards($customerId);
         $card = $cards['data'][0];
@@ -91,7 +95,8 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testCreateCard */
-    public function testGetCard(array $data) {
+    public function testGetCard(array $data)
+    {
         $customerId = $data['customerId'];
         $card = $this->stripe->getCard($customerId, $data['cardId']);
         $this->assertNotEmpty($card['id']);
@@ -103,7 +108,8 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testCreateCard */
-    public function testUpdateCard(array $data) {
+    public function testUpdateCard(array $data)
+    {
         $customerId = $data['customerId'];
         $card = $this->stripe->updateCard($customerId, $data['cardId'], 'Test Customer', 5, 2025);
         $this->assertNotEmpty($card['id']);
@@ -116,7 +122,8 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testCreateCard */
-    public function testPurchase(array $data) {
+    public function testPurchase(array $data)
+    {
         $customerId = $data['customerId'];
         $purchase = $this->stripe->purchase(5000, $customerId);
         $this->assertNotEmpty($purchase['id']);
@@ -129,7 +136,8 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testPurchase */
-    public function testRefund(array $data) {
+    public function testRefund(array $data)
+    {
         $purchase = $this->stripe->refund($data['paymentId'], 3000);
         $this->assertNotEmpty($purchase['id']);
         $this->assertEquals('refund', $purchase['object']);
@@ -138,18 +146,20 @@ class StripeTest extends TestCase {
     }
 
     /** @depends testCreateCard */
-    public function testDeleteCard(array $data) {
+    public function testDeleteCard(array $data)
+    {
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deleteCard($customerId, $data['cardId']);
         $this->assertTrue($deleted);
 
         $this->expectException("Exception");
         $this->expectExceptionCode(404);
-        $this->stripe->getCard($customerId, $data['cardId']);        
+        $this->stripe->getCard($customerId, $data['cardId']);
     }
 
     /** @depends testUpdateCustomer */
-    public function testDeleteCustomer(array $data) {
+    public function testDeleteCustomer(array $data)
+    {
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deleteCustomer($customerId);
         $this->assertTrue($deleted);

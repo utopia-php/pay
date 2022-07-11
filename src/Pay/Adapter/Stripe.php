@@ -6,7 +6,6 @@ use Utopia\Pay\Adapter;
 
 class Stripe extends Adapter
 {
-
     private string $baseUrl = 'https://api.stripe.com/v1';
     private string $secretKey;
     private string $publishableKey;
@@ -32,6 +31,8 @@ class Stripe extends Adapter
      */
     public function purchase(int $amount, string $customerId, string $cardId = null, array $additonalParams = []): array
     {
+        $path = '/charges';
+
         $requestBody = [
             'customer' => $customerId,
             'amount' => $amount,
@@ -41,7 +42,7 @@ class Stripe extends Adapter
         if (!empty($cardId)) {
             $requestBody['source'] = $cardId;
         }
-        $res = $this->execute(self::METHOD_POST, '/charges', $requestBody);
+        $res = $this->execute(self::METHOD_POST, $path, $requestBody);
         return $res;
     }
 
@@ -79,7 +80,7 @@ class Stripe extends Adapter
     /**
      * Update card
      */
-    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array  $billingDetails = null): array
+    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array $billingDetails = null): array
     {
         $path = '/customers/' . $customerId . '/sources/' . $cardId;
         $requestBody = [];
@@ -91,6 +92,14 @@ class Stripe extends Adapter
         }
         if (!empty($expYear)) {
             $requestBody['exp_year'] = $expYear;
+        }
+        if (!empty($billingDetails)) {
+            $requestBody['address_city'] = $billingDetails['address_city'] ?? null;
+            $requestBody['address_country'] = $billingDetails['address_country'] ?? null;
+            $requestBody['address_line1'] = $billingDetails['address_line1'];
+            $requestBody['address_line2'] = $billingDetails['address_line2'];
+            $requestBody['address_state'] = $billingDetails['address_state'];
+            $requestBody['address_zip'] = $billingDetails['address_zip'];
         }
         return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
@@ -117,7 +126,7 @@ class Stripe extends Adapter
     /**
      * Add new customer in the gateway database
      * returns the newly created customer
-     * 
+     *
      * @throws Exception
      */
     public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array
@@ -158,7 +167,7 @@ class Stripe extends Adapter
     /**
      * Update customer details
      */
-    public function updateCustomer(string $customerId, string $name, string $email,  array $billingDetails = [], string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array
     {
         $path = '/customers/' . $customerId;
         $requestBody = [
@@ -184,8 +193,9 @@ class Stripe extends Adapter
         return $result['deleted'] ?? false;
     }
 
-    private function execute(string $method, string $path, array $requestBody = [], array $headers = ['content-type' => 'application/x-www-form-urlencoded']): array
+    private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
+        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded'], $headers);
         return $this->call($method, $this->baseUrl . $path, $requestBody, $headers, [CURLOPT_USERPWD => $this->secretKey . ':']);
     }
 }
