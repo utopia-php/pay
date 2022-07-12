@@ -100,17 +100,6 @@ class Pay
     }
 
     /**
-     * Cancel Payment
-     *
-     * @param string $paymentId
-     * @return boolean
-     */
-    public function cancel(string $paymentId): bool
-    {
-        return $this->adapter->cancel($paymentId);
-    }
-
-    /**
      * Delete Card
      *
      * @param string $customerId
