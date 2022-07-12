@@ -119,13 +119,25 @@ abstract class Adapter
    */
     abstract public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array;
 
-  /**
-   * Delete customer by ID
-   */
+    /**
+     * Delete Customer
+     *
+     * @param string $customerId
+     * @return boolean
+     */
     abstract public function deleteCustomer(string $customerId): bool;
 
-    abstract public function cancel(string $paymentId): bool;
-
+    /**
+     * Call
+     * Make a request
+     *
+     * @param string $method
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param array $options
+     * @return array
+     */
     protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): array
     {
 
