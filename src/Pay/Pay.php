@@ -180,13 +180,13 @@ class Pay
      *
      * @param string $name
      * @param string $email
-     * @param array $billingDetails
+     * @param array $address
      * @param string|null $paymentMethod
      * @return array
      */
-    public function createCustomer(string $name, string $email, array $billingDetails = [], ?string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
     {
-        return $this->adapter->createCustomer($name, $email, $billingDetails, $paymentMethod);
+        return $this->adapter->createCustomer($name, $email, $address, $paymentMethod);
     }
 
     /**
@@ -210,9 +210,9 @@ class Pay
      * @param string $paymentMethod
      * @return array
      */
-    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $billingDetails = []): array
+    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = []): array
     {
-        return $this->adapter->updateCustomer($customerId, $name, $email, $billingDetails, $paymentMethod);
+        return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
 
     /**

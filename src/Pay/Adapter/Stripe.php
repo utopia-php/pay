@@ -129,7 +129,7 @@ class Stripe extends Adapter
      *
      * @throws Exception
      */
-    public function createCustomer(string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array
     {
         $path = '/customers';
         $requestBody = [
@@ -139,8 +139,8 @@ class Stripe extends Adapter
         if (!empty($paymentMethod)) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if (!empty($billingDetails)) {
-            $requestBody['billing_details'] = $billingDetails;
+        if (!empty($address)) {
+            $requestBody['address'] = $address;
         }
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
         return $result;
