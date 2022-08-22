@@ -51,6 +51,21 @@ Utopia Framework requires PHP 8.0 or later. We recommend using the latest PHP ve
 + [https://twitter.com/lohanidamodar](https://twitter.com/lohanidamodar)
 + [https://github.com/lohanidamodar](https://github.com/lohanidamodar)
 
+
+## Contributing
+
+All code contributions - including those of people having commit access - must go through a pull request and approved by a core developer before being merged. This is to ensure proper review of all the code.
+
+Fork the project, create a feature branch, and send us a pull request.
+
+You can refer to the [Contributing Guide](CONTRIBUTING.md) for more info.
+
+### Testing
+
+```
+vendor/bin/phpunit --configuration phpunit.xml
+```
+
 ## Copyright and license
 
 The MIT License (MIT) [http://www.opensource.org/licenses/mit-license.php](http://www.opensource.org/licenses/mit-license.php)
