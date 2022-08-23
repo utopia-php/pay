@@ -2,14 +2,15 @@
 
 namespace Utopia\Pay;
 
-class Address {
+class Address
+{
     /**
      * City, district, suburb, town or village
      *
      * @var string
      */
     protected string $city;
-    
+
     /**
      * Two letter country code
      * https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
@@ -17,21 +18,21 @@ class Address {
      * @var string
      */
     protected string $country;
-    
+
     /**
      * Address Line 1 (eg. street, PO Box, or company name)
      *
      * @var string
      */
     protected string $line1;
-    
+
     /**
      * Address Line 2 (eg, appartment, suite, unit or building)
      *
      * @var string
      */
     protected string $line2;
-    
+
     /**
      * ZIP or postal code
      *
@@ -46,7 +47,8 @@ class Address {
      */
     protected string $state;
 
-    public function __construct(string $city, string $country, string $line1 = null, string $line2 = null, string $postalCode = null, string $state = null) {
+    public function __construct(string $city, string $country, string $line1 = null, string $line2 = null, string $postalCode = null, string $state = null)
+    {
         $this->city = $city;
         $this->country = $country;
         $this->line1 = $line1;
@@ -67,7 +69,7 @@ class Address {
     /**
      * Set the value of city
      * @param string $city
-     * 
+     *
      * @return self
      */
     public function setCity(string $city): self
@@ -89,7 +91,7 @@ class Address {
     /**
      * Set the value of country
      * @param string $country
-     * 
+     *
      * @return self
      */
     public function setCountry(string $country): self
@@ -110,9 +112,9 @@ class Address {
 
     /**
      * Set the value of line1
-     * 
+     *
      * @param string $line1
-     * 
+     *
      * @return self
      */
     public function setLine1(string $line1): self
@@ -124,7 +126,7 @@ class Address {
 
     /**
      * Get the value of line2
-     * 
+     *
      * @return self
      */
     public function getLine2(): string
@@ -134,7 +136,7 @@ class Address {
 
     /**
      * Set the value of line2
-     * 
+     *
      * @param string $line2
      * @return self
      */
@@ -147,7 +149,7 @@ class Address {
 
     /**
      * Get the value of postalCode
-     * 
+     *
      * @return string
      */
     public function getPostalCode(): string
@@ -157,7 +159,7 @@ class Address {
 
     /**
      * Set the value of postalCode
-     * 
+     *
      * @param string $postalCode
      * @return self
      */
@@ -170,7 +172,7 @@ class Address {
 
     /**
      * Get the value of state
-     * 
+     *
      * @return string
      */
     public function getState(): string
@@ -180,7 +182,7 @@ class Address {
 
     /**
      * Set the value of state
-     * 
+     *
      * @param string $state
      * @return self
      */
