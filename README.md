@@ -46,7 +46,7 @@ Utopia Framework requires PHP 8.0 or later. We recommend using the latest PHP ve
 
 ## Authors
 
-**Eldad Fux**
+**Damodar Lohani**
 
 + [https://twitter.com/lohanidamodar](https://twitter.com/lohanidamodar)
 + [https://github.com/lohanidamodar](https://github.com/lohanidamodar)
