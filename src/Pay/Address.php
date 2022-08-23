@@ -8,7 +8,7 @@ class Address {
      *
      * @var string
      */
-    protected string $city;
+    protected string $city = '';
     
     /**
      * Two letter country code
@@ -16,35 +16,35 @@ class Address {
      *
      * @var string
      */
-    protected string $country;
+    protected string $country = '';
     
     /**
      * Address Line 1 (eg. street, PO Box, or company name)
      *
      * @var string
      */
-    protected string $line1;
+    protected string $line1 = '';
     
     /**
      * Address Line 2 (eg, appartment, suite, unit or building)
      *
      * @var string
      */
-    protected string $line2;
+    protected string $line2 = '';
     
     /**
      * ZIP or postal code
      *
      * @var string
      */
-    protected string $postalCode;
+    protected string $postalCode = '';
 
     /**
      * State, county, province or region
      *
      * @var string
      */
-    protected string $state;
+    protected string $state = '';
 
     public function __construct($city, $country, $line1, $line2, $postalCode, $state) {
         $this->city = $city;
@@ -189,5 +189,22 @@ class Address {
         $this->state = $state;
 
         return $this;
+    }
+
+    /**
+     * Get Object as an array
+     *
+     * @return array
+     */
+    public function asArray(): array
+    {
+        return [
+            'city' => $this->city,
+            'country' => $this->country,
+            'line1' => $this->line1,
+            'line2' => $this->line2,
+            'postalCode' => $this->postalCode,
+            'state' => $this->state,
+        ];
     }
 }

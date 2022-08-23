@@ -3,6 +3,7 @@
 namespace Utopia\Pay\Adapter;
 
 use Utopia\Pay\Adapter;
+use Utopia\Pay\Address;
 
 class Stripe extends Adapter
 {
@@ -129,7 +130,7 @@ class Stripe extends Adapter
      *
      * @throws Exception
      */
-    public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, Address $address = null, string $paymentMethod = null): array
     {
         $path = '/customers';
         $requestBody = [
@@ -139,8 +140,8 @@ class Stripe extends Adapter
         if (!empty($paymentMethod)) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if (!empty($address)) {
-            $requestBody['address'] = $address;
+        if (!is_null($address)) {
+            $requestBody['address'] = $address->asArray();
         }
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
         return $result;
@@ -167,7 +168,7 @@ class Stripe extends Adapter
     /**
      * Update customer details
      */
-    public function updateCustomer(string $customerId, string $name, string $email, array $billingDetails = [], string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, string $paymentMethod = null): array
     {
         $path = '/customers/' . $customerId;
         $requestBody = [
@@ -177,8 +178,8 @@ class Stripe extends Adapter
         if (!empty($paymentMethod)) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if (!empty($billingDetails)) {
-            $requestBody['billing_details'] = $billingDetails;
+        if (!is_null($address)) {
+            $requestBody['address'] = $address->asArray();
         }
         return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
