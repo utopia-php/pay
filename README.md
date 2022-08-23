@@ -42,7 +42,7 @@ var_dump($purchase);
 
 ## System Requirements
 
-Utopia Framework requires PHP 8.0 or later. We recommend using the latest PHP version whenever possible.
+Utopia Pay requires PHP 8.0 or later. We recommend using the latest PHP version whenever possible.
 
 ## Authors
 
