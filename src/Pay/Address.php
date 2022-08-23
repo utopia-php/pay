@@ -46,7 +46,7 @@ class Address {
      */
     protected string $state;
 
-    public function __construct($city, $country, $line1, $line2, $postalCode, $state) {
+    public function __construct(string $city, string $country, string $line1 = null, string $line2 = null, string $postalCode = null, string $state = null) {
         $this->city = $city;
         $this->country = $country;
         $this->line1 = $line1;
