@@ -81,7 +81,7 @@ class Stripe extends Adapter
     /**
      * Update card
      */
-    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array $billingDetails = null): array
+    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, Address $billingAddress = null): array
     {
         $path = '/customers/' . $customerId . '/sources/' . $cardId;
         $requestBody = [];
@@ -94,13 +94,13 @@ class Stripe extends Adapter
         if (!empty($expYear)) {
             $requestBody['exp_year'] = $expYear;
         }
-        if (!empty($billingDetails)) {
-            $requestBody['address_city'] = $billingDetails['address_city'] ?? null;
-            $requestBody['address_country'] = $billingDetails['address_country'] ?? null;
-            $requestBody['address_line1'] = $billingDetails['address_line1'];
-            $requestBody['address_line2'] = $billingDetails['address_line2'];
-            $requestBody['address_state'] = $billingDetails['address_state'];
-            $requestBody['address_zip'] = $billingDetails['address_zip'];
+        if (!is_null($billingAddress)) {
+            $requestBody['address_city'] = $billingAddress->getCity() ?? null;
+            $requestBody['address_country'] = $billingAddress->getCountry() ?? null;
+            $requestBody['address_line1'] = $billingAddress->getLine1();
+            $requestBody['address_line2'] = $billingAddress->getLine2();
+            $requestBody['address_state'] = $billingAddress->getState();
+            $requestBody['address_zip'] = $billingAddress->getPostalCode();
         }
         return $this->execute(self::METHOD_POST, $path, $requestBody);
     }

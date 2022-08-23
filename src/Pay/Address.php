@@ -61,7 +61,7 @@ class Address {
      */
     public function getCity(): string
     {
-        return $this->city;
+        return $this->city ?? null;
     }
 
     /**
@@ -83,7 +83,7 @@ class Address {
      */
     public function getCountry(): string
     {
-        return $this->country;
+        return $this->country ?? null;
     }
 
     /**
@@ -105,7 +105,7 @@ class Address {
      */
     public function getLine1(): string
     {
-        return $this->line1;
+        return $this->line1 ?? null;
     }
 
     /**
@@ -129,7 +129,7 @@ class Address {
      */
     public function getLine2(): string
     {
-        return $this->line2;
+        return $this->line2 ?? null;
     }
 
     /**
@@ -152,7 +152,7 @@ class Address {
      */
     public function getPostalCode(): string
     {
-        return $this->postalCode;
+        return $this->postalCode ?? null;
     }
 
     /**
@@ -175,7 +175,7 @@ class Address {
      */
     public function getState(): string
     {
-        return $this->state;
+        return $this->state ?? null;
     }
 
     /**
