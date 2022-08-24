@@ -205,7 +205,7 @@ class Address
             'country' => $this->country ?? null,
             'line1' => $this->line1 ?? null,
             'line2' => $this->line2 ?? null,
-            'postalCode' => $this->postalCode ?? null,
+            'postal_code' => $this->postalCode ?? null,
             'state' => $this->state ?? null,
         ];
     }
