@@ -6,8 +6,8 @@
     "license": "MIT",
     "minimum-stability": "stable",
     "scripts": {
-        "lint": "vendor/bin/pint --test",
-        "format": "vendor/bin/pint"
+        "lint": "./vendor/bin/pint --test",
+        "format": "./vendor/bin/pint"
     },
     "authors": [
         {
