@@ -2,8 +2,8 @@
 
 namespace Utopia\Tests;
 
-use Utopia\Pay\Adapter\Stripe;
 use PHPUnit\Framework\TestCase;
+use Utopia\Pay\Adapter\Stripe;
 use Utopia\Pay\Address;
 
 class StripeTest extends TestCase
@@ -13,7 +13,7 @@ class StripeTest extends TestCase
     protected function setUp(): void
     {
         $secretKey = getenv('STRIPE_SECRET') ? getenv('STRIPE_SECRET') : 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
-        $publishableKey = getenv('STRIPE_PUBLISHABLE') ? getenv('STRIPE_PUBLISHABLE')  : '';
+        $publishableKey = getenv('STRIPE_PUBLISHABLE') ? getenv('STRIPE_PUBLISHABLE') : '';
         $this->stripe = new Stripe(
             $publishableKey,
             $secretKey
@@ -31,6 +31,7 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($customer['id']);
         $this->assertEquals($customer['name'], 'Test customer');
         $this->assertEquals($customer['email'], 'testcustomer@email.com');
+
         return ['customerId' => $customer['id']];
     }
 
@@ -42,6 +43,7 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($customer['id']);
         $this->assertEquals($customer['name'], 'Test customer');
         $this->assertEquals($customer['email'], 'testcustomer@email.com');
+
         return $data;
     }
 
@@ -53,6 +55,7 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($customer['id']);
         $this->assertEquals($customer['name'], 'Test Updated');
         $this->assertEquals($customer['email'], 'testcustomerupdated@email.com');
+
         return $data;
     }
 
@@ -78,6 +81,7 @@ class StripeTest extends TestCase
         $this->assertEquals(2023, $card['exp_year']);
         $this->assertEquals(date('m'), $card['exp_month']);
         $data['cardId'] = $card['id'];
+
         return $data;
     }
 
@@ -92,6 +96,7 @@ class StripeTest extends TestCase
         $this->assertEquals('US', $card['country']);
         $this->assertEquals(2023, $card['exp_year']);
         $this->assertEquals(date('m'), $card['exp_month']);
+
         return $data;
     }
 
@@ -105,6 +110,7 @@ class StripeTest extends TestCase
         $this->assertEquals('US', $card['country']);
         $this->assertEquals(2023, $card['exp_year']);
         $this->assertEquals(date('m'), $card['exp_month']);
+
         return $data;
     }
 
@@ -119,6 +125,7 @@ class StripeTest extends TestCase
         $this->assertEquals(2025, $card['exp_year']);
         $this->assertEquals(5, $card['exp_month']);
         $this->assertEquals('Test Customer', $card['name']);
+
         return $data;
     }
 
@@ -133,6 +140,7 @@ class StripeTest extends TestCase
         $this->assertEquals(0, $purchase['amount_refunded']);
         $this->assertTrue($purchase['captured']);
         $data['paymentId'] = $purchase['id'];
+
         return $data;
     }
 
@@ -153,7 +161,7 @@ class StripeTest extends TestCase
         $deleted = $this->stripe->deleteCard($customerId, $data['cardId']);
         $this->assertTrue($deleted);
 
-        $this->expectException("Exception");
+        $this->expectException('Exception');
         $this->expectExceptionCode(404);
         $this->stripe->getCard($customerId, $data['cardId']);
     }

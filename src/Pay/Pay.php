@@ -5,13 +5,12 @@ namespace Utopia\Pay;
 class Pay
 {
     /**
-     *
      * @var Adapter
      */
     protected Adapter $adapter;
 
     /**
-     * @param Adapter $adapter
+     * @param  Adapter  $adapter
      */
     public function __construct(Adapter $adapter)
     {
@@ -21,7 +20,7 @@ class Pay
     /**
      * Set Test Mode
      *
-     * @param boolean $testMode
+     * @param  bool  $testMode
      * @return void
      */
     public function setTestMode(bool $testMode)
@@ -32,7 +31,7 @@ class Pay
     /**
      * Get Test Mode
      *
-     * @return boolean
+     * @return bool
      */
     public function getTestMode(): bool
     {
@@ -52,7 +51,7 @@ class Pay
     /**
      * Set Currency
      *
-     * @param string $currency
+     * @param  string  $currency
      * @return void
      */
     public function setCurrency(string $currency)
@@ -76,10 +75,10 @@ class Pay
      * Make a purchase request
      * Returns payment ID on successfull payment
      *
-     * @param float $amount
-     * @param string $customerId
-     * @param string|null $cardId
-     * @param array $additionalParams
+     * @param  float  $amount
+     * @param  string  $customerId
+     * @param  string|null  $cardId
+     * @param  array  $additionalParams
      * @return array
      */
     public function purchase(float $amount, string $customerId, string $cardId = null, array $additionalParams = []): array
@@ -90,8 +89,8 @@ class Pay
     /**
      * Refund Payment
      *
-     * @param string $paymentId
-     * @param float $amount
+     * @param  string  $paymentId
+     * @param  float  $amount
      * @return array
      */
     public function refund(string $paymentId, float $amount): array
@@ -102,9 +101,9 @@ class Pay
     /**
      * Delete Card
      *
-     * @param string $customerId
-     * @param string $cardId
-     * @return boolean
+     * @param  string  $customerId
+     * @param  string  $cardId
+     * @return bool
      */
     public function deleteCard(string $customerId, string $cardId): bool
     {
@@ -114,8 +113,8 @@ class Pay
     /**
      * Create Card
      *
-     * @param string $customerId
-     * @param string $cardId
+     * @param  string  $customerId
+     * @param  string  $cardId
      * @return array
      */
     public function createCard(string $customerId, string $cardId): array
@@ -126,12 +125,12 @@ class Pay
     /**
      * Update Card
      *
-     * @param string $customerId
-     * @param string $cardId
-     * @param string $name
-     * @param int $expMonth
-     * @param int $expYear
-     * @param array $billingDetails
+     * @param  string  $customerId
+     * @param  string  $cardId
+     * @param  string  $name
+     * @param  int  $expMonth
+     * @param  int  $expYear
+     * @param  array  $billingDetails
      * @return array
      */
     public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array $billingDetails = null): array
@@ -142,8 +141,8 @@ class Pay
     /**
      * Get Card
      *
-     * @param string $customerId
-     * @param string $cardId
+     * @param  string  $customerId
+     * @param  string  $cardId
      * @return array
      */
     public function getCard(string $customerId, string $cardId): array
@@ -154,7 +153,7 @@ class Pay
     /**
      * List Cards
      *
-     * @param string $customerId
+     * @param  string  $customerId
      * @return array
      */
     public function listCards(string $customerId): array
@@ -178,10 +177,10 @@ class Pay
      * Add new customer in the gateway database
      * returns the details of the newly created customer
      *
-     * @param string $name
-     * @param string $email
-     * @param array $address
-     * @param string|null $paymentMethod
+     * @param  string  $name
+     * @param  string  $email
+     * @param  array  $address
+     * @param  string|null  $paymentMethod
      * @return array
      */
     public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
@@ -192,7 +191,7 @@ class Pay
     /**
      * Get Customer
      *
-     * @param string $customerId
+     * @param  string  $customerId
      * @return array
      */
     public function getCustomer(string $customerId): array
@@ -203,11 +202,11 @@ class Pay
     /**
      * Update Customer
      *
-     * @param string $customerId
-     * @param string $name
-     * @param string $email
-     * @param array $billingDetails
-     * @param string $paymentMethod
+     * @param  string  $customerId
+     * @param  string  $name
+     * @param  string  $email
+     * @param  array  $billingDetails
+     * @param  string  $paymentMethod
      * @return array
      */
     public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = []): array
@@ -218,8 +217,8 @@ class Pay
     /**
      * Delete Customer
      *
-     * @param string $customerId
-     * @return boolean
+     * @param  string  $customerId
+     * @return bool
      */
     public function deleteCustomer(string $customerId): bool
     {

@@ -59,6 +59,7 @@ class Address
 
     /**
      * Get the value of city
+     *
      * @return string
      */
     public function getCity(): string
@@ -68,8 +69,8 @@ class Address
 
     /**
      * Set the value of city
-     * @param string $city
      *
+     * @param  string  $city
      * @return self
      */
     public function setCity(string $city): self
@@ -81,6 +82,7 @@ class Address
 
     /**
      * Get the value of country
+     *
      * @return string
      */
     public function getCountry(): string
@@ -90,8 +92,8 @@ class Address
 
     /**
      * Set the value of country
-     * @param string $country
      *
+     * @param  string  $country
      * @return self
      */
     public function setCountry(string $country): self
@@ -103,6 +105,7 @@ class Address
 
     /**
      * Get the value of line1
+     *
      * @return string
      */
     public function getLine1(): string
@@ -113,8 +116,7 @@ class Address
     /**
      * Set the value of line1
      *
-     * @param string $line1
-     *
+     * @param  string  $line1
      * @return self
      */
     public function setLine1(string $line1): self
@@ -137,7 +139,7 @@ class Address
     /**
      * Set the value of line2
      *
-     * @param string $line2
+     * @param  string  $line2
      * @return self
      */
     public function setLine2(string $line2): self
@@ -160,7 +162,7 @@ class Address
     /**
      * Set the value of postalCode
      *
-     * @param string $postalCode
+     * @param  string  $postalCode
      * @return self
      */
     public function setPostalCode(string $postalCode): self
@@ -183,7 +185,7 @@ class Address
     /**
      * Set the value of state
      *
-     * @param string $state
+     * @param  string  $state
      * @return self
      */
     public function setState(string $state): self
