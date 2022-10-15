@@ -10,16 +10,6 @@
         "lint": "vendor/bin/phpcs -p",
         "test": "vendor/bin/phpunit --configuration phpunit.xml"
     },
-    "authors": [
-        {
-            "name": "Eldad Fux",
-            "email": "eldad@appwrite.io"
-        },
-        {
-            "name": "Damodar Lohani",
-            "email": "damodar@appwrite.io"
-        }
-    ],
     "autoload": {
         "psr-4": {"Utopia\\Pay\\": "src/Pay"}
     },
