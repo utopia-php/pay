@@ -31,6 +31,6 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.4",
-        "laravel/pint": "dev-main"
+        "laravel/pint": "1.2.*"
     }
 }
