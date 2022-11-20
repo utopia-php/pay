@@ -22,7 +22,7 @@ class Pay
      * Set Test Mode
      *
      * @param boolean $testMode
-     * @return void
+     *
      */
     public function setTestMode(bool $testMode)
     {
@@ -53,7 +53,7 @@ class Pay
      * Set Currency
      *
      * @param string $currency
-     * @return void
+     * 
      */
     public function setCurrency(string $currency)
     {
@@ -131,7 +131,7 @@ class Pay
      * @param string $name
      * @param int $expMonth
      * @param int $expYear
-     * @param array $billingDetails
+     * @param array|null $billingDetails
      * @return array
      */
     public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, array $billingDetails = null): array
@@ -206,7 +206,7 @@ class Pay
      * @param string $customerId
      * @param string $name
      * @param string $email
-     * @param array $billingDetails
+     * @param array $address
      * @param string $paymentMethod
      * @return array
      */

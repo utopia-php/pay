@@ -95,8 +95,8 @@ class Stripe extends Adapter
             $requestBody['exp_year'] = $expYear;
         }
         if (!is_null($billingAddress)) {
-            $requestBody['address_city'] = $billingAddress->getCity() ?? null;
-            $requestBody['address_country'] = $billingAddress->getCountry() ?? null;
+            $requestBody['address_city'] = $billingAddress->getCity() ?: null;
+            $requestBody['address_country'] = $billingAddress->getCountry() ?: null;
             $requestBody['address_line1'] = $billingAddress->getLine1();
             $requestBody['address_line2'] = $billingAddress->getLine2();
             $requestBody['address_state'] = $billingAddress->getState();
@@ -128,7 +128,7 @@ class Stripe extends Adapter
      * Add new customer in the gateway database
      * returns the newly created customer
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function createCustomer(string $name, string $email, Address $address = null, string $paymentMethod = null): array
     {
