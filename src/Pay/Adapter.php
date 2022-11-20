@@ -27,7 +27,7 @@ abstract class Adapter
   /**
    * Set test mode
    */
-    public function setTestMode(bool $testMode)
+    public function setTestMode(bool $testMode) : void
     {
         $this->testMode = $testMode;
     }
@@ -48,7 +48,7 @@ abstract class Adapter
   /**
    * Set the currency for payments
    */
-    public function setCurrency(string $currency)
+    public function setCurrency(string $currency) : void
     {
         $this->currency = $currency;
     }
@@ -56,7 +56,7 @@ abstract class Adapter
   /**
    * Get currently set currency for payments
    */
-    public function getCurrency(): string
+    public function getCurrency() : string
     {
         return $this->currency;
     }
@@ -100,7 +100,7 @@ abstract class Adapter
    * Add new customer in the gateway database
    * returns the id of the newly created customer
    *
-   * @throws Exception
+   * @throws \Exception
    */
     abstract public function createCustomer(string $name, string $email, Address $address = null, string $paymentMethod = null): array;
 

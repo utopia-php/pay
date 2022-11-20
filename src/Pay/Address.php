@@ -127,7 +127,7 @@ class Address
     /**
      * Get the value of line2
      *
-     * @return self
+     * @return string
      */
     public function getLine2(): string
     {
