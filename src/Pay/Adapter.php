@@ -135,6 +135,8 @@ abstract class Adapter
      */
     abstract public function deleteCustomer(string $customerId): bool;
 
+    abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = []): array;
+
     /**
      * Call
      * Make a request

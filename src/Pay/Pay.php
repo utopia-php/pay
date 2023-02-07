@@ -224,4 +224,9 @@ class Pay
     {
         return $this->adapter->deleteCustomer($customerId);
     }
+
+    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
+    {
+        return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes);
+    }
 }
