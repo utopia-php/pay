@@ -209,7 +209,7 @@ class Pay
      * @param  string  $paymentMethod
      * @return array
      */
-    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = []): array
+    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = null): array
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
