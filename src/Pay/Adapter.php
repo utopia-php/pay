@@ -110,7 +110,7 @@ abstract class Adapter
      *
      * @throws Exception
      */
-    abstract public function createCustomer(string $name, string $email, Address $address = null, string $paymentMethod = null): array;
+    abstract public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array;
 
     /**
      * List customers

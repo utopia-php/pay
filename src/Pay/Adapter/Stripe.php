@@ -138,7 +138,7 @@ class Stripe extends Adapter
      *
      * @throws Exception
      */
-    public function createCustomer(string $name, string $email, Address $address = null, string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array
     {
         $path = '/customers';
         $requestBody = [
