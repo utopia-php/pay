@@ -220,8 +220,8 @@ class Stripe extends Adapter
 
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
-        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded'], $headers);
+        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer ' . $this->secretKey], $headers);
 
-        return $this->call($method, $this->baseUrl.$path, $requestBody, $headers, [CURLOPT_USERPWD => $this->secretKey.':']);
+        return $this->call($method, $this->baseUrl.$path, $requestBody, $headers);
     }
 }
