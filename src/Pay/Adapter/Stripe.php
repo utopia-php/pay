@@ -149,7 +149,7 @@ class Stripe extends Adapter
             $requestBody['payment_method'] = $paymentMethod;
         }
         if (! is_null($address)) {
-            $requestBody['address'] = $address->asArray();
+            $requestBody['address'] = $address;
         }
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
 
