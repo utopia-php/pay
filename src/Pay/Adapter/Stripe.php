@@ -84,6 +84,24 @@ class Stripe extends Adapter
     }
 
     /**
+     * List Customer Payment Methods
+     */
+    public function listCustomerPaymentMethods(string $customerId): array
+    {
+        $path = '/customer/' . $customerId . '/payment_methods';
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
+    /**
+     * List Customer Payment Methods
+     */
+    public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array
+    {
+        $path = '/customer/' . $customerId . '/payment_methods/' . $paymentMethodId;
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
+    /**
      * Update card
      */
     public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, Address $billingAddress = null): array
