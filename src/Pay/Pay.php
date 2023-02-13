@@ -225,7 +225,7 @@ class Pay
         return $this->adapter->deleteCustomer($customerId);
     }
 
-        /**
+    /**
      * List Customer Payment Methods
      */
     public function listCustomerPaymentMethods(string $customerId): array

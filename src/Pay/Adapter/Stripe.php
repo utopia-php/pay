@@ -88,7 +88,8 @@ class Stripe extends Adapter
      */
     public function listCustomerPaymentMethods(string $customerId): array
     {
-        $path = '/customers/' . $customerId . '/payment_methods';
+        $path = '/customers/'.$customerId.'/payment_methods';
+
         return $this->execute(self::METHOD_GET, $path);
     }
 
@@ -97,7 +98,8 @@ class Stripe extends Adapter
      */
     public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array
     {
-        $path = '/customers/' . $customerId . '/payment_methods/' . $paymentMethodId;
+        $path = '/customers/'.$customerId.'/payment_methods/'.$paymentMethodId;
+
         return $this->execute(self::METHOD_GET, $path);
     }
 
@@ -229,16 +231,17 @@ class Stripe extends Adapter
         $path = '/setup_intents';
         $requestBody = [
             'customer' => $customerId,
-            'payment_method_types' => $paymentMethodTypes
+            'payment_method_types' => $paymentMethodTypes,
         ];
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
         return $result;
     }
 
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
-        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer ' . $this->secretKey], $headers);
+        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);
 
         return $this->call($method, $this->baseUrl.$path, $requestBody, $headers);
     }
