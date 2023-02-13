@@ -27,7 +27,7 @@ class StripeTest extends TestCase
 
     public function testCreateCustomer(): array
     {
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati'));
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', array('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati'));
         $this->assertNotEmpty($customer['id']);
         $this->assertEquals($customer['name'], 'Test customer');
         $this->assertEquals($customer['email'], 'testcustomer@email.com');
