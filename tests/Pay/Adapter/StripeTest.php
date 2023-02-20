@@ -4,7 +4,6 @@ namespace Utopia\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Adapter\Stripe;
-use Utopia\Pay\Address;
 
 class StripeTest extends TestCase
 {
@@ -27,7 +26,7 @@ class StripeTest extends TestCase
 
     public function testCreateCustomer(): array
     {
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', array('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati'));
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati']);
         $this->assertNotEmpty($customer['id']);
         $this->assertEquals($customer['name'], 'Test customer');
         $this->assertEquals($customer['email'], 'testcustomer@email.com');
