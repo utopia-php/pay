@@ -77,7 +77,7 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($card['id']);
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2023, $card['exp_year']);
+        $this->assertEquals(2024, $card['exp_year']);
         $this->assertEquals(date('m'), $card['exp_month']);
         $data['cardId'] = $card['id'];
 
