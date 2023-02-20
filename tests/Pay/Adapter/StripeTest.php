@@ -4,7 +4,6 @@ namespace Utopia\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Adapter\Stripe;
-use Utopia\Pay\Address;
 
 class StripeTest extends TestCase
 {
@@ -27,7 +26,7 @@ class StripeTest extends TestCase
 
     public function testCreateCustomer(): array
     {
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati'));
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
         $this->assertNotEmpty($customer['id']);
         $this->assertEquals($customer['name'], 'Test customer');
         $this->assertEquals($customer['email'], 'testcustomer@email.com');
@@ -78,7 +77,7 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($card['id']);
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2023, $card['exp_year']);
+        $this->assertEquals(2024, $card['exp_year']);
         $this->assertEquals(date('m'), $card['exp_month']);
         $data['cardId'] = $card['id'];
 
@@ -94,7 +93,7 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($card['id']);
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2023, $card['exp_year']);
+        $this->assertEquals(2024, $card['exp_year']);
         $this->assertEquals(date('m'), $card['exp_month']);
 
         return $data;
@@ -108,7 +107,7 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($card['id']);
         $this->assertEquals('Visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2023, $card['exp_year']);
+        $this->assertEquals(2024, $card['exp_year']);
         $this->assertEquals(date('m'), $card['exp_month']);
 
         return $data;

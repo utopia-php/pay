@@ -209,7 +209,7 @@ class Pay
      * @param  string  $paymentMethod
      * @return array
      */
-    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = []): array
+    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = null): array
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
@@ -223,5 +223,26 @@ class Pay
     public function deleteCustomer(string $customerId): bool
     {
         return $this->adapter->deleteCustomer($customerId);
+    }
+
+    /**
+     * List Customer Payment Methods
+     */
+    public function listCustomerPaymentMethods(string $customerId): array
+    {
+        return $this->adapter->listCustomerPaymentMethods($customerId);
+    }
+
+    /**
+     * List Customer Payment Methods
+     */
+    public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array
+    {
+        return $this->adapter->getCustomerPaymentMethod($customerId, $paymentMethodId);
+    }
+
+    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
+    {
+        return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes);
     }
 }

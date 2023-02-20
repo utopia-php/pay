@@ -84,6 +84,26 @@ class Stripe extends Adapter
     }
 
     /**
+     * List Customer Payment Methods
+     */
+    public function listCustomerPaymentMethods(string $customerId): array
+    {
+        $path = '/customers/'.$customerId.'/payment_methods';
+
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
+    /**
+     * List Customer Payment Methods
+     */
+    public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array
+    {
+        $path = '/customers/'.$customerId.'/payment_methods/'.$paymentMethodId;
+
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
+    /**
      * Update card
      */
     public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, Address $billingAddress = null): array
@@ -138,7 +158,7 @@ class Stripe extends Adapter
      *
      * @throws Exception
      */
-    public function createCustomer(string $name, string $email, Address $address = null, string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array
     {
         $path = '/customers';
         $requestBody = [
@@ -149,7 +169,7 @@ class Stripe extends Adapter
             $requestBody['payment_method'] = $paymentMethod;
         }
         if (! is_null($address)) {
-            $requestBody['address'] = $address->asArray();
+            $requestBody['address'] = $address;
         }
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
 
@@ -206,10 +226,23 @@ class Stripe extends Adapter
         return $result['deleted'] ?? false;
     }
 
+    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
+    {
+        $path = '/setup_intents';
+        $requestBody = [
+            'customer' => $customerId,
+            'payment_method_types' => $paymentMethodTypes,
+        ];
+
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return $result;
+    }
+
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
-        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded'], $headers);
+        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);
 
-        return $this->call($method, $this->baseUrl.$path, $requestBody, $headers, [CURLOPT_USERPWD => $this->secretKey.':']);
+        return $this->call($method, $this->baseUrl.$path, $requestBody, $headers);
     }
 }

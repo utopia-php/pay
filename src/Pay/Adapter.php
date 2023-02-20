@@ -110,7 +110,7 @@ abstract class Adapter
      *
      * @throws Exception
      */
-    abstract public function createCustomer(string $name, string $email, Address $address = null, string $paymentMethod = null): array;
+    abstract public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array;
 
     /**
      * List customers
@@ -134,6 +134,18 @@ abstract class Adapter
      * @return bool
      */
     abstract public function deleteCustomer(string $customerId): bool;
+
+    /**
+     * List Customer Payment Methods
+     */
+    abstract public function listCustomerPaymentMethods(string $customerId): array;
+
+    /**
+     * List Customer Payment Methods
+     */
+    abstract public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array;
+
+    abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = []): array;
 
     /**
      * Call
