@@ -241,6 +241,11 @@ class Pay
         return $this->adapter->getCustomerPaymentMethod($customerId, $paymentMethodId);
     }
 
+    public function createPaymentIntent(string $customerId, string $paymentMethodId, int $amount): array
+    {
+        return $this->adapter->createPaymentIntent($customerId, $paymentMethodId, $amount);
+    }
+
     public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
     {
         return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes);

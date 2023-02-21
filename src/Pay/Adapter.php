@@ -145,6 +145,8 @@ abstract class Adapter
      */
     abstract public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array;
 
+    abstract public function createPaymentIntent(string $customerId, string $paymentMethodId, int $amount): array;
+
     abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = []): array;
 
     /**
