@@ -234,8 +234,8 @@ class Stripe extends Adapter
             'currency' => $this->currency,
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
-            'off_session' => true,
-            'confirm' => true,
+            'off_session' => "true",
+            'confirm' => "true",
         ];
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
 
