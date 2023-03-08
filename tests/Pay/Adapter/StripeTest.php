@@ -70,76 +70,105 @@ class StripeTest extends TestCase
     }
 
     /** @depends testUpdateCustomer */
-    public function testCreateCard(array $data)
+    public function testCreatePaymentMethod(array $data)
     {
         $customerId = $data['customerId'];
-        $card = $this->stripe->createCard($customerId, 'tok_visa');
-        $this->assertNotEmpty($card['id']);
-        $this->assertEquals('Visa', $card['brand']);
+        $pm = $this->stripe->createPaymentMethod($customerId, 'card',  [
+            'number' => 4242424242424242,
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
+
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
         $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2024, $card['exp_year']);
-        $this->assertEquals(date('m'), $card['exp_month']);
-        $data['cardId'] = $card['id'];
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals(4242, $card['last4']);
+        
+        $data['paymentMethodId'] = $pm['id'];
+        return $data;
+    }
+
+    /** @depends testCreatePaymentMethod */
+    public function testListPaymentMethods(array $data)
+    {
+        $customerId = $data['customerId'];
+        $pms = $this->stripe->listPaymentMethods($customerId);
+        $this->assertArray($pms['data']);
+
+        $pm = $pms['data'][0];
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
+
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
+        $this->assertEquals('US', $card['country']);
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals(4242, $card['last4']);
+        
+        return $data;
+    }
+
+    /** @depends testCreatePaymentMethod */
+    public function testGetPaymentMethod(array $data)
+    {
+        $customerId = $data['customerId'];
+        $paymentMethodId = $data['paymentMethodId'];
+        $pm = $this->stripe->getPaymentMethod($customerId, $paymentMethodId);
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
+
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
+        $this->assertEquals('US', $card['country']);
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals(4242, $card['last4']);
 
         return $data;
     }
 
-    /** @depends testCreateCard */
-    public function testListCards(array $data)
+    /** @depends testCreatePaymentMethod */
+    public function testUpdatePaymentMethod(array $data)
     {
-        $customerId = $data['customerId'];
-        $cards = $this->stripe->listCards($customerId);
-        $card = $cards['data'][0];
-        $this->assertNotEmpty($card['id']);
-        $this->assertEquals('Visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2024, $card['exp_year']);
-        $this->assertEquals(date('m'), $card['exp_month']);
+        $paymentMethodId = $data['paymentMethodId'];
+        $pm = $this->stripe->updatePaymentMethod($paymentMethodId, 'card', [
+            'exp_month' => 6,
+            'exp_year' => 2031,
+        ]);
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
+
+        $card = $pm['card'];
+        $this->assertEquals(2031, $card['exp_year']);
+        $this->assertEquals(6, $card['exp_month']);
 
         return $data;
     }
 
-    /** @depends testCreateCard */
-    public function testGetCard(array $data)
-    {
-        $customerId = $data['customerId'];
-        $card = $this->stripe->getCard($customerId, $data['cardId']);
-        $this->assertNotEmpty($card['id']);
-        $this->assertEquals('Visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2024, $card['exp_year']);
-        $this->assertEquals(date('m'), $card['exp_month']);
-
-        return $data;
-    }
-
-    /** @depends testCreateCard */
-    public function testUpdateCard(array $data)
-    {
-        $customerId = $data['customerId'];
-        $card = $this->stripe->updateCard($customerId, $data['cardId'], 'Test Customer', 5, 2025);
-        $this->assertNotEmpty($card['id']);
-        $this->assertEquals('Visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2025, $card['exp_year']);
-        $this->assertEquals(5, $card['exp_month']);
-        $this->assertEquals('Test Customer', $card['name']);
-
-        return $data;
-    }
-
-    /** @depends testCreateCard */
+    /** @depends testCreatePaymentMethod */
     public function testPurchase(array $data)
     {
         $customerId = $data['customerId'];
-        $purchase = $this->stripe->purchase(5000, $customerId);
+        $paymentMethodId = $data['paymentMethodId'];
+        $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
+        
         $this->assertNotEmpty($purchase['id']);
-        $this->assertEquals('charge', $purchase['object']);
-        $this->assertEquals(5000, $purchase['amount_captured']);
-        $this->assertEquals(0, $purchase['amount_refunded']);
-        $this->assertTrue($purchase['captured']);
-        $data['paymentId'] = $purchase['id'];
+        $this->assertArray($purchase['charges']['data']);
 
+        $charge = $purchase['charges']['data'][0];
+        $this->assertNotEmpty($charge['id']);
+        $this->assertEquals('charge', $charge['object']);
+        $this->assertEquals(5000, $charge['amount_captured']);
+        $this->assertEquals(0, $charge['amount_refunded']);
+        $this->assertTrue($charge['captured']);
+        
+        $data['paymentId'] = $purchase['id'];
         return $data;
     }
 
@@ -153,11 +182,11 @@ class StripeTest extends TestCase
         $this->assertEquals(3000, $purchase['amount']);
     }
 
-    /** @depends testCreateCard */
-    public function testDeleteCard(array $data)
+    /** @depends testcreatePaymentMethod */
+    public function testdeletePaymentMethod(array $data)
     {
         $customerId = $data['customerId'];
-        $deleted = $this->stripe->deleteCard($customerId, $data['cardId']);
+        $deleted = $this->stripe->deletePaymentMethod($customerId, $data['cardId']);
         $this->assertTrue($deleted);
 
         $this->expectException('Exception');

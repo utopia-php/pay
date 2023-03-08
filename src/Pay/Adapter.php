@@ -72,37 +72,35 @@ abstract class Adapter
     /**
      * Make a purchase request
      */
-    abstract public function purchase(int $amount, string $customerId, string $cardId, array $additionalParams = []): array;
+    abstract public function purchase(int $amount, string $customerId, string $paymentMethodId, array $additionalParams = []): array;
 
     /**
      * Refund payment
      */
-    abstract public function refund(string $paymentId, int $amount = null): array;
+    abstract public function refund(string $paymentId, int $amount = null, string $reason = null): array;
 
     /**
      * Add a credit card for a customer
      */
-    abstract public function createCard(string $customerId, string $cardId): array;
+    abstract public function createPaymentMethod(string $customerId, string $type, array $details): array;
 
     /**
      * Update credit card
      */
-    abstract public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, Address $billingAddress = null): array;
+    abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array;
 
-    /**
-     * Get credit card
-     */
-    abstract public function getCard(string $customerId, string $cardId): array;
+    abstract public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array;
+
 
     /**
      * List cards
      */
-    abstract public function listCards(string $customerId): array;
+    abstract public function listPaymentMethods(string $customerId): array;
 
     /**
      * Remove a credit card for a customer
      */
-    abstract public function deleteCard(string $customerId, string $cardId): bool;
+    abstract public function deletePaymentMethod(string $customerId): bool;
 
     /**
      * Add new customer in the gateway database
@@ -138,14 +136,7 @@ abstract class Adapter
     /**
      * List Customer Payment Methods
      */
-    abstract public function listCustomerPaymentMethods(string $customerId): array;
-
-    /**
-     * List Customer Payment Methods
-     */
-    abstract public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array;
-
-    abstract public function createPaymentIntent(string $customerId, string $paymentMethodId, int $amount): array;
+    abstract public function getPaymentMethod(string $customerId, string $paymentMethodId): array;
 
     abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = []): array;
 

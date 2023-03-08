@@ -31,33 +31,37 @@ class Stripe extends Adapter
     /**
      * Make a purchase request
      */
-    public function purchase(int $amount, string $customerId, string $cardId = null, array $additonalParams = []): array
+    public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
     {
-        $path = '/charges';
-
+        $path = '/payment_intents';
         $requestBody = [
-            'customer' => $customerId,
             'amount' => $amount,
             'currency' => $this->currency,
+            'customer' => $customerId,
+            'payment_method' => $paymentMethodId,
+            'off_session' => "true",
+            'confirm' => "true",
         ];
-        $requestBody = array_merge($requestBody, $additonalParams);
-        if (! empty($cardId)) {
-            $requestBody['source'] = $cardId;
-        }
-        $res = $this->execute(self::METHOD_POST, $path, $requestBody);
 
-        return $res;
+        $requestBody = array_merge($requestBody, $additionalParams);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return $result;
     }
 
     /**
      * Refund payment
      */
-    public function refund(string $paymentId, int $amount = null): array
+    public function refund(string $paymentId, int $amount = null, string $reason = null): array
     {
         $path = '/refunds';
-        $requestBody = ['charge' => $paymentId];
+        $requestBody = ['payment_intent' => $paymentId];
         if ($amount != null) {
             $requestBody['amount'] = $amount;
+        }
+
+        if($reason != null) {
+            $requestBody['reason'] = $reason;
         }
 
         return $this->execute(self::METHOD_POST, $path, $requestBody);
@@ -66,27 +70,28 @@ class Stripe extends Adapter
     /**
      * Add a credit card for customer
      */
-    public function createCard(string $customerId, string $cardId): array
+    public function createPaymentMethod(string $customerId, string $type, array $paymentMethodDetails): array
     {
-        $path = '/customers/'.$customerId.'/sources';
+        $path = '/payment_methods';
 
-        return $this->execute(self::METHOD_POST, $path, ['source' => $cardId]);
+        $requestBody = [
+            'type' => $type,
+            $type => $paymentMethodDetails
+        ];
+
+        // Create payment method
+        $paymentMethod = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $paymentMethodId = $paymentMethod['$id'];
+
+        // attach payment method to the customer
+        $path .= '/' . $paymentMethodId . '/attach';
+        return $this->execute(self::METHOD_POST, $path, ['customer' => $customerId]);
     }
 
     /**
      * List cards
      */
-    public function listCards(string $customerId): array
-    {
-        $path = '/customers/'.$customerId.'/sources';
-
-        return $this->execute(self::METHOD_GET, $path);
-    }
-
-    /**
-     * List Customer Payment Methods
-     */
-    public function listCustomerPaymentMethods(string $customerId): array
+    public function listPaymentMethods(string $customerId): array
     {
         $path = '/customers/'.$customerId.'/payment_methods';
 
@@ -96,7 +101,7 @@ class Stripe extends Adapter
     /**
      * List Customer Payment Methods
      */
-    public function getCustomerPaymentMethod(string $customerId, string $paymentMethodId): array
+    public function getPaymentMethod(string $customerId, string $paymentMethodId): array
     {
         $path = '/customers/'.$customerId.'/payment_methods/'.$paymentMethodId;
 
@@ -106,50 +111,46 @@ class Stripe extends Adapter
     /**
      * Update card
      */
-    public function updateCard(string $customerId, string $cardId, string $name = null, int $expMonth = null, int $expYear = null, Address $billingAddress = null): array
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array
     {
-        $path = '/customers/'.$customerId.'/sources/'.$cardId;
+        $path = '/payment_methods/'.$paymentMethodId;
         $requestBody = [];
+        $requestBody['billing_details'] = [];
         if (! empty($name)) {
-            $requestBody['name'] = $name;
+            $requestBody['billing_details']['name'] = $name;
         }
-        if (! empty($expMonth)) {
-            $requestBody['exp_month'] = $expMonth;
+        if (! empty($email)) {
+            $requestBody['billing_details']['email'] = $email;
         }
-        if (! empty($expYear)) {
-            $requestBody['exp_year'] = $expYear;
+        if (! empty($phone)) {
+            $requestBody['billing_details']['phone'] = $phone;
         }
-        if (! is_null($billingAddress)) {
-            $requestBody['address_city'] = $billingAddress->getCity() ?? null;
-            $requestBody['address_country'] = $billingAddress->getCountry() ?? null;
-            $requestBody['address_line1'] = $billingAddress->getLine1();
-            $requestBody['address_line2'] = $billingAddress->getLine2();
-            $requestBody['address_state'] = $billingAddress->getState();
-            $requestBody['address_zip'] = $billingAddress->getPostalCode();
+        if (! is_null($address)) {
+            $requestBody['billing_details']['address'] = $address;
         }
 
         return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
-    /**
-     * Get a card
-     */
-    public function getCard(string $customerId, string $cardId): array
+    public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
     {
-        $path = '/customers/'.$customerId.'/sources/'.$cardId;
+        $path = '/payment_methods/' . $paymentMethodId;
 
-        return $this->execute(self::METHOD_GET, $path);
+        $requestBody = [
+            $type => $details
+        ];
+
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
     /**
      * Delete a credit card record
      */
-    public function deleteCard(string $customerId, string $cardId): bool
+    public function deletePaymentMethod(string $paymentMethodId): bool
     {
-        $path = '/customers/'.$customerId.'/sources/'.$cardId;
-        $res = $this->execute(self::METHOD_DELETE, $path);
-
-        return $res['deleted'] ?? false;
+        $path = '/payment_methods/'.$paymentMethodId.'/detach';
+        $this->execute(self::METHOD_POST, $path);
+        return true;
     }
 
     /**
@@ -224,22 +225,6 @@ class Stripe extends Adapter
         $result = $this->execute(self::METHOD_DELETE, $path);
 
         return $result['deleted'] ?? false;
-    }
-
-    public function createPaymentIntent(string $customerId, string $paymentMethodId, int $amount): array
-    {
-        $path = '/payment_intents';
-        $requestBody = [
-            'amount' => $amount,
-            'currency' => $this->currency,
-            'customer' => $customerId,
-            'payment_method' => $paymentMethodId,
-            'off_session' => "true",
-            'confirm' => "true",
-        ];
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
-
-        return $result;
     }
 
     public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
