@@ -115,7 +115,7 @@ class Pay
      *
      * @param  string  $customerId
      * @param  string  $type
-     * @param array $details
+     * @param  array  $details
      * @return array
      */
     public function createPaymentMethod(string $customerId, string $type, array $details): array
@@ -126,11 +126,11 @@ class Pay
     /**
      * Update Payment Method Billing Details
      *
-     * @param  string $paymentMethodId
-     * @param  string $type
-     * @param  string $name
-     * @param  string $email
-     * @param  string $phone
+     * @param  string  $paymentMethodId
+     * @param  string  $type
+     * @param  string  $name
+     * @param  string  $email
+     * @param  string  $phone
      * @param  array  $address
      * @return array
      */
@@ -142,9 +142,9 @@ class Pay
     /**
      * Update Payment Method
      *
-     * @param string $paymentMethodId
-     * @param string $type
-     * @param array $details
+     * @param  string  $paymentMethodId
+     * @param  string  $type
+     * @param  array  $details
      * @return array
      */
     public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
@@ -242,8 +242,8 @@ class Pay
     /**
      * Create Setup for accepting future payments
      *
-     * @param string $customerId
-     * @param array $paymentMethodTypes
+     * @param  string  $customerId
+     * @param  array  $paymentMethodTypes
      * @return array
      */
     public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
