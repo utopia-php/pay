@@ -81,7 +81,7 @@ class Stripe extends Adapter
 
         // Create payment method
         $paymentMethod = $this->execute(self::METHOD_POST, $path, $requestBody);
-        $paymentMethodId = $paymentMethod['$id'];
+        $paymentMethodId = $paymentMethod['id'];
 
         // attach payment method to the customer
         $path .= '/' . $paymentMethodId . '/attach';

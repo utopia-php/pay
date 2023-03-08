@@ -98,7 +98,7 @@ class StripeTest extends TestCase
     {
         $customerId = $data['customerId'];
         $pms = $this->stripe->listPaymentMethods($customerId);
-        $this->assertArray($pms['data']);
+        $this->assertIsArray($pms['data']);
 
         $pm = $pms['data'][0];
         $this->assertNotEmpty($pm['id']);
@@ -159,15 +159,10 @@ class StripeTest extends TestCase
         $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
         
         $this->assertNotEmpty($purchase['id']);
-        $this->assertArray($purchase['charges']['data']);
+        $this->assertEquals(5000, $purchase['amount_received']);
+        $this->assertEquals('payment_intent', $purchase['object']);
+        $this->assertEquals('succeeded', $purchase['status']);
 
-        $charge = $purchase['charges']['data'][0];
-        $this->assertNotEmpty($charge['id']);
-        $this->assertEquals('charge', $charge['object']);
-        $this->assertEquals(5000, $charge['amount_captured']);
-        $this->assertEquals(0, $charge['amount_refunded']);
-        $this->assertTrue($charge['captured']);
-        
         $data['paymentId'] = $purchase['id'];
         return $data;
     }
@@ -182,16 +177,16 @@ class StripeTest extends TestCase
         $this->assertEquals(3000, $purchase['amount']);
     }
 
-    /** @depends testcreatePaymentMethod */
-    public function testdeletePaymentMethod(array $data)
+    /** @depends testCreatePaymentMethod */
+    public function testDeletePaymentMethod(array $data)
     {
         $customerId = $data['customerId'];
-        $deleted = $this->stripe->deletePaymentMethod($customerId, $data['cardId']);
+        $deleted = $this->stripe->deletePaymentMethod($data['paymentMethodId']);
         $this->assertTrue($deleted);
 
         $this->expectException('Exception');
         $this->expectExceptionCode(404);
-        $this->stripe->getCard($customerId, $data['cardId']);
+        $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
     }
 
     /** @depends testUpdateCustomer */
