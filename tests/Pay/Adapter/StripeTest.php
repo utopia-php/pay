@@ -73,7 +73,7 @@ class StripeTest extends TestCase
     public function testCreatePaymentMethod(array $data)
     {
         $customerId = $data['customerId'];
-        $pm = $this->stripe->createPaymentMethod($customerId, 'card',  [
+        $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
             'number' => 4242424242424242,
             'exp_month' => 8,
             'exp_year' => 2030,
@@ -88,8 +88,9 @@ class StripeTest extends TestCase
         $this->assertEquals(2030, $card['exp_year']);
         $this->assertEquals(8, $card['exp_month']);
         $this->assertEquals(4242, $card['last4']);
-        
+
         $data['paymentMethodId'] = $pm['id'];
+
         return $data;
     }
 
@@ -110,7 +111,7 @@ class StripeTest extends TestCase
         $this->assertEquals(2030, $card['exp_year']);
         $this->assertEquals(8, $card['exp_month']);
         $this->assertEquals(4242, $card['last4']);
-        
+
         return $data;
     }
 
@@ -157,13 +158,14 @@ class StripeTest extends TestCase
         $customerId = $data['customerId'];
         $paymentMethodId = $data['paymentMethodId'];
         $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
-        
+
         $this->assertNotEmpty($purchase['id']);
         $this->assertEquals(5000, $purchase['amount_received']);
         $this->assertEquals('payment_intent', $purchase['object']);
         $this->assertEquals('succeeded', $purchase['status']);
 
         $data['paymentId'] = $purchase['id'];
+
         return $data;
     }
 

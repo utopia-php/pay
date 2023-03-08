@@ -39,8 +39,8 @@ class Stripe extends Adapter
             'currency' => $this->currency,
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
-            'off_session' => "true",
-            'confirm' => "true",
+            'off_session' => 'true',
+            'confirm' => 'true',
         ];
 
         $requestBody = array_merge($requestBody, $additionalParams);
@@ -60,7 +60,7 @@ class Stripe extends Adapter
             $requestBody['amount'] = $amount;
         }
 
-        if($reason != null) {
+        if ($reason != null) {
             $requestBody['reason'] = $reason;
         }
 
@@ -76,7 +76,7 @@ class Stripe extends Adapter
 
         $requestBody = [
             'type' => $type,
-            $type => $paymentMethodDetails
+            $type => $paymentMethodDetails,
         ];
 
         // Create payment method
@@ -84,7 +84,8 @@ class Stripe extends Adapter
         $paymentMethodId = $paymentMethod['id'];
 
         // attach payment method to the customer
-        $path .= '/' . $paymentMethodId . '/attach';
+        $path .= '/'.$paymentMethodId.'/attach';
+
         return $this->execute(self::METHOD_POST, $path, ['customer' => $customerId]);
     }
 
@@ -134,10 +135,10 @@ class Stripe extends Adapter
 
     public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
     {
-        $path = '/payment_methods/' . $paymentMethodId;
+        $path = '/payment_methods/'.$paymentMethodId;
 
         $requestBody = [
-            $type => $details
+            $type => $details,
         ];
 
         return $this->execute(self::METHOD_POST, $path, $requestBody);
@@ -150,6 +151,7 @@ class Stripe extends Adapter
     {
         $path = '/payment_methods/'.$paymentMethodId.'/detach';
         $this->execute(self::METHOD_POST, $path);
+
         return true;
     }
 

@@ -91,7 +91,6 @@ abstract class Adapter
 
     abstract public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array;
 
-
     /**
      * List cards
      */
