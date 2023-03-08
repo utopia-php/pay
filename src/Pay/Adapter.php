@@ -80,32 +80,32 @@ abstract class Adapter
     abstract public function refund(string $paymentId, int $amount = null, string $reason = null): array;
 
     /**
-     * Add a credit card for a customer
+     * Add a payment method
      */
     abstract public function createPaymentMethod(string $customerId, string $type, array $details): array;
 
     /**
-     * Update credit card
+     * Update payment method billing details
      */
     abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array;
 
+    /**
+     * Update payment method
+     */
     abstract public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array;
 
     /**
-     * List cards
+     * List payment methods
      */
     abstract public function listPaymentMethods(string $customerId): array;
 
     /**
-     * Remove a credit card for a customer
+     * Remove payment method
      */
     abstract public function deletePaymentMethod(string $customerId): bool;
 
     /**
      * Add new customer in the gateway database
-     * returns the id of the newly created customer
-     *
-     * @throws Exception
      */
     abstract public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array;
 
@@ -133,10 +133,17 @@ abstract class Adapter
     abstract public function deleteCustomer(string $customerId): bool;
 
     /**
-     * List Customer Payment Methods
+     * List Payment Methods
      */
     abstract public function getPaymentMethod(string $customerId, string $paymentMethodId): array;
 
+    /**
+     * Create setup for accepting future payments
+     *
+     * @param string $customerId
+     * @param array $paymentMethodTypes
+     * @return array
+     */
     abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = []): array;
 
     /**

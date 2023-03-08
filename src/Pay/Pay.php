@@ -60,7 +60,7 @@ class Pay
     }
 
     /**
-     * Get Curreycy
+     * Get Currency
      * Get currently set currency for payments
      *
      * @return string
@@ -77,7 +77,7 @@ class Pay
      *
      * @param  int  $amount
      * @param  string  $customerId
-     * @param  string|null  $cardId
+     * @param  string|null  $paymentMethodId
      * @param  array  $additionalParams
      * @return array
      */
@@ -99,38 +99,39 @@ class Pay
     }
 
     /**
-     * Delete Card
+     * Delete Payment Method
      *
      * @param  string  $customerId
-     * @param  string  $cardId
+     * @param  string  $paymentMethodId
      * @return bool
      */
-    public function deletePaymentMethod(string $customerId, string $cardId): bool
+    public function deletePaymentMethod(string $customerId, string $paymentMethodId): bool
     {
-        return $this->adapter->deletePaymentMethod($customerId, $cardId);
+        return $this->adapter->deletePaymentMethod($customerId, $paymentMethodId);
     }
 
     /**
-     * Create Card
+     * Create Payment Method
      *
      * @param  string  $customerId
-     * @param  string  $cardId
+     * @param  string  $type
+     * @param array $details
      * @return array
      */
-    public function createPaymentMethod(string $customerId, string $type, array $paymentMethodDetails): array
+    public function createPaymentMethod(string $customerId, string $type, array $details): array
     {
-        return $this->adapter->createPaymentMethod($customerId, $type, $paymentMethodDetails);
+        return $this->adapter->createPaymentMethod($customerId, $type, $details);
     }
 
     /**
-     * Update Card
+     * Update Payment Method Billing Details
      *
-     * @param  string  $customerId
-     * @param  string  $cardId
-     * @param  string  $name
-     * @param  int  $expMonth
-     * @param  int  $expYear
-     * @param  array  $billingDetails
+     * @param  string $paymentMethodId
+     * @param  string $type
+     * @param  string $name
+     * @param  string $email
+     * @param  string $phone
+     * @param  array  $address
      * @return array
      */
     public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, string $name = null, string $email = null, string $phone = null, array $address = null): array
@@ -138,13 +139,21 @@ class Pay
         return $this->adapter->updatePaymentMethodBillingDetails($paymentMethodId, $name, $email, $phone, $address);
     }
 
+    /**
+     * Update Payment Method
+     *
+     * @param string $paymentMethodId
+     * @param string $type
+     * @param array $details
+     * @return array
+     */
     public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
     {
         return $this->adapter->updatePaymentMethod($paymentMethodId, $type, $details);
     }
 
     /**
-     * Get Card
+     * Get Payment Method
      *
      * @param  string  $customerId
      * @param  string  $paymentMethodId
@@ -156,7 +165,7 @@ class Pay
     }
 
     /**
-     * List Cards
+     * List Payment Methods
      *
      * @param  string  $customerId
      * @return array
@@ -230,6 +239,13 @@ class Pay
         return $this->adapter->deleteCustomer($customerId);
     }
 
+    /**
+     * Create Setup for accepting future payments
+     *
+     * @param string $customerId
+     * @param array $paymentMethodTypes
+     * @return array
+     */
     public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
     {
         return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes);
