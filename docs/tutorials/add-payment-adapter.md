@@ -190,7 +190,7 @@ Please mention in your documentation what resources or API docs you used to impl
 
 After you finished adding your new adapter, you should write a proper test for it. To do that, you create `tests/Pay/Adapter/[PROVIDER_NAME]Tests.php` and write tests for the provider. Look at the test written for the existing adapters for examples.
 
-To run the test you can simply run
+To run the test, you can simply run
 
 ```bash
 composer test
