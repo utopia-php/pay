@@ -202,4 +202,4 @@ First of all, commit the changes with the message `Add XXX Adapter` (where `XXX`
 
 ## 🤕 Stuck ?
 
-If you need any help with the contribution, feel free to head over to [Appwrite discord channel](https://appwrite.io/discord) and we'll be happy to help you out.
+If you need any help with the contribution, feel free to head over to the [Appwrite discord channel](https://appwrite.io/discord), and we'll be happy to help you out.
