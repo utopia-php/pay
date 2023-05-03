@@ -39,7 +39,7 @@ Create a new file `XXX.php` where `XXX` is the name of the adapter in [`PascalCa
 src/Pay/Adapter/XXX.php
 ```
 
-Inside this file, create a new class that extends adapter abstract class `Adapter`. Note that the class name should start with a capital letter, as PHP FIG standards suggest.
+Inside this file, create a new class that extends the adapter abstract `Adapter` class. Note that the class name should start with a capital letter, as PHP FIG standards suggest.
 
 Once a new class is created, you can start to implement your new adapter's flow. We have prepared a starting point for adapter class below, but you should also consider looking at other adapter implementations and try to follow the same standards.
 
