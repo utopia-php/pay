@@ -26,7 +26,7 @@ $ git clone [COPIED_URL]
 
 > To clone a repository, you will need a basic understanding of CLI and git-cli binaries installed. If you are a beginner, we recommend you to use `Github Desktop`. It is a really clean and simple visual Git client.
 
-Finally, you will need to create a `feat-ZZZ-adapter` branch based on the `main` branch and switch to it. The `ZZZ` should represent the adapter name.
+Finally, you will need to create a `feat-ZZZ-adapter` branch based on the `main` branch and switch to it. Replace `ZZZ` with the adapter name.
 
 ## 2. Implement new adapter
 
