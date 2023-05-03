@@ -41,7 +41,7 @@ src/Pay/Adapter/XXX.php
 
 Inside this file, create a new class that extends the adapter abstract `Adapter` class. Note that the class name should start with a capital letter, as PHP FIG standards suggest.
 
-Once a new class is created, you can start to implement your new adapter's flow. We have prepared a starting point for adapter class below, but you should also consider looking at other adapter implementations and try to follow the same standards.
+Once a new class is created, you can implement your new adapter's flow. We have prepared a starting point for the adapter class below, but you should also consider looking at other adapter implementations and try to follow the same standards.
 
 ```php
 <?php
@@ -52,7 +52,6 @@ use Utopia\Pay\Adapter;
 
 class [PROVIDER_NAME] extends Adapter
 {
-
 
     /**
      * Get name of the payment gateway
@@ -177,18 +176,17 @@ class [PROVIDER_NAME] extends Adapter
 
 ```
 
-> If you copy this template, make sure to replace all placeholders wrapped like `[THIS]` and to implement everything marked as `TODO:`.
+> If you copy this template, make sure to replace all `[THIS]` placeholders and to implement everything marked as `TODO:`.
 
-When implementing new adapter, please make sure to follow these rules:
+When implementing a new adapter, please make sure to follow these rules:
 
-- `getName()` needs to use same name as file name with first letter lowercased. For example, in `Stripe.php`, we use `stripe`
-
+- `getName()` needs to use the same name as the file name with the first letter lowercased. For example, in `Stripe.php`, we use `stripe`.
 
 Please mention in your documentation what resources or API docs you used to implement the provider's API.
 
 ## 2. Test your adapter
 
-After you finished adding your new adapter, you should write a proper test for it. To do that, you create `tests/Pay/Adapter/[PROVIDER_NAME]Tests.php` and write tests for the provider. Look at the test written for the existing adapters for examples.
+After you add your new adapter, you should write proper tests. To do that, create `tests/Pay/Adapter/[PROVIDER_NAME]Tests.php` and write tests for the provider. You can look at the tests written for the existing adapters for examples.
 
 To run the test, you can simply run
 
