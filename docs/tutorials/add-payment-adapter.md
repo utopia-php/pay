@@ -6,7 +6,7 @@ This document is part of the Utopia contributors' guide. Before you continue rea
 
 Payment adapters help developers process payments using payment providers. By adding a new payment provider, you will be able to use it to process payments.
 
-Utopia is and will always be tech-agnostic, which means, we are creating a tools based on technologies you already use and love, instead of creating a new tool-set for you. With that in mind, we accept all contributions with adapters for any payment providers.
+Utopia is and will always be tech-agnostic, meaning we are creating tools based on technologies you already use and love instead of creating a new toolset for you. With that in mind, we accept all contributions with adapters for any payment provider.
 
 ## 1. Prerequisites
 
