@@ -18,7 +18,7 @@ It's really easy to contribute to an open source project, but when using GitHub,
 
 Before making any changes, you will need to fork Utopia's repository to keep branches on the official repo clean. To do that, visit the [utopia/pay Github repository](https://github.com/utopia-php/pay) and click on the fork button.
 
-This will redirect you from `github.com/utopia-php/pay` to `github.com/YOUR_USERNAME/pay`, meaning all changes you do are only done inside your repository. Once you are there, click the highlighted `Code` button, copy the URL and clone the repository to your computer using `git clone` command:
+This will redirect you from `github.com/utopia-php/pay` to `github.com/YOUR_USERNAME/pay`, meaning all changes you do will only be done inside your repository. Once you are there, click the highlighted `Code` button, copy the URL, and clone the repository to your computer using `git clone` command:
 
 ```shell
 $ git clone [COPIED_URL]
