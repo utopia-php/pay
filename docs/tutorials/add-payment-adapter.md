@@ -4,7 +4,7 @@ This document is part of the Utopia contributors' guide. Before you continue rea
 
 ## Getting started
 
-Payment adapters help developers to process their payment using payment providers. With each payment provider you will be able to use a new payment provider to process payment.
+Payment adapters help developers process payments using payment providers. By adding a new payment provider, you will be able to use it to process payments.
 
 Utopia is and will always be tech-agnostic, which means, we are creating a tools based on technologies you already use and love, instead of creating a new tool-set for you. With that in mind, we accept all contributions with adapters for any payment providers.
 
