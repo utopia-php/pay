@@ -14,7 +14,7 @@ It's really easy to contribute to an open source project, but when using GitHub,
 
 > If you are experienced with GitHub or have made a pull request before, you can skip to [Implement new adapter](#2-implement-new-adapter).
 
-###  1.1 Fork the utopia-php/pay repository
+### 1.1 Fork the utopia-php/pay repository
 
 Before making any changes, you will need to fork Utopia's repository to keep branches on the official repo clean. To do that, visit the [utopia/pay Github repository](https://github.com/utopia-php/pay) and click on the fork button.
 
