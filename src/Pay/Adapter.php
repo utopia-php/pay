@@ -224,10 +224,10 @@ abstract class Adapter
 
         if ($responseStatus >= 400) {
             if (is_array($responseBody)) {
-                throw new \Exception('Error: '.json_encode($responseBody), $responseStatus);
+                throw new \Exception(json_encode($responseBody), $responseStatus);
             }
 
-            throw new \Exception('Error: '.$responseBody, $responseStatus);
+            throw new \Exception($responseBody, $responseStatus);
         }
 
         curl_close($ch);
