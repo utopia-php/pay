@@ -147,6 +147,17 @@ abstract class Adapter
     abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = []): array;
 
     /**
+     * Calculate tax based on address
+     *
+     * @param string $invoiceId
+     * @param float $amount
+     * @param string $currency
+     * @param array $address
+     * @return array
+     */
+    abstract public function taxCalculations(string $invoiceId, float $amount, string $currency, array $address): array;
+
+    /**
      * Call
      * Make a request
      *

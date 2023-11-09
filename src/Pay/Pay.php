@@ -239,6 +239,11 @@ class Pay
         return $this->adapter->deleteCustomer($customerId);
     }
 
+    public function taxCalculations(string $invoiceId, float $amount, string $currency, array $address): array
+    {
+        return $this->adapter->taxCalculations($invoiceId, $amount, $currency, $address);
+    }
+
     /**
      * Create Setup for accepting future payments
      *

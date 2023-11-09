@@ -191,6 +191,18 @@ class StripeTest extends TestCase
         $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
     }
 
+    public function testTaxCalculations()
+    {
+        // $res = $this->stripe->taxCalculations('test1', 2000, 'USD', [
+        //     'line1' => '354 Oyster Point Blvd',
+        //     'line2' => '',
+        //     'postal_code' => '94080',
+        //     'state' => 'CA',
+        //     'country' => 'US',
+        // ], );
+        // var_dump($res);
+    }
+
     /** @depends testUpdateCustomer */
     public function testDeleteCustomer(array $data)
     {
