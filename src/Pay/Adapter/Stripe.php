@@ -244,7 +244,7 @@ class Stripe extends Adapter
 
     public function taxCalculations(string $invoiceId, float $amount, string $currency, array $address): array
     {
-        $path = 'tax/calculations';
+        $path = '/tax/calculations';
 
         $lineItems = [
             0 => [
@@ -253,7 +253,8 @@ class Stripe extends Adapter
             ]
         ];
         $customerDetails = [
-            'address' => $address
+            'address' => $address,
+            'address_source' => 'shipping',
         ];
         $requestBody = [
             'currency' => $currency,
