@@ -242,6 +242,30 @@ class Stripe extends Adapter
         return $result;
     }
 
+    public function taxCalculations(string $invoiceId, float $amount, string $currency, array $address): array
+    {
+        $path = 'tax/calculations';
+
+        $lineItems = [
+            0 => [
+                'amount' => $amount,
+                'reference' => $invoiceId,
+            ]
+        ];
+        $customerDetails = [
+            'address' => $address
+        ];
+        $requestBody = [
+            'currency' => $currency,
+            'customer_details' => $customerDetails,
+            'line_items' => $lineItems
+        ];
+
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return $result;
+    }
+
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
         $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);
