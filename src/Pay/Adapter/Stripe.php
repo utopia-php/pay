@@ -254,7 +254,7 @@ class Stripe extends Adapter
         ];
         $customerDetails = [
             'address' => $address,
-            'address_source' => 'shipping',
+            'address_source' => 'billing',
         ];
         $requestBody = [
             'currency' => $currency,
