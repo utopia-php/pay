@@ -234,10 +234,10 @@ class Stripe extends Adapter
         $path = '/setup_intents';
         $requestBody = [
             'customer' => $customerId,
-            'payment_method_types' => $paymentMethodTypes
+            'payment_method_types' => $paymentMethodTypes,
         ];
 
-        if($paymentMethodConfiguration != null) {
+        if ($paymentMethodConfiguration != null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
         }
 
