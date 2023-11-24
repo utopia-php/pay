@@ -238,7 +238,7 @@ class Stripe extends Adapter
         ];
 
         if($paymentMethodConfiguration != null) {
-            $requestBody['payment_method_configuration'] => $paymentMethodConfiguration;
+            $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
         }
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
