@@ -229,13 +229,17 @@ class Stripe extends Adapter
         return $result['deleted'] ?? false;
     }
 
-    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card']): array
+    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], ?string $paymentMethodConfiguration = null): array
     {
         $path = '/setup_intents';
         $requestBody = [
             'customer' => $customerId,
             'payment_method_types' => $paymentMethodTypes,
         ];
+
+        if ($paymentMethodConfiguration != null) {
+            $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
+        }
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
 
