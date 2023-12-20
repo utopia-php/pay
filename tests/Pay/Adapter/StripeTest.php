@@ -188,7 +188,7 @@ class StripeTest extends TestCase
 
         $this->expectException('Exception');
         $this->expectExceptionCode(404);
-        $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId'])gi;
+        $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
     }
 
     /** @depends testUpdateCustomer */
