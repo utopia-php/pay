@@ -101,13 +101,12 @@ class Pay
     /**
      * Delete Payment Method
      *
-     * @param  string  $customerId
      * @param  string  $paymentMethodId
      * @return bool
      */
-    public function deletePaymentMethod(string $customerId, string $paymentMethodId): bool
+    public function deletePaymentMethod(string $paymentMethodId): bool
     {
-        return $this->adapter->deletePaymentMethod($customerId, $paymentMethodId);
+        return $this->adapter->deletePaymentMethod($paymentMethodId);
     }
 
     /**

@@ -102,7 +102,7 @@ abstract class Adapter
     /**
      * Remove payment method
      */
-    abstract public function deletePaymentMethod(string $customerId): bool;
+    abstract public function deletePaymentMethod(string $paymentMethodId): bool;
 
     /**
      * Add new customer in the gateway database
