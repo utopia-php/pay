@@ -142,9 +142,11 @@ abstract class Adapter
      *
      * @param  string  $customerId
      * @param  array  $paymentMethodTypes
+     * @param  array  $paymentMethodOptions
+     * @param  ?string  $paymentMethodConfiguration
      * @return array
      */
-    abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = [], ?string $paymentMethodConfiguration = null): array;
+    abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = [], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
 
     /**
      * Call
