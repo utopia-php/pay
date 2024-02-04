@@ -135,6 +135,29 @@ class StripeTest extends TestCase
     }
 
     /** @depends testCreatePaymentMethod */
+    public function testCreateFuturePayment(array $data)
+    {
+        $customerId = $data['customerId'];
+        $setupIntent = $this->stripe->createFuturePayment($customerId, paymentMethodOptions: [
+            'card' => [
+                'mandate_options' => [
+                    'reference' => \uniqid(),
+                    'description' => 'Utopia pay test',
+                    'amount' => 15000,
+                    'currency' => 'USD',
+                    'start_date' => time(),
+                    'amount_type' => 'maximum',
+                    'interval' => 'day',
+                    'interval_count' => 30,
+                    'supported_types' => ['india'],
+                ],
+            ],
+        ]);
+        $this->assertNotEmpty($setupIntent);
+        $this->assertNotEmpty($setupIntent['client_secret']);
+    }
+
+    /** @depends testCreatePaymentMethod */
     public function testUpdatePaymentMethod(array $data)
     {
         $paymentMethodId = $data['paymentMethodId'];
