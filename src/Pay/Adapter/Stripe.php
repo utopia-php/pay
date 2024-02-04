@@ -270,6 +270,26 @@ class Stripe extends Adapter
         return $result;
     }
 
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    {
+        $path = '/setup_intents/'.$id;
+        $requestBody = [];
+        if ($customerId != null) {
+            $requestBody['customer'] = $customerId;
+        }
+        if ($paymentMethod != null) {
+            $requestBody['payment_method'] = $paymentMethod;
+        }
+        if ($paymentMethodConfiguration != null) {
+            $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
+        }
+        if (! empty($paymentMethodOptions)) {
+            $requestBody['payment_method_options'] = $paymentMethodOptions;
+        }
+
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
+    }
+
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
         $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);

@@ -218,11 +218,11 @@ class Pay
      * @param  string  $customerId
      * @param  string  $name
      * @param  string  $email
-     * @param  array  $billingDetails
      * @param  string  $paymentMethod
+     * @param  Address  $address
      * @return array
      */
-    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, ?string $paymentMethod = null): array
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
@@ -250,6 +250,11 @@ class Pay
     public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
         return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
+    }
+
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    {
+        return $this->adapter->updateFuturePayment($id, $customerId, $paymentMethod, $paymentMethodOptions, $paymentMethodConfiguration);
     }
 
     /**

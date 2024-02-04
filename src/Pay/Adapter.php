@@ -158,6 +158,18 @@ abstract class Adapter
     abstract public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array;
 
     /**
+     * Update future payment setup
+     *
+     * @param  string  $id,
+     * @param  string  $customerId
+     * @param  string|null  $paymentMethod
+     * @param  array  $paymentMethodOptions
+     * @param  string|null  $paymentMethodConfiguration
+     * @return array
+     */
+    abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
+
+    /**
      * Call
      * Make a request
      *

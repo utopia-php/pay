@@ -161,6 +161,37 @@ class StripeTest extends TestCase
     }
 
     /** @depends testCreateFuturePayment */
+    public function testUpdateFuturePayment(array $data)
+    {
+        $customerId = $data['customerId'];
+        $setupIntentId = $data['setupIntentId'];
+
+        $reference = uniqid();
+        $setupIntent = $this->stripe->updateFuturePayment($setupIntentId, $customerId, paymentMethodOptions: [
+            'card' => [
+                'mandate_options' => [
+                    'reference' => $reference,
+                    'description' => 'Utopia monthly subscription',
+                    'amount' => 1500,
+                    'currency' => 'USD',
+                    'start_date' => time(),
+                    'amount_type' => 'maximum',
+                    'interval' => 'day',
+                    'interval_count' => 5,
+                    'supported_types' => ['india'],
+                ],
+            ],
+        ]);
+
+        $this->assertNotEmpty($setupIntent);
+        $this->assertEquals($setupIntentId, $setupIntent['id']);
+        $this->assertIsArray($setupIntent['payment_method_options']);
+        $this->assertArrayHasKey('card', $setupIntent['payment_method_options']);
+        $this->assertArrayHasKey('mandate_options', $setupIntent['payment_method_options']['card']);
+        $this->assertEquals($reference, $setupIntent['payment_method_options']['card']['mandate_options']['reference']);
+    }
+
+    /** @depends testCreateFuturePayment */
     public function testListFuturePayment(array $data)
     {
         $customerId = $data['customerId'];
