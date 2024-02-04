@@ -244,11 +244,23 @@ class Pay
      * @param  string  $customerId
      * @param  array  $paymentMethodTypes
      * @param  array  $paymentMethodOptions
-     * @param  ?string  $paymentMethodConfiguration
+     * @param  string  $paymentMethodConfiguration
      * @return array
      */
     public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
         return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
+    }
+
+    /**
+     * List future payment
+     *
+     * @param  string|null  $customerId
+     * @param  string|null  $paymentMethodId
+     * @return array
+     */
+    public function listFuturePayment(?string $customerId, ?string $paymentMethodId = null): array
+    {
+        return $this->adapter->listFuturePayments($customerId, $paymentMethodId);
     }
 }

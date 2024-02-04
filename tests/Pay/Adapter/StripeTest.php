@@ -155,6 +155,21 @@ class StripeTest extends TestCase
         ]);
         $this->assertNotEmpty($setupIntent);
         $this->assertNotEmpty($setupIntent['client_secret']);
+        $data['setupIntentId'] = $setupIntent['id'];
+
+        return $data;
+    }
+
+    /** @depends testCreateFuturePayment */
+    public function testListFuturePayment(array $data)
+    {
+        $customerId = $data['customerId'];
+        $setupIntentId = $data['setupIntentId'];
+
+        $setupIntents = $this->stripe->listFuturePayments($customerId);
+        $this->assertNotEmpty($setupIntents['data'] ?? []);
+        $this->assertCount(1, $setupIntents['data'] ?? []);
+        $this->assertEquals($setupIntentId, $setupIntents['data'][0]['id']);
     }
 
     /** @depends testCreatePaymentMethod */

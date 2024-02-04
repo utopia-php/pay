@@ -254,6 +254,22 @@ class Stripe extends Adapter
         return $result;
     }
 
+    public function listFuturePayments(?string $customerId = null, ?string $pyamentMethodId = null): array
+    {
+        $path = '/setup_intents';
+        $requestBody = [];
+        if ($customerId != null) {
+            $requestBody['customer'] = $customerId;
+        }
+
+        if ($pyamentMethodId != null) {
+            $requestBody['payment_method'] = $pyamentMethodId;
+        }
+        $result = $this->execute(self::METHOD_GET, $path, $requestBody);
+
+        return $result;
+    }
+
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
         $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);
