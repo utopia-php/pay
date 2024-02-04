@@ -243,6 +243,9 @@ class Stripe extends Adapter
 
         if (! empty($paymentMethodOptions)) {
             $requestBody['payment_method_options'] = $paymentMethodOptions;
+            $requestBody['automatic_payment_methods'] = [
+                'enabled' => true
+            ];
         }
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
