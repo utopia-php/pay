@@ -249,6 +249,6 @@ class Pay
      */
     public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
-        return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes, $paymentMethodConfiguration);
+        return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
     }
 }
