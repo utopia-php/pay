@@ -242,14 +242,15 @@ class Pay
      * Create Setup for accepting future payments
      *
      * @param  string  $customerId
+     * @param  string|null  $paymentMethod
      * @param  array  $paymentMethodTypes
      * @param  array  $paymentMethodOptions
      * @param  string  $paymentMethodConfiguration
      * @return array
      */
-    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
-        return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
+        return $this->adapter->createFuturePayment($customerId, $paymentMethod, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
     }
 
     public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array

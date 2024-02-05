@@ -229,7 +229,7 @@ class Stripe extends Adapter
         return $result['deleted'] ?? false;
     }
 
-    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
         $path = '/setup_intents';
         $requestBody = [
