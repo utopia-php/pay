@@ -237,6 +237,10 @@ class Stripe extends Adapter
             'payment_method_types' => $paymentMethodTypes,
         ];
 
+        if ($paymentMethod != null) {
+            $requestBody['payment_method'] = $paymentMethod;
+        }
+
         if ($paymentMethodConfiguration != null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
             $requestBody['automatic_payment_methods'] = [
