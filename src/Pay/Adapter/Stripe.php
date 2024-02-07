@@ -229,7 +229,7 @@ class Stripe extends Adapter
         return $result['deleted'] ?? false;
     }
 
-    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], ?string $paymentMethodConfiguration = null): array
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
         $path = '/setup_intents';
         $requestBody = [
@@ -237,13 +237,61 @@ class Stripe extends Adapter
             'payment_method_types' => $paymentMethodTypes,
         ];
 
+        if ($paymentMethod != null) {
+            $requestBody['payment_method'] = $paymentMethod;
+        }
+
         if ($paymentMethodConfiguration != null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
+            $requestBody['automatic_payment_methods'] = [
+                'enabled' => 'true',
+            ];
+            unset($requestBody['payment_method_types']);
+        }
+
+        if (! empty($paymentMethodOptions)) {
+            $requestBody['payment_method_options'] = $paymentMethodOptions;
         }
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
 
         return $result;
+    }
+
+    public function listFuturePayments(?string $customerId = null, ?string $pyamentMethodId = null): array
+    {
+        $path = '/setup_intents';
+        $requestBody = [];
+        if ($customerId != null) {
+            $requestBody['customer'] = $customerId;
+        }
+
+        if ($pyamentMethodId != null) {
+            $requestBody['payment_method'] = $pyamentMethodId;
+        }
+        $result = $this->execute(self::METHOD_GET, $path, $requestBody);
+
+        return $result;
+    }
+
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    {
+        $path = '/setup_intents/'.$id;
+        $requestBody = [];
+        if ($customerId != null) {
+            $requestBody['customer'] = $customerId;
+        }
+        if ($paymentMethod != null) {
+            $requestBody['payment_method'] = $paymentMethod;
+        }
+        if ($paymentMethodConfiguration != null) {
+            $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
+        }
+        if (! empty($paymentMethodOptions)) {
+            $requestBody['payment_method_options'] = $paymentMethodOptions;
+        }
+
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array

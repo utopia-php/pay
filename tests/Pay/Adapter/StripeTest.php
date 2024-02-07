@@ -135,6 +135,75 @@ class StripeTest extends TestCase
     }
 
     /** @depends testCreatePaymentMethod */
+    public function testCreateFuturePayment(array $data)
+    {
+        $customerId = $data['customerId'];
+        $setupIntent = $this->stripe->createFuturePayment($customerId, paymentMethodOptions: [
+            'card' => [
+                'mandate_options' => [
+                    'reference' => \uniqid(),
+                    'description' => 'Utopia pay test',
+                    'amount' => 15000,
+                    'currency' => 'USD',
+                    'start_date' => time(),
+                    'amount_type' => 'maximum',
+                    'interval' => 'day',
+                    'interval_count' => 30,
+                    'supported_types' => ['india'],
+                ],
+            ],
+        ]);
+        $this->assertNotEmpty($setupIntent);
+        $this->assertNotEmpty($setupIntent['client_secret']);
+        $data['setupIntentId'] = $setupIntent['id'];
+
+        return $data;
+    }
+
+    /** @depends testCreateFuturePayment */
+    public function testUpdateFuturePayment(array $data)
+    {
+        $customerId = $data['customerId'];
+        $setupIntentId = $data['setupIntentId'];
+
+        $reference = uniqid();
+        $setupIntent = $this->stripe->updateFuturePayment($setupIntentId, $customerId, paymentMethodOptions: [
+            'card' => [
+                'mandate_options' => [
+                    'reference' => $reference,
+                    'description' => 'Utopia monthly subscription',
+                    'amount' => 1500,
+                    'currency' => 'USD',
+                    'start_date' => time(),
+                    'amount_type' => 'maximum',
+                    'interval' => 'day',
+                    'interval_count' => 5,
+                    'supported_types' => ['india'],
+                ],
+            ],
+        ]);
+
+        $this->assertNotEmpty($setupIntent);
+        $this->assertEquals($setupIntentId, $setupIntent['id']);
+        $this->assertIsArray($setupIntent['payment_method_options']);
+        $this->assertArrayHasKey('card', $setupIntent['payment_method_options']);
+        $this->assertArrayHasKey('mandate_options', $setupIntent['payment_method_options']['card']);
+        $this->assertEquals($reference, $setupIntent['payment_method_options']['card']['mandate_options']['reference']);
+    }
+
+    /** @depends testCreateFuturePayment */
+    public function testListFuturePayment(array $data)
+    {
+        $customerId = $data['customerId'];
+        $setupIntentId = $data['setupIntentId'];
+
+        $setupIntents = $this->stripe->listFuturePayments($customerId);
+        $this->assertNotEmpty($setupIntents['data'] ?? []);
+        $this->assertCount(1, $setupIntents['data'] ?? []);
+        $this->assertEquals($setupIntentId, $setupIntents['data'][0]['id']);
+    }
+
+    /** @depends testCreatePaymentMethod */
     public function testUpdatePaymentMethod(array $data)
     {
         $paymentMethodId = $data['paymentMethodId'];

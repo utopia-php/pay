@@ -141,10 +141,34 @@ abstract class Adapter
      * Create setup for accepting future payments
      *
      * @param  string  $customerId
+     * @param  string|null  $paymentMethod
      * @param  array  $paymentMethodTypes
+     * @param  array  $paymentMethodOptions
+     * @param  ?string  $paymentMethodConfiguration
      * @return array
      */
-    abstract public function createFuturePayment(string $customerId, array $paymentMethodTypes = [], ?string $paymentMethodConfiguration = null): array;
+    abstract public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = [], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
+
+    /**
+     * List future payments associated with the provided customer or payment method
+     *
+     * @param  string|null  $customerId
+     * @param  string|null  $paymentMethodId
+     * @return array
+     */
+    abstract public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array;
+
+    /**
+     * Update future payment setup
+     *
+     * @param  string  $id,
+     * @param  string  $customerId
+     * @param  string|null  $paymentMethod
+     * @param  array  $paymentMethodOptions
+     * @param  string|null  $paymentMethodConfiguration
+     * @return array
+     */
+    abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
 
     /**
      * Call

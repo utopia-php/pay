@@ -218,11 +218,11 @@ class Pay
      * @param  string  $customerId
      * @param  string  $name
      * @param  string  $email
-     * @param  array  $billingDetails
      * @param  string  $paymentMethod
+     * @param  Address  $address
      * @return array
      */
-    public function updateCustomer(string $customerId, string $name, string $email, string $paymentMethod, array $address = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, ?string $paymentMethod = null): array
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
@@ -242,12 +242,31 @@ class Pay
      * Create Setup for accepting future payments
      *
      * @param  string  $customerId
+     * @param  string|null  $paymentMethod
      * @param  array  $paymentMethodTypes
-     * @param  ?string  $paymentMethodConfiguration
+     * @param  array  $paymentMethodOptions
+     * @param  string  $paymentMethodConfiguration
      * @return array
      */
-    public function createFuturePayment(string $customerId, array $paymentMethodTypes = ['card'], ?string $paymentMethodConfiguration = null): array
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
-        return $this->adapter->createFuturePayment($customerId, $paymentMethodTypes);
+        return $this->adapter->createFuturePayment($customerId, $paymentMethod, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
+    }
+
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    {
+        return $this->adapter->updateFuturePayment($id, $customerId, $paymentMethod, $paymentMethodOptions, $paymentMethodConfiguration);
+    }
+
+    /**
+     * List future payment
+     *
+     * @param  string|null  $customerId
+     * @param  string|null  $paymentMethodId
+     * @return array
+     */
+    public function listFuturePayment(?string $customerId, ?string $paymentMethodId = null): array
+    {
+        return $this->adapter->listFuturePayments($customerId, $paymentMethodId);
     }
 }
