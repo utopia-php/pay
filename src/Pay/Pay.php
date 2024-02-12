@@ -269,4 +269,15 @@ class Pay
     {
         return $this->adapter->listFuturePayments($customerId, $paymentMethodId);
     }
+
+    /**
+     * Get mandate
+     * 
+     * @param string $id
+     * @return array
+     */
+    public function getMandate(string $id): array
+    {
+        return $this->adapter->getMandate($id);
+    }
 }

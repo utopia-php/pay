@@ -171,6 +171,13 @@ abstract class Adapter
     abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
 
     /**
+     * Get mandate
+     * 
+     * @param string $id
+     * @return array
+     */
+    abstract public function getMandate(string $id): array;
+    /**
      * Call
      * Make a request
      *
