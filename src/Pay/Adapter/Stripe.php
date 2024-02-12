@@ -296,7 +296,8 @@ class Stripe extends Adapter
 
     public function getMandate(string $id): array
     {
-        $path = '/mandates/' . $id;
+        $path = '/mandates/'.$id;
+
         return $this->execute(self::METHOD_GET, $path);
     }
 

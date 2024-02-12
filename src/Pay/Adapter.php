@@ -172,11 +172,12 @@ abstract class Adapter
 
     /**
      * Get mandate
-     * 
-     * @param string $id
+     *
+     * @param  string  $id
      * @return array
      */
     abstract public function getMandate(string $id): array;
+
     /**
      * Call
      * Make a request

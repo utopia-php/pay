@@ -272,8 +272,8 @@ class Pay
 
     /**
      * Get mandate
-     * 
-     * @param string $id
+     *
+     * @param  string  $id
      * @return array
      */
     public function getMandate(string $id): array
