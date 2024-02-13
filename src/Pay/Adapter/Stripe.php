@@ -258,6 +258,13 @@ class Stripe extends Adapter
         return $result;
     }
 
+    public function getFuturePayment(string $id): array
+    {
+        $path = '/setup_intents/'.$id;
+
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
     public function listFuturePayments(?string $customerId = null, ?string $pyamentMethodId = null): array
     {
         $path = '/setup_intents';
@@ -271,7 +278,7 @@ class Stripe extends Adapter
         }
         $result = $this->execute(self::METHOD_GET, $path, $requestBody);
 
-        return $result;
+        return $result['data'];
     }
 
     public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
@@ -292,6 +299,13 @@ class Stripe extends Adapter
         }
 
         return $this->execute(self::METHOD_POST, $path, $requestBody);
+    }
+
+    public function getMandate(string $id): array
+    {
+        $path = '/mandates/'.$id;
+
+        return $this->execute(self::METHOD_GET, $path);
     }
 
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
