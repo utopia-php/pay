@@ -258,6 +258,13 @@ class Stripe extends Adapter
         return $result;
     }
 
+    public function getFuturePayment(string $id): array
+    {
+        $path = '/setup_intents/'.$id;
+
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
     public function listFuturePayments(?string $customerId = null, ?string $pyamentMethodId = null): array
     {
         $path = '/setup_intents';

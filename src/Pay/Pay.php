@@ -253,6 +253,27 @@ class Pay
         return $this->adapter->createFuturePayment($customerId, $paymentMethod, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
     }
 
+    /**
+     * Get future payment
+     *
+     * @param  string  $id
+     * @return array
+     */
+    public function getFuturePayment(string $id): array
+    {
+        return $this->adapter->getFuturePayment($id);
+    }
+
+    /**
+     * Update Future payment
+     *
+     * @param  string  $id
+     * @param  string|null  $customerId
+     * @param  string|null  $paymentMethod
+     * @param  array  $paymentMethodOptions
+     * @param  string|null  $paymentMethodConfiguration
+     * @return array
+     */
     public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
         return $this->adapter->updateFuturePayment($id, $customerId, $paymentMethod, $paymentMethodOptions, $paymentMethodConfiguration);
