@@ -277,6 +277,7 @@ class Stripe extends Adapter
             $requestBody['payment_method'] = $pyamentMethodId;
         }
         $result = $this->execute(self::METHOD_GET, $path, $requestBody);
+
         return $result['data'];
     }
 
