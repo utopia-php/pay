@@ -277,8 +277,7 @@ class Stripe extends Adapter
             $requestBody['payment_method'] = $pyamentMethodId;
         }
         $result = $this->execute(self::METHOD_GET, $path, $requestBody);
-
-        return $result;
+        return $result['data'];
     }
 
     public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
