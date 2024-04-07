@@ -307,7 +307,8 @@ class StripeTest extends TestCase
 
     /**
      * @depends testCreatePaymentMethod
-     * @param array<mixed> $data
+     *
+     * @param  array<mixed>  $data
      */
     public function testDeletePaymentMethod(array $data): void
     {
