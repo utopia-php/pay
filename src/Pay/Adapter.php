@@ -74,11 +74,11 @@ abstract class Adapter
      *
      * @param  int  $amount
      * @param  string  $customerId
-     * @param  string  $paymentMethodId
+     * @param  string|null  $paymentMethodId
      * @param  array<mixed>  $additionalParams
      * @return array<mixed>
      */
-    abstract public function purchase(int $amount, string $customerId, string $paymentMethodId, array $additionalParams = []): array;
+    abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
 
     /**
      * Refund payment
@@ -308,7 +308,7 @@ abstract class Adapter
         $responseType = $responseHeaders['content-type'] ?? '';
         $responseStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        switch ($responseType) {
+        switch ($responseType && is_string($responseBody)) {
             case 'application/json':
                 $responseBody = json_decode($responseBody, true);
                 break;
@@ -320,6 +320,7 @@ abstract class Adapter
 
         if ($responseStatus >= 400) {
             if (is_array($responseBody)) {
+                /** @phpstan-ignore-next-line */
                 throw new \Exception(json_encode($responseBody), $responseStatus);
             }
 

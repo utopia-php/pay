@@ -22,30 +22,30 @@ class Address
     /**
      * Address Line 1 (eg. street, PO Box, or company name)
      *
-     * @var string
+     * @var string|null
      */
-    protected string $line1;
+    protected ?string $line1;
 
     /**
      * Address Line 2 (eg, appartment, suite, unit or building)
      *
-     * @var string
+     * @var string|null
      */
-    protected string $line2;
+    protected ?string $line2;
 
     /**
      * ZIP or postal code
      *
-     * @var string
+     * @var string|null
      */
-    protected string $postalCode;
+    protected ?string $postalCode;
 
     /**
      * State, county, province or region
      *
-     * @var string
+     * @var string|null
      */
-    protected string $state;
+    protected ?string $state;
 
     public function __construct(string $city, string $country, string $line1 = null, string $line2 = null, string $postalCode = null, string $state = null)
     {
@@ -60,9 +60,9 @@ class Address
     /**
      * Get the value of city
      *
-     * @return string
+     * @return string|null
      */
-    public function getCity(): string
+    public function getCity(): ?string
     {
         return $this->city ?? null;
     }
@@ -87,7 +87,7 @@ class Address
      */
     public function getCountry(): string
     {
-        return $this->country ?? null;
+        return $this->country;
     }
 
     /**
@@ -106,9 +106,9 @@ class Address
     /**
      * Get the value of line1
      *
-     * @return string
+     * @return string|null
      */
-    public function getLine1(): string
+    public function getLine1(): ?string
     {
         return $this->line1 ?? null;
     }
@@ -129,9 +129,9 @@ class Address
     /**
      * Get the value of line2
      *
-     * @return string
+     * @return string|null
      */
-    public function getLine2(): string
+    public function getLine2(): ?string
     {
         return $this->line2 ?? null;
     }
@@ -152,9 +152,9 @@ class Address
     /**
      * Get the value of postalCode
      *
-     * @return string
+     * @return string|null
      */
-    public function getPostalCode(): string
+    public function getPostalCode(): ?string
     {
         return $this->postalCode ?? null;
     }
@@ -175,9 +175,9 @@ class Address
     /**
      * Get the value of state
      *
-     * @return string
+     * @return string|null
      */
-    public function getState(): string
+    public function getState(): ?string
     {
         return $this->state ?? null;
     }

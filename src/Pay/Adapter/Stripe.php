@@ -28,7 +28,7 @@ class Stripe extends Adapter
     /**
      * Make a purchase request
      */
-    public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
+    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
     {
         $path = '/payment_intents';
         $requestBody = [
