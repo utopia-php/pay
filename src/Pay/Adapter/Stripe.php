@@ -159,7 +159,7 @@ class Stripe extends Adapter
      * Add new customer in the gateway database
      * returns the newly created customer
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array
     {
