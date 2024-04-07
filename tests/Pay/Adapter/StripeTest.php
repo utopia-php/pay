@@ -58,7 +58,8 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    public function testListCustomers()
+    /** @depends testUpdateCustomer */
+    public function testListCustomers(array $data)
     {
         $response = $this->stripe->listCustomers();
         $this->assertIsArray($response['data']);
