@@ -17,11 +17,16 @@ class StripeTest extends TestCase
         );
     }
 
-    public function testName()
+    public function testName(): void
     {
         $this->assertEquals($this->stripe->getName(), 'Stripe');
     }
 
+    /**
+     * Test create customer
+     *
+     * @return array<mixed>
+     */
     public function testCreateCustomer(): array
     {
         $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
@@ -32,7 +37,12 @@ class StripeTest extends TestCase
         return ['customerId' => $customer['id']];
     }
 
-    /** @depends testCreateCustomer */
+    /**
+     * @depends testCreateCustomer
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
     public function testGetCustomer(array $data): array
     {
         $customerId = $data['customerId'];
@@ -44,7 +54,12 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testCreateCustomer */
+    /**
+     * @depends testCreateCustomer
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
     public function testUpdateCustomer(array $data): array
     {
         $customerId = $data['customerId'];
@@ -56,8 +71,12 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testUpdateCustomer */
-    public function testListCustomers(array $data)
+    /**
+     * @depends testUpdateCustomer
+     *
+     * @param  array<mixed>  $data
+     */
+    public function testListCustomers(array $data): void
     {
         $response = $this->stripe->listCustomers();
         $this->assertIsArray($response['data']);
@@ -68,8 +87,13 @@ class StripeTest extends TestCase
         $this->assertEquals($customers[0]['email'], 'testcustomerupdated@email.com');
     }
 
-    /** @depends testUpdateCustomer */
-    public function testCreatePaymentMethod(array $data)
+    /**
+     * @depends testUpdateCustomer
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testCreatePaymentMethod(array $data): array
     {
         $customerId = $data['customerId'];
         $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
@@ -93,8 +117,13 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testCreatePaymentMethod */
-    public function testListPaymentMethods(array $data)
+    /**
+     * @depends testCreatePaymentMethod
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testListPaymentMethods(array $data): array
     {
         $customerId = $data['customerId'];
         $pms = $this->stripe->listPaymentMethods($customerId);
@@ -114,8 +143,11 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testCreatePaymentMethod */
-    public function testGetPaymentMethod(array $data)
+    /** @depends testCreatePaymentMethod
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testGetPaymentMethod(array $data): array
     {
         $customerId = $data['customerId'];
         $paymentMethodId = $data['paymentMethodId'];
@@ -133,8 +165,13 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testCreatePaymentMethod */
-    public function testCreateFuturePayment(array $data)
+    /**
+     * @depends testCreatePaymentMethod
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testCreateFuturePayment(array $data): array
     {
         $customerId = $data['customerId'];
         $setupIntent = $this->stripe->createFuturePayment($customerId, paymentMethodOptions: [
@@ -159,8 +196,12 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testCreateFuturePayment */
-    public function testUpdateFuturePayment(array $data)
+    /**
+     * @depends testCreateFuturePayment
+     *
+     * @param  array<mixed>  $data
+     * */
+    public function testUpdateFuturePayment(array $data): void
     {
         $customerId = $data['customerId'];
         $setupIntentId = $data['setupIntentId'];
@@ -190,8 +231,12 @@ class StripeTest extends TestCase
         $this->assertEquals($reference, $setupIntent['payment_method_options']['card']['mandate_options']['reference']);
     }
 
-    /** @depends testCreateFuturePayment */
-    public function testListFuturePayment(array $data)
+    /**
+     * @depends testCreateFuturePayment
+     *
+     * @param  array<mixed>  $data
+     * */
+    public function testListFuturePayment(array $data): void
     {
         $customerId = $data['customerId'];
         $setupIntentId = $data['setupIntentId'];
@@ -202,8 +247,13 @@ class StripeTest extends TestCase
         $this->assertEquals($setupIntentId, $setupIntents[0]['id']);
     }
 
-    /** @depends testCreatePaymentMethod */
-    public function testUpdatePaymentMethod(array $data)
+    /**
+     * @depends testCreatePaymentMethod
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     * */
+    public function testUpdatePaymentMethod(array $data): array
     {
         $paymentMethodId = $data['paymentMethodId'];
         $pm = $this->stripe->updatePaymentMethod($paymentMethodId, 'card', [
@@ -220,8 +270,13 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testCreatePaymentMethod */
-    public function testPurchase(array $data)
+    /**
+     * @depends testCreatePaymentMethod
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     * */
+    public function testPurchase(array $data): array
     {
         $customerId = $data['customerId'];
         $paymentMethodId = $data['paymentMethodId'];
@@ -237,8 +292,12 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testPurchase */
-    public function testRefund(array $data)
+    /**
+     * @depends testPurchase
+     *
+     * @param  array<mixed>  $data
+     */
+    public function testRefund(array $data): void
     {
         $purchase = $this->stripe->refund($data['paymentId'], 3000);
         $this->assertNotEmpty($purchase['id']);
@@ -247,8 +306,11 @@ class StripeTest extends TestCase
         $this->assertEquals(3000, $purchase['amount']);
     }
 
-    /** @depends testCreatePaymentMethod */
-    public function testDeletePaymentMethod(array $data)
+    /**
+     * @depends testCreatePaymentMethod
+     * @param array<mixed> $data
+     */
+    public function testDeletePaymentMethod(array $data): void
     {
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deletePaymentMethod($data['paymentMethodId']);
@@ -259,8 +321,12 @@ class StripeTest extends TestCase
         $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
     }
 
-    /** @depends testUpdateCustomer */
-    public function testDeleteCustomer(array $data)
+    /**
+     * @depends testUpdateCustomer
+     *
+     * @param  array<mixed>  $data
+     */
+    public function testDeleteCustomer(array $data): void
     {
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deleteCustomer($customerId);

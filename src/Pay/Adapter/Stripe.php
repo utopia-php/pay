@@ -107,7 +107,14 @@ class Stripe extends Adapter
     }
 
     /**
-     * Update card
+     * Update billing details
+     *
+     * @param  string  $paymentMethodId
+     * @param  string|null  $name
+     * @param  string|null  $email
+     * @param  string|null  $phone
+     * @param  array<mixed>|null  $address
+     * @return array<mixed>
      */
     public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array
     {
@@ -298,6 +305,12 @@ class Stripe extends Adapter
         return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
+    /**
+     * Get mandate
+     *
+     * @param  string  $id
+     * @return array<mixed>
+     */
     public function getMandate(string $id): array
     {
         $path = '/mandates/'.$id;
@@ -305,6 +318,15 @@ class Stripe extends Adapter
         return $this->execute(self::METHOD_GET, $path);
     }
 
+    /**
+     * Execute
+     *
+     * @param  string  $method
+     * @param  string  $path
+     * @param  array<mixed>  $requestBody
+     * @param  array<mixed>  $headers
+     * @return array<mixed>
+     */
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
         $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);

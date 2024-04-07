@@ -71,56 +71,108 @@ abstract class Adapter
 
     /**
      * Make a purchase request
+     *
+     * @param  int  $amount
+     * @param  string  $customerId
+     * @param  string  $paymentMethodId
+     * @param  array<mixed>  $additionalParams
+     * @return array<mixed>
      */
     abstract public function purchase(int $amount, string $customerId, string $paymentMethodId, array $additionalParams = []): array;
 
     /**
      * Refund payment
+     *
+     * @param  string  $paymentId
+     * @param  int  $amount
+     * @param  string  $reason
+     * @return array<mixed>
      */
     abstract public function refund(string $paymentId, int $amount = null, string $reason = null): array;
 
     /**
      * Add a payment method
+     *
+     * @param  string  $customerId
+     * @param  string  $type
+     * @param  array<mixed>  $details
+     * @return array<mixed>
      */
     abstract public function createPaymentMethod(string $customerId, string $type, array $details): array;
 
     /**
      * Update payment method billing details
+     *
+     * @param  string  $paymentMethodId
+     * @param  string|null  $name
+     * @param  string|null  $email
+     * @param  string|null  $phone
+     * @param  array<mixed>|null  $address
+     * @return array<mixed>
      */
     abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array;
 
     /**
      * Update payment method
+     *
+     * @param  string  $paymentMethodId
+     * @param  string  $type
+     * @param  array<mixed>  $details
+     * @return array<mixed>
      */
     abstract public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array;
 
     /**
      * List payment methods
+     *
+     * @param  string  $customerId
+     * @return array<mixed>
      */
     abstract public function listPaymentMethods(string $customerId): array;
 
     /**
      * Remove payment method
+     *
+     * @param  string  $paymentMethodId
+     * @return bool
      */
     abstract public function deletePaymentMethod(string $paymentMethodId): bool;
 
     /**
      * Add new customer in the gateway database
+     *
+     * @param  string  $name
+     * @param  string  $email
+     * @param  array<mixed>  $address
+     * @param  string|null  $paymentMethod
+     * @return array<mixed>
      */
     abstract public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array;
 
     /**
      * List customers
+     *
+     * @return array<mixed>
      */
     abstract public function listCustomers(): array;
 
     /**
      * Get customer details by ID
+     *
+     * @param  string  $customerId
+     * @return array<mixed>
      */
     abstract public function getCustomer(string $customerId): array;
 
     /**
      * Update customer details
+     *
+     * @param  string  $customerId
+     * @param  string  $name
+     * @param  string  $email
+     * @param  Address|null  $address
+     * @param  string|null  $paymentMethod
+     * @return array<mixed>
      */
     abstract public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, string $paymentMethod = null): array;
 
@@ -134,6 +186,10 @@ abstract class Adapter
 
     /**
      * List Payment Methods
+     *
+     * @param  string  $customerId
+     * @param  string  $paymentMethodId
+     * @return array<mixed>
      */
     abstract public function getPaymentMethod(string $customerId, string $paymentMethodId): array;
 
@@ -142,10 +198,10 @@ abstract class Adapter
      *
      * @param  string  $customerId
      * @param  string|null  $paymentMethod
-     * @param  array  $paymentMethodTypes
-     * @param  array  $paymentMethodOptions
+     * @param  array<mixed>  $paymentMethodTypes
+     * @param  array<mixed>  $paymentMethodOptions
      * @param  ?string  $paymentMethodConfiguration
-     * @return array
+     * @return array<mixed>
      */
     abstract public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = [], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
 
@@ -154,7 +210,7 @@ abstract class Adapter
      *
      * @param  string|null  $customerId
      * @param  string|null  $paymentMethodId
-     * @return array
+     * @return array<mixed>
      */
     abstract public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array;
 
@@ -162,7 +218,7 @@ abstract class Adapter
      * Get Future payment
      *
      * @param  string  $id
-     * @return array
+     * @return array<mixed>
      */
     abstract public function getFuturePayment(string $id): array;
 
@@ -172,9 +228,9 @@ abstract class Adapter
      * @param  string  $id,
      * @param  string  $customerId
      * @param  string|null  $paymentMethod
-     * @param  array  $paymentMethodOptions
+     * @param  array<mixed>  $paymentMethodOptions
      * @param  string|null  $paymentMethodConfiguration
-     * @return array
+     * @return array<mixed>
      */
     abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
 
@@ -182,7 +238,7 @@ abstract class Adapter
      * Get mandate
      *
      * @param  string  $id
-     * @return array
+     * @return array<mixed>
      */
     abstract public function getMandate(string $id): array;
 
@@ -192,10 +248,10 @@ abstract class Adapter
      *
      * @param  string  $method
      * @param  string  $url
-     * @param  array  $params
-     * @param  array  $headers
-     * @param  array  $options
-     * @return array
+     * @param  array<mixed>  $params
+     * @param  array<mixed>  $headers
+     * @param  array<mixed>  $options
+     * @return array<mixed>
      */
     protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): array
     {
@@ -278,11 +334,11 @@ abstract class Adapter
     /**
      * Flatten params array to PHP multiple format
      *
-     * @param  array  $data
+     * @param  array<mixed>  $data
      * @param  string  $prefix
-     * @return array
+     * @return array<mixed>
      */
-    protected function flatten(array $data, $prefix = '')
+    protected function flatten(array $data, $prefix = ''): array
     {
         $output = [];
 

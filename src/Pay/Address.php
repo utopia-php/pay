@@ -198,7 +198,7 @@ class Address
     /**
      * Get Object as an array
      *
-     * @return array
+     * @return array<mixed>
      */
     public function asArray(): array
     {
