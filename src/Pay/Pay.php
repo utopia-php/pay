@@ -23,9 +23,9 @@ class Pay
      * @param  bool  $testMode
      * @return void
      */
-    public function setTestMode(bool $testMode)
+    public function setTestMode(bool $testMode): void
     {
-        return $this->adapter->setTestMode($testMode);
+        $this->adapter->setTestMode($testMode);
     }
 
     /**
@@ -54,9 +54,9 @@ class Pay
      * @param  string  $currency
      * @return void
      */
-    public function setCurrency(string $currency)
+    public function setCurrency(string $currency): void
     {
-        return $this->adapter->setCurrency($currency);
+        $this->adapter->setCurrency($currency);
     }
 
     /**

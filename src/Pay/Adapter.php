@@ -35,7 +35,7 @@ abstract class Adapter
     /**
      * Set test mode
      */
-    public function setTestMode(bool $testMode)
+    public function setTestMode(bool $testMode): void
     {
         $this->testMode = $testMode;
     }
@@ -56,7 +56,7 @@ abstract class Adapter
     /**
      * Set the currency for payments
      */
-    public function setCurrency(string $currency)
+    public function setCurrency(string $currency): void
     {
         $this->currency = $currency;
     }
