@@ -11,12 +11,9 @@ class Stripe extends Adapter
 
     private string $secretKey;
 
-    private string $publishableKey;
-
-    public function __construct(string $publishableKey, string $secretKey, string $currency = 'USD')
+    public function __construct(string $secretKey, string $currency = 'USD')
     {
         $this->secretKey = $secretKey;
-        $this->publishableKey = $publishableKey;
         $this->currency = $currency;
     }
 
@@ -171,7 +168,7 @@ class Stripe extends Adapter
         if (! empty($paymentMethod)) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if (! is_null($address)) {
+        if (! empty($address)) {
             $requestBody['address'] = $address;
         }
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);

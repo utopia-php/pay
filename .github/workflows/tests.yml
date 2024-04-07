@@ -26,6 +26,5 @@ jobs:
 
     - name: Run tests
       run: |
-        export STRIPE_PUBLISHABLE=${{ secrets.STRIPE_PUBLISHABLE }}
         export STRIPE_SECRET=${{ secrets.STRIPE_SECRET }}
         composer test

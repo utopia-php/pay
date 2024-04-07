@@ -12,9 +12,7 @@ class StripeTest extends TestCase
     protected function setUp(): void
     {
         $secretKey = getenv('STRIPE_SECRET') ? getenv('STRIPE_SECRET') : '';
-        $publishableKey = getenv('STRIPE_PUBLISHABLE') ? getenv('STRIPE_PUBLISHABLE') : '';
         $this->stripe = new Stripe(
-            $publishableKey,
             $secretKey
         );
     }

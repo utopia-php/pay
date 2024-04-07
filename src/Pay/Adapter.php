@@ -240,7 +240,7 @@ abstract class Adapter
 
             return $len;
         });
-        if ($method != self::METHOD_GET || $method != self::METHOD_DELETE) {
+        if ($method != self::METHOD_GET && $method != self::METHOD_DELETE) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
         }
 
