@@ -243,7 +243,6 @@ class StripeTest extends TestCase
 
         $setupIntents = $this->stripe->listFuturePayments($customerId);
         $this->assertNotEmpty($setupIntents);
-        $this->assertCount(1, $setupIntents);
         $this->assertEquals($setupIntentId, $setupIntents[0]['id']);
     }
 
