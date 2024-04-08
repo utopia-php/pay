@@ -11,12 +11,9 @@ class Stripe extends Adapter
 
     private string $secretKey;
 
-    private string $publishableKey;
-
-    public function __construct(string $publishableKey, string $secretKey, string $currency = 'USD')
+    public function __construct(string $secretKey, string $currency = 'USD')
     {
         $this->secretKey = $secretKey;
-        $this->publishableKey = $publishableKey;
         $this->currency = $currency;
     }
 
@@ -31,7 +28,7 @@ class Stripe extends Adapter
     /**
      * Make a purchase request
      */
-    public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
+    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
     {
         $path = '/payment_intents';
         $requestBody = [
@@ -110,7 +107,14 @@ class Stripe extends Adapter
     }
 
     /**
-     * Update card
+     * Update billing details
+     *
+     * @param  string  $paymentMethodId
+     * @param  string|null  $name
+     * @param  string|null  $email
+     * @param  string|null  $phone
+     * @param  array<mixed>|null  $address
+     * @return array<mixed>
      */
     public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array
     {
@@ -159,7 +163,7 @@ class Stripe extends Adapter
      * Add new customer in the gateway database
      * returns the newly created customer
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array
     {
@@ -171,7 +175,7 @@ class Stripe extends Adapter
         if (! empty($paymentMethod)) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if (! is_null($address)) {
+        if (! empty($address)) {
             $requestBody['address'] = $address;
         }
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
@@ -301,6 +305,12 @@ class Stripe extends Adapter
         return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
+    /**
+     * Get mandate
+     *
+     * @param  string  $id
+     * @return array<mixed>
+     */
     public function getMandate(string $id): array
     {
         $path = '/mandates/'.$id;
@@ -308,6 +318,15 @@ class Stripe extends Adapter
         return $this->execute(self::METHOD_GET, $path);
     }
 
+    /**
+     * Execute
+     *
+     * @param  string  $method
+     * @param  string  $path
+     * @param  array<mixed>  $requestBody
+     * @param  array<mixed>  $headers
+     * @return array<mixed>
+     */
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
         $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);

@@ -23,9 +23,9 @@ class Pay
      * @param  bool  $testMode
      * @return void
      */
-    public function setTestMode(bool $testMode)
+    public function setTestMode(bool $testMode): void
     {
-        return $this->adapter->setTestMode($testMode);
+        $this->adapter->setTestMode($testMode);
     }
 
     /**
@@ -54,9 +54,9 @@ class Pay
      * @param  string  $currency
      * @return void
      */
-    public function setCurrency(string $currency)
+    public function setCurrency(string $currency): void
     {
-        return $this->adapter->setCurrency($currency);
+        $this->adapter->setCurrency($currency);
     }
 
     /**
@@ -78,8 +78,8 @@ class Pay
      * @param  int  $amount
      * @param  string  $customerId
      * @param  string|null  $paymentMethodId
-     * @param  array  $additionalParams
-     * @return array
+     * @param  array<mixed>  $additionalParams
+     * @return array<mixed>
      */
     public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
     {
@@ -91,7 +91,7 @@ class Pay
      *
      * @param  string  $paymentId
      * @param  int  $amount
-     * @return array
+     * @return array<mixed>
      */
     public function refund(string $paymentId, int $amount): array
     {
@@ -114,8 +114,8 @@ class Pay
      *
      * @param  string  $customerId
      * @param  string  $type
-     * @param  array  $details
-     * @return array
+     * @param  array<mixed>  $details
+     * @return array<mixed>
      */
     public function createPaymentMethod(string $customerId, string $type, array $details): array
     {
@@ -130,8 +130,8 @@ class Pay
      * @param  string  $name
      * @param  string  $email
      * @param  string  $phone
-     * @param  array  $address
-     * @return array
+     * @param  array<mixed>  $address
+     * @return array<mixed>
      */
     public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, string $name = null, string $email = null, string $phone = null, array $address = null): array
     {
@@ -143,8 +143,8 @@ class Pay
      *
      * @param  string  $paymentMethodId
      * @param  string  $type
-     * @param  array  $details
-     * @return array
+     * @param  array<mixed>  $details
+     * @return array<mixed>
      */
     public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
     {
@@ -156,7 +156,7 @@ class Pay
      *
      * @param  string  $customerId
      * @param  string  $paymentMethodId
-     * @return array
+     * @return array<mixed>
      */
     public function getPaymentMethod(string $customerId, string $paymentMethodId): array
     {
@@ -167,7 +167,7 @@ class Pay
      * List Payment Methods
      *
      * @param  string  $customerId
-     * @return array
+     * @return array<mixed>
      */
     public function listPaymentMethods(string $customerId): array
     {
@@ -177,7 +177,7 @@ class Pay
     /**
      * List Customers
      *
-     * @return array
+     * @return array<mixed>
      */
     public function listCustomers(): array
     {
@@ -192,9 +192,9 @@ class Pay
      *
      * @param  string  $name
      * @param  string  $email
-     * @param  array  $address
+     * @param  array<mixed>  $address
      * @param  string|null  $paymentMethod
-     * @return array
+     * @return array<mixed>
      */
     public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
     {
@@ -205,7 +205,7 @@ class Pay
      * Get Customer
      *
      * @param  string  $customerId
-     * @return array
+     * @return array<mixed>
      */
     public function getCustomer(string $customerId): array
     {
@@ -220,7 +220,7 @@ class Pay
      * @param  string  $email
      * @param  string  $paymentMethod
      * @param  Address  $address
-     * @return array
+     * @return array<mixed>
      */
     public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, ?string $paymentMethod = null): array
     {
@@ -243,10 +243,10 @@ class Pay
      *
      * @param  string  $customerId
      * @param  string|null  $paymentMethod
-     * @param  array  $paymentMethodTypes
-     * @param  array  $paymentMethodOptions
+     * @param  array<mixed>  $paymentMethodTypes
+     * @param  array<mixed>  $paymentMethodOptions
      * @param  string  $paymentMethodConfiguration
-     * @return array
+     * @return array<mixed>
      */
     public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
@@ -257,7 +257,7 @@ class Pay
      * Get future payment
      *
      * @param  string  $id
-     * @return array
+     * @return array<mixed>
      */
     public function getFuturePayment(string $id): array
     {
@@ -270,9 +270,9 @@ class Pay
      * @param  string  $id
      * @param  string|null  $customerId
      * @param  string|null  $paymentMethod
-     * @param  array  $paymentMethodOptions
+     * @param  array<mixed>  $paymentMethodOptions
      * @param  string|null  $paymentMethodConfiguration
-     * @return array
+     * @return array<mixed>
      */
     public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
@@ -284,7 +284,7 @@ class Pay
      *
      * @param  string|null  $customerId
      * @param  string|null  $paymentMethodId
-     * @return array
+     * @return array<mixed>
      */
     public function listFuturePayment(?string $customerId, ?string $paymentMethodId = null): array
     {
@@ -295,7 +295,7 @@ class Pay
      * Get mandate
      *
      * @param  string  $id
-     * @return array
+     * @return array<mixed>
      */
     public function getMandate(string $id): array
     {
