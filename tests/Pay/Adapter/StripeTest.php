@@ -66,7 +66,7 @@ class StripeTest extends TestCase
         $customer = $this->stripe->getCustomer($customerId);
         $this->assertNotEmpty($customer['id']);
         $this->assertEquals($customer['name'], 'Test Updated');
-        $this->assertEquals($customer['email'], 'testcustomer@email.com');
+        $this->assertEquals($customer['email'], 'testcustomerupdated@email.com');
 
         return $data;
     }
