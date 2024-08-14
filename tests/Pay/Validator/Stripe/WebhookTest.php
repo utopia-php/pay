@@ -10,7 +10,7 @@ class WebhookTest extends TestCase
     public function testValid()
     {
         $header = 't=1723597289,v1=ca18f2c5b48c347b26f2d862f29d93dc1c9c6b319ba2cd934db54333acef1492';
-        $secret = 'whsec_2FMR5OjJa6Czcj3G07HvMGjLsw8uw3dQ';
+        $secret = getenv('STRIPE_WEBHOOK_SECRET');
 
         $validator = new Webhook();
 
