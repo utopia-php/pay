@@ -43,23 +43,6 @@ class StripeTest extends TestCase
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
-    public function testGetCustomer(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $customer = $this->stripe->getCustomer($customerId);
-        $this->assertNotEmpty($customer['id']);
-        $this->assertEquals($customer['name'], 'Test customer');
-        $this->assertEquals($customer['email'], 'testcustomer@email.com');
-
-        return $data;
-    }
-
-    /**
-     * @depends testCreateCustomer
-     *
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
     public function testUpdateCustomer(array $data): array
     {
         $customerId = $data['customerId'];
@@ -73,6 +56,23 @@ class StripeTest extends TestCase
 
     /**
      * @depends testUpdateCustomer
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testGetCustomer(array $data): array
+    {
+        $customerId = $data['customerId'];
+        $customer = $this->stripe->getCustomer($customerId);
+        $this->assertNotEmpty($customer['id']);
+        $this->assertEquals($customer['name'], 'Test Updated');
+        $this->assertEquals($customer['email'], 'testcustomer@email.com');
+
+        return $data;
+    }
+
+    /**
+     * @depends testGetCustomer
      *
      * @param  array<mixed>  $data
      */
