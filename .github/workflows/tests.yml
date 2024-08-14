@@ -27,4 +27,5 @@ jobs:
     - name: Run tests
       run: |
         export STRIPE_SECRET=${{ secrets.STRIPE_SECRET }}
+        export STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
         composer test
