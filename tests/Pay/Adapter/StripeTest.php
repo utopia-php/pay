@@ -293,6 +293,21 @@ class StripeTest extends TestCase
 
     /**
      * @depends testPurchase
+     */
+    public function testGetPayment(array $data): array
+    {
+        $paymentId = $data['paymentId'];
+        $payment = $this->stripe->getPayment($paymentId);
+        $this->assertNotEmpty($payment['id']);
+        $this->assertEquals(5000, $payment['amount_received']);
+        $this->assertEquals('payment_intent', $payment['object']);
+        $this->assertEquals('succeeded', $payment['status']);
+
+        return $data;
+    }
+
+    /**
+     * @depends testPurchase
      *
      * @param  array<mixed>  $data
      */
