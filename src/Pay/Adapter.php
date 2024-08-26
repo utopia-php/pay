@@ -91,6 +91,14 @@ abstract class Adapter
     abstract public function refund(string $paymentId, int $amount = null, string $reason = null): array;
 
     /**
+     * Get a payment details
+     *
+     * @param  string  $paymentId
+     * @return array<mixed>
+     */
+    abstract public function getPayment(string $paymentId): array;
+
+    /**
      * Add a payment method
      *
      * @param  string  $customerId

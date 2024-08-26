@@ -99,6 +99,17 @@ class Pay
     }
 
     /**
+     * Get a payment details
+     *
+     * @param  string  $paymentId
+     * @return array<mixed>
+     */
+    public function getPayment(string $paymentId): array
+    {
+        return $this->adapter->getPayment($paymentId);
+    }
+
+    /**
      * Delete Payment Method
      *
      * @param  string  $paymentMethodId

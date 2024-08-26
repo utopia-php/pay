@@ -65,6 +65,19 @@ class Stripe extends Adapter
     }
 
     /**
+     * Get a payment details
+     *
+     * @param  string  $paymentId
+     * @return array<mixed>
+     */
+    public function getPayment(string $paymentId): array
+    {
+        $path = '/payment_intents/'.$paymentId;
+
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
+    /**
      * Add a credit card for customer
      */
     public function createPaymentMethod(string $customerId, string $type, array $paymentMethodDetails): array
