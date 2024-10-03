@@ -335,7 +335,7 @@ class StripeTest extends TestCase
             $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
             $this->fail('Expected exception was not thrown');
         } catch (\Exception $e) {
-            $this->assertInstanceOf(Exception::class, $e);
+            $this->assertInstanceOf(\Exception::class, $e);
             $this->assertEquals(404, $e->getCode());
         }
     }
