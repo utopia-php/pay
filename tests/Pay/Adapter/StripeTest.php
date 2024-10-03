@@ -331,9 +331,13 @@ class StripeTest extends TestCase
         $deleted = $this->stripe->deletePaymentMethod($data['paymentMethodId']);
         $this->assertTrue($deleted);
 
-        $this->expectException('Exception');
-        $this->expectExceptionCode(404);
-        $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
+        try {
+            $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
+            $this->fail('Expected exception was not thrown');
+        } catch (Exception $e) {
+            $this->assertInstanceOf(Exception::class, $e);
+            $this->assertEquals(404, $e->getCode());
+        }
     }
 
     /**
