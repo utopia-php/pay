@@ -4,6 +4,7 @@ namespace Utopia\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Adapter\Stripe;
+use Utopia\Pay\Exception;
 
 class StripeTest extends TestCase
 {
@@ -352,5 +353,76 @@ class StripeTest extends TestCase
         $this->assertTrue($deleted);
         $res = $this->stripe->getCustomer($customerId);
         $this->assertTrue($res['deleted']);
+    }
+
+    public function testErrorHandling(): void
+    {
+        try {
+            $this->stripe->deleteCustomer('dedefe');
+        } catch (\Throwable $e) {
+            $this->assertEquals(404, $e->getCode());
+            $this->assertInstanceOf(Exception::class, $e);
+        }
+
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
+        $this->assertNotEmpty($customer['id']);
+
+        $customerId = $customer['id'];
+
+        // incorrect card number
+        try {
+            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
+                'number' => 4242424242424241,
+                'exp_month' => 8,
+                'exp_year' => 2030,
+                'cvc' => 123,
+            ]);
+        } catch (Exception $e) {
+            $this->assertEquals(402, $e->getCode());
+            $this->assertEquals(Exception::INCORRECT_NUMBER, $e->getType());
+            $this->assertInstanceOf(Exception::class, $e);
+        }
+
+        // insufficient fund
+        try {
+            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
+                'number' => 4000000000009995,
+                'exp_month' => 8,
+                'exp_year' => 2030,
+                'cvc' => 123,
+            ]);
+        } catch (Exception $e) {
+            $this->assertEquals(402, $e->getCode());
+            $this->assertEquals(Exception::INSUFFICIENT_FUNDS, $e->getType());
+            $this->assertInstanceOf(Exception::class, $e);
+        }
+
+        // authentication required
+        try {
+            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
+                'number' => 4000002760003184,
+                'exp_month' => 8,
+                'exp_year' => 2030,
+                'cvc' => 123,
+            ]);
+        } catch (Exception $e) {
+            $this->assertEquals(402, $e->getCode());
+            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->getType());
+            $this->assertInstanceOf(Exception::class, $e);
+        }
+
+        // generic decline
+        try {
+            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
+                'number' => 4000000000000002,
+                'exp_month' => 8,
+                'exp_year' => 2030,
+                'cvc' => 123,
+            ]);
+        } catch (Exception $e) {
+            $this->assertEquals(402, $e->getCode());
+            $this->assertEquals(Exception::GENERIC_DECLINE, $e->getType());
+            $this->assertInstanceOf(Exception::class, $e);
+        }
     }
 }
