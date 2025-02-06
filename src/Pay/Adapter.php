@@ -323,21 +323,26 @@ abstract class Adapter
         }
 
         if (curl_errno($ch)) {
-            throw new \Exception(curl_error($ch), $responseStatus, $responseBody);
+            $this->handleError($responseStatus, curl_error($ch));
         }
 
         if ($responseStatus >= 400) {
-            if (is_array($responseBody)) {
-                /** @phpstan-ignore-next-line */
-                throw new \Exception(json_encode($responseBody), $responseStatus);
-            }
-
-            throw new \Exception($responseBody, $responseStatus);
+            $this->handleError($responseStatus, $responseBody);
         }
 
         curl_close($ch);
 
         return $responseBody;
+    }
+
+    protected function handleError(int $code, mixed $response)
+    {
+        if (is_array($response)) {
+            /** @phpstan-ignore-next-line */
+            throw new \Exception(json_encode($response), $code);
+        }
+
+        throw new \Exception($response, $code);
     }
 
     /**

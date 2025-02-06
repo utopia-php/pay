@@ -4,6 +4,7 @@ namespace Utopia\Pay\Adapter;
 
 use Utopia\Pay\Adapter;
 use Utopia\Pay\Address;
+use Utopia\Pay\Exception;
 
 class Stripe extends Adapter
 {
@@ -345,5 +346,22 @@ class Stripe extends Adapter
         $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);
 
         return $this->call($method, $this->baseUrl.$path, $requestBody, $headers);
+    }
+
+    protected function handleError(int $code, mixed $response)
+    {
+        if (is_array($response)) {
+            // stripe error is inside `error`
+            $error = $response['error'] ?? [];
+            $type = $error['code'] ?? Exception::GENERAL_UNKNOWN;
+            $stripeType = $error['type'] ?? '';
+            if ($stripeType == 'card_error') {
+                $type = $error['decline_code'] ?? $type;
+            }
+            $message = $error['message'] ?? 'Unknown error';
+            throw new Exception($type, $message, $code);
+        }
+
+        throw new Exception($response, $code);
     }
 }
