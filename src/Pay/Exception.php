@@ -54,4 +54,25 @@ class Exception extends \Exception
     {
         $this->type = $type;
     }
+
+    /**
+     * Get error object.
+     *
+     * @return string
+     */
+    public function getError(): array
+    {
+        return $this->error;
+    }
+
+    /**
+     * Set error object.
+     *
+     * @param  array  $error
+     * @return void
+     */
+    public function setError(array $error): void
+    {
+        $this->error = $error;
+    }
 }
