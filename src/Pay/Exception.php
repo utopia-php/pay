@@ -16,10 +16,18 @@ class Exception extends \Exception
 
     protected string $type = '';
 
-    public function __construct(string $type = Exception::GENERAL_UNKNOWN, string $message = null, int $code = null, \Throwable $previous = null)
+    /**
+     * Error object with additional error data
+     *
+     * @var array
+     */
+    protected array $error = [];
+
+    public function __construct(string $type = Exception::GENERAL_UNKNOWN, string $message = null, int $code = null, array $error = [], \Throwable $previous = null)
     {
         $this->type = $type;
         $this->code = $code ?? 500;
+        $this->error = $error;
 
         $this->message = $message ?? 'Unknown error';
 

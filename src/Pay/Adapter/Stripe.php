@@ -359,7 +359,7 @@ class Stripe extends Adapter
                 $type = $error['decline_code'] ?? $type;
             }
             $message = $error['message'] ?? 'Unknown error';
-            throw new Exception($type, $message, $code);
+            throw new Exception($type, $message, $code, $error);
         }
 
         throw new Exception($response, $code);
