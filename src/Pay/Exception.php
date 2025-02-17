@@ -16,10 +16,18 @@ class Exception extends \Exception
 
     protected string $type = '';
 
-    public function __construct(string $type = Exception::GENERAL_UNKNOWN, string $message = null, int $code = null, \Throwable $previous = null)
+    /**
+     * Metadata object with additional error data
+     *
+     * @var array
+     */
+    protected array $metadata = [];
+
+    public function __construct(string $type = Exception::GENERAL_UNKNOWN, string $message = null, int $code = null, array $metadata = [], \Throwable $previous = null)
     {
         $this->type = $type;
         $this->code = $code ?? 500;
+        $this->metadata = $metadata;
 
         $this->message = $message ?? 'Unknown error';
 
@@ -45,5 +53,26 @@ class Exception extends \Exception
     public function setType(string $type): void
     {
         $this->type = $type;
+    }
+
+    /**
+     * Get metadata object.
+     *
+     * @return string
+     */
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    /**
+     * Set metadata object.
+     *
+     * @param  array  $metadata
+     * @return void
+     */
+    public function setMetadata(array $metadata): void
+    {
+        $this->metadata = $metadata;
     }
 }

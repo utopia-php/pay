@@ -408,6 +408,8 @@ class StripeTest extends TestCase
         } catch (Exception $e) {
             $this->assertEquals(402, $e->getCode());
             $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->getType());
+            $this->assertNotEmpty($e->getMetadata());
+            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->getMetadata()['decline_code']);
             $this->assertInstanceOf(Exception::class, $e);
         }
 
