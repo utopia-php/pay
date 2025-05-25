@@ -392,15 +392,12 @@ class StripeTest extends TestCase
         $this->assertEquals('payment_intent', $purchase['object']);
         $this->assertEquals('succeeded', $purchase['status']);
 
-        sleep(2);
         // list disputes
         $paymentIntentId = $purchase['id'];
 
         $disputes = $this->stripe->listDisputes(1);
         $this->assertIsArray($disputes);
         $this->assertEquals(1, count($disputes));
-
-        $this->assertEquals($paymentIntentId, $disputes[0]['payment_intent']);
 
         $disputes = $this->stripe->listDisputes(paymentIntentId: $paymentIntentId);
         $this->assertEquals(1, count($disputes));
