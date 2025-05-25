@@ -392,6 +392,7 @@ class StripeTest extends TestCase
         $this->assertEquals('payment_intent', $purchase['object']);
         $this->assertEquals('succeeded', $purchase['status']);
 
+        sleep(2);
         // list disputes
         $paymentIntentId = $purchase['id'];
 
