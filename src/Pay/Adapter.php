@@ -253,12 +253,13 @@ abstract class Adapter
     /**
      * List disputes
      *
+     * @param  int|null  $limit
      * @param  string|null  $paymentIntentId
      * @param  string|null  $chargeId
      * @param  int|null  $createdAfter
      * @return array
      */
-    abstract public function listDisputes(?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array;
+    abstract public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array;
 
     /**
      * Call
@@ -275,8 +276,9 @@ abstract class Adapter
     {
         $responseHeaders = [];
         $ch = \curl_init();
+        $query = null;
 
-        switch ($headers['content-type']) {
+        switch ($headers['content-type'] ?? null) {
             case 'application/json':
                 $query = json_encode($params);
                 break;
@@ -314,7 +316,7 @@ abstract class Adapter
 
             return $len;
         });
-        if ($method != self::METHOD_GET && $method != self::METHOD_DELETE) {
+        if (! empty($query)) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
         }
 

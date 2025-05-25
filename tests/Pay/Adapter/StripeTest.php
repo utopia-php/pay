@@ -12,7 +12,7 @@ class StripeTest extends TestCase
 
     protected function setUp(): void
     {
-        $secretKey = getenv('STRIPE_SECRET') ? getenv('STRIPE_SECRET') : '';
+        $secretKey = getenv('STRIPE_SECRET') ? getenv('STRIPE_SECRET') : 'sk_test_51LT5nsGYD1ySxNCydTZfiu3E8h6BAb7GWvVGUWOuqTBEWZMkffxAeP5N8xuENQgLs2nmWNJBpFT8lLrwGIEsLvK800rfxozxYD';
         $this->stripe = new Stripe(
             $secretKey
         );
@@ -353,6 +353,57 @@ class StripeTest extends TestCase
         $this->assertTrue($deleted);
         $res = $this->stripe->getCustomer($customerId);
         $this->assertTrue($res['deleted']);
+    }
+
+    /**
+     * Test list disputes
+     *
+     * @param  array  $data
+     * @return void
+     */
+    public function testListDisputes(): void
+    {
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
+        $this->assertNotEmpty($customer['id']);
+        $customerId = $customer['id'];
+
+        $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
+            'number' => 4000000000000259,
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
+
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
+        $this->assertEquals('US', $card['country']);
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals('0259', $card['last4']);
+
+        $paymentMethodId = $pm['id'];
+
+        $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
+
+        $this->assertNotEmpty($purchase['id']);
+        $this->assertEquals(5000, $purchase['amount_received']);
+        $this->assertEquals('payment_intent', $purchase['object']);
+        $this->assertEquals('succeeded', $purchase['status']);
+
+        // list disputes
+        $paymentIntentId = $purchase['id'];
+
+        $disputes = $this->stripe->listDisputes(1);
+        $this->assertIsArray($disputes);
+        $this->assertEquals(1, count($disputes));
+
+        $this->assertEquals($paymentIntentId, $disputes[0]['payment_intent']);
+
+        $disputes = $this->stripe->listDisputes(paymentIntentId: $paymentIntentId);
+        $this->assertEquals(1, count($disputes));
+        $this->assertEquals($paymentIntentId, $disputes[0]['payment_intent']);
     }
 
     public function testErrorHandling(): void
