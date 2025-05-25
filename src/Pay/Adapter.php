@@ -251,6 +251,16 @@ abstract class Adapter
     abstract public function getMandate(string $id): array;
 
     /**
+     * List disputes
+     *
+     * @param  string|null  $paymentIntentId
+     * @param  string|null  $chargeId
+     * @param  int|null  $createdAfter
+     * @return array
+     */
+    abstract public function listDisputes(?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array;
+
+    /**
      * Call
      * Make a request
      *

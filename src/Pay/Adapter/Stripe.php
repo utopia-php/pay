@@ -333,6 +333,34 @@ class Stripe extends Adapter
     }
 
     /**
+     * List disputes
+     *
+     * @param  string|null  $paymentIntentId
+     * @param  string|null  $chargeId
+     * @param  int|null  $createdAfter
+     * @return array
+     */
+    public function listDisputes(?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
+    {
+        $path = '/disputes';
+        $requestBody = [];
+
+        if ($paymentIntentId != null) {
+            $requestBody['payment_intent'] = $paymentIntentId;
+        }
+        if ($chargeId != null) {
+            $requestBody['charge'] = $chargeId;
+        }
+        if ($createdAfter != null) {
+            $requestBody['created'] = [
+                'gte' => $createdAfter,
+            ];
+        }
+
+        return $this->execute(self::METHOD_GET, $path, $requestBody);
+    }
+
+    /**
      * Execute
      *
      * @param  string  $method
