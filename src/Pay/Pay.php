@@ -312,4 +312,18 @@ class Pay
     {
         return $this->adapter->getMandate($id);
     }
+
+    /**
+     * List disputes
+     *
+     * @param  int|null  $limit
+     * @param  string|null  $paymentIntentId
+     * @param  string|null  $chargeId
+     * @param  int|null  $createdAfter
+     * @return array
+     */
+    public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
+    {
+        return $this->adapter->listDisputes($limit, $paymentIntentId, $chargeId, $createdAfter);
+    }
 }

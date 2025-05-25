@@ -333,6 +333,41 @@ class Stripe extends Adapter
     }
 
     /**
+     * List disputes
+     *
+     * @param  int|null  $limit
+     * @param  string|null  $paymentIntentId
+     * @param  string|null  $chargeId
+     * @param  int|null  $createdAfter
+     * @return array
+     */
+    public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
+    {
+        $path = '/disputes';
+        $requestBody = [];
+
+        if ($limit !== null) {
+            $requestBody['limit'] = $limit;
+        }
+
+        if ($paymentIntentId !== null) {
+            $requestBody['payment_intent'] = $paymentIntentId;
+        }
+        if ($chargeId !== null) {
+            $requestBody['charge'] = $chargeId;
+        }
+        if ($createdAfter !== null) {
+            $requestBody['created'] = [
+                'gte' => $createdAfter,
+            ];
+        }
+
+        $result = $this->execute(self::METHOD_GET, $path, $requestBody);
+
+        return $result['data'];
+    }
+
+    /**
      * Execute
      *
      * @param  string  $method
@@ -343,7 +378,12 @@ class Stripe extends Adapter
      */
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
-        $headers = array_merge(['content-type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Bearer '.$this->secretKey], $headers);
+        $defaultHeaders = ['Authorization' => 'Bearer '.$this->secretKey];
+
+        if ($method !== self::METHOD_GET) {
+            $defaultHeaders['content-type'] = 'application/x-www-form-urlencoded';
+        }
+        $headers = array_merge($defaultHeaders, $headers);
 
         return $this->call($method, $this->baseUrl.$path, $requestBody, $headers);
     }
