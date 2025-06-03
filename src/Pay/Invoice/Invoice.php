@@ -348,7 +348,7 @@ class Invoice
         return $this;
     }
 
-    public function finalizeInvoice()
+    public function finalize()
     {
         // Apply discounts first
         $this->applyDiscounts();
