@@ -436,4 +436,35 @@ class Invoice
 
         return $this;
     }
+
+    public static function fromArray(array $data): self
+    {
+        $id = $data['id'] ?? $data['$id'] ?? uniqid('invoice_');
+        $amount = $data['amount'] ?? 0;
+        $status = $data['status'] ?? self::STATUS_PENDING;
+        $currency = $data['currency'] ?? 'USD';
+        $grossAmount = $data['grossAmount'] ?? 0;
+        $taxAmount = $data['taxAmount'] ?? 0;
+        $vatAmount = $data['vatAmount'] ?? 0;
+        $address = $data['address'] ?? [];
+        $discounts = isset($data['discounts']) ? array_map(fn ($d) => Discount::fromArray($d), $data['discounts']) : [];
+        $credits = isset($data['credits']) ? array_map(fn ($c) => Credit::fromArray($c), $data['credits']) : [];
+        $creditsUsed = $data['creditsUsed'] ?? 0;
+        $creditsIds = $data['creditsIds'] ?? [];
+
+        return new self(
+            id: $id,
+            amount: $amount,
+            status: $status,
+            currency: $currency,
+            discounts: $discounts,
+            credits: $credits,
+            address: $address,
+            grossAmount: $grossAmount,
+            taxAmount: $taxAmount,
+            vatAmount: $vatAmount,
+            creditsUsed: $creditsUsed,
+            creditsIds: $creditsIds
+        );
+    }
 }
