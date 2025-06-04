@@ -2,8 +2,8 @@
 
 namespace Utopia\Pay\Invoice;
 
-use Pay\Credit\Credit;
-use Pay\Discount\Discount;
+use Utopia\Pay\Discount\Discount;
+use Utopia\Pay\Credit\Credit;
 
 class Invoice
 {
@@ -52,7 +52,7 @@ class Invoice
         $this->id = $id;
         $this->amount = $amount;
         $this->currency = $currency;
-        $this->status = 'unpaid';
+        $this->status = self::STATUS_PENDING;
         $this->grossAmount = $amount;
         $this->taxAmount = 0;
         $this->vatAmount = 0;
