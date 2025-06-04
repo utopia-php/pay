@@ -110,6 +110,7 @@ class Discount
     {
         $discount = new self(
             $data['id'] ?? $data['$id'] ?? '',
+            $data['value'] ?? 0,
             $data['amount'] ?? 0,
             $data['description'] ?? '',
             $data['type'] ?? self::TYPE_FIXED,

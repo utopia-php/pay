@@ -54,8 +54,8 @@ class Invoice
         $this->currency = $currency;
         $this->status = self::STATUS_PENDING;
         $this->grossAmount = $grossAmount;
-        $this->taxAmount = 0;
-        $this->vatAmount = 0;
+        $this->taxAmount = $taxAmount;
+        $this->vatAmount = $vatAmount;
         $this->address = $address;
         $this->setDiscounts($discounts);
         $this->setCredits($credits);
@@ -241,7 +241,7 @@ class Invoice
 
     public function isZeroAmount(): bool
     {
-        return $this->grossAmount === 0;
+        return $this->grossAmount == 0;
     }
 
     public function getDiscountTotal(): float
@@ -324,6 +324,7 @@ class Invoice
             }
         }
 
+        $amount = round($amount, 2);
         $this->setGrossAmount($amount);
         $this->setCreditsUsed($totalCreditsUsed);
         $this->setCreditInternalIds($creditsIds);
@@ -348,6 +349,7 @@ class Invoice
             $amount -= $discountToUse;
         }
 
+        $amount = round($amount, 2);
         $this->setGrossAmount($amount);
 
         return $this;
