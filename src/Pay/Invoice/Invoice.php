@@ -1,6 +1,6 @@
 <?php
 
-namespace Pay\Invoice;
+namespace Utopia\Pay\Invoice;
 
 use Pay\Credit\Credit;
 use Pay\Discount\Discount;

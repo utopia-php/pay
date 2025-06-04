@@ -1,6 +1,6 @@
 <?php
 
-namespace Pay\Credit;
+namespace Utopia\Pay\Credit;
 
 class Credit
 {

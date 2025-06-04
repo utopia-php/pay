@@ -1,6 +1,6 @@
 <?php
 
-namespace Pay\Discount;
+namespace Utopia\Pay\Discount;
 
 class Discount
 {
