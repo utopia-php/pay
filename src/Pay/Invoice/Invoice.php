@@ -437,6 +437,24 @@ class Invoice
         return $this;
     }
 
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'amount' => $this->amount,
+            'status' => $this->status,
+            'currency' => $this->currency,
+            'grossAmount' => $this->grossAmount,
+            'taxAmount' => $this->taxAmount,
+            'vatAmount' => $this->vatAmount,
+            'address' => $this->address,
+            'discounts' => $this->getDiscountsAsArray(),
+            'credits' => $this->getCreditsAsArray(),
+            'creditsUsed' => $this->creditsUsed,
+            'creditsIds' => $this->creditsIds,
+        ];
+    }
+
     public static function fromArray(array $data): self
     {
         $id = $data['id'] ?? $data['$id'] ?? uniqid('invoice_');
