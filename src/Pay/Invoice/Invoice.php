@@ -357,12 +357,18 @@ class Invoice
 
     public function finalize(): static
     {
-        $this->grossAmount = $this->amount;
+        // Set the initial gross amount and round to 2 decimal places
+        $this->grossAmount = round($this->amount, 2);
+
         // Apply discounts first
         $this->applyDiscounts();
 
-        // add tax and VAT
-        $this->grossAmount += $this->taxAmount + $this->vatAmount;
+        // Round tax and VAT amounts before adding
+        $this->taxAmount = round($this->taxAmount, 2);
+        $this->vatAmount = round($this->vatAmount, 2);
+
+        // Add rounded tax and VAT to the gross amount
+        $this->grossAmount = $this->grossAmount + $this->taxAmount + $this->vatAmount;
 
         // Then apply credits
         $this->applyCredits();
