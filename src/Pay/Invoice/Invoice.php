@@ -2,21 +2,41 @@
 
 namespace Pay\Invoice;
 
-use Pay\Discount\Discount;
 use Pay\Credit\Credit;
+use Pay\Discount\Discount;
 
 class Invoice
 {
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_DUE = 'due';
+
     public const STATUS_REFUNDED = 'refunded';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_SUCCEEDED = 'succeeded';
+
     public const STATUS_PROCESSING = 'processing';
+
     public const STATUS_FAILED = 'failed';
 
+    /**
+     * @param  string  $id
+     * @param  float  $amount
+     * @param  string  $status
+     * @param  string  $currency
+     * @param  Discount[]  $discounts
+     * @param  Credit[]  $credits
+     * @param  array  $address
+     * @param  int  $grossAmount
+     * @param  int  $taxAmount
+     * @param  int  $vatAmount
+     * @param  float  $creditsUsed
+     * @param  string[]  $creditsIds
+     */
     public function __construct(
-        private string $id, 
+        private string $id,
         private float $amount,
         private string $status = self::STATUS_PENDING,
         private string $currency = 'USD',
@@ -41,81 +61,87 @@ class Invoice
         $this->setCredits($credits);
     }
 
-    public function getid()
+    public function getid(): string
     {
         return $this->id;
     }
 
-    public function getAmount()
+    public function getAmount(): float
     {
         return $this->amount;
     }
 
-    public function getCurrency()
+    public function getCurrency(): string
     {
         return $this->currency;
     }
 
-    public function getStatus()
+    public function getStatus(): string
     {
         return $this->status;
     }
 
-    public function markAsPaid()
+    public function markAsPaid(): static
     {
-        $this->status = 'paid';
+        $this->status = self::STATUS_SUCCEEDED;
+
+        return $this;
     }
 
-    public function getGrossAmount()
+    public function getGrossAmount(): float
     {
         return $this->grossAmount;
     }
 
-    public function setGrossAmount($grossAmount)
+    public function setGrossAmount(float $grossAmount): static
     {
         $this->grossAmount = $grossAmount;
+
         return $this;
     }
 
-    public function getTaxAmount()
+    public function getTaxAmount(): float
     {
         return $this->taxAmount;
     }
 
-    public function setTaxAmount($taxAmount)
+    public function setTaxAmount(float $taxAmount): static
     {
         $this->taxAmount = $taxAmount;
+
         return $this;
     }
 
-    public function getVatAmount()
+    public function getVatAmount(): float
     {
         return $this->vatAmount;
     }
 
-    public function setVatAmount($vatAmount)
+    public function setVatAmount(float $vatAmount): static
     {
         $this->vatAmount = $vatAmount;
+
         return $this;
     }
 
-    public function getAddress()
+    public function getAddress(): array
     {
         return $this->address;
     }
 
-    public function setAddress($address)
+    public function setAddress(array $address): static
     {
         $this->address = $address;
+
         return $this;
     }
 
-    public function getDiscounts()
+    public function getDiscounts(): array
     {
         return $this->discounts;
     }
 
-    public function setDiscounts($discounts)
+    public function setDiscounts(array $discounts): static
     {
         // Handle both arrays of Discount objects and arrays of arrays
         if (is_array($discounts)) {
@@ -140,68 +166,70 @@ class Invoice
         } else {
             throw new \InvalidArgumentException('Discounts must be an array');
         }
+
         return $this;
     }
 
-    public function addDiscount(Discount $discount)
+    public function addDiscount(Discount $discount): static
     {
         $this->discounts[] = $discount;
+
         return $this;
     }
 
-    public function getCreditsUsed()
+    public function getCreditsUsed(): float
     {
         return $this->creditsUsed;
     }
 
-    public function setCreditsUsed($creditsUsed)
+    public function setCreditsUsed(float $creditsUsed): static
     {
         $this->creditsUsed = $creditsUsed;
+
         return $this;
     }
 
-    public function getCreditInternalIds()
+    public function getCreditInternalIds(): array
     {
         return $this->creditsIds;
     }
 
-    public function setCreditInternalIds($creditsIds)
+    public function setCreditInternalIds(array $creditsIds): static
     {
         $this->creditsIds = $creditsIds;
+
         return $this;
     }
 
-    public function addCreditInternalId($creditId)
-    {
-        $this->creditsIds[] = $creditId;
-        return $this;
-    }
-
-    public function setStatus($status)
+    public function setStatus(string $status): static
     {
         $this->status = $status;
+
         return $this;
     }
 
-    public function markAsDue()
+    public function markAsDue(): static
     {
         $this->status = self::STATUS_DUE;
+
         return $this;
     }
 
-    public function markAsSucceeded()
+    public function markAsSucceeded(): static
     {
-        $this->status =  self::STATUS_SUCCEEDED;
+        $this->status = self::STATUS_SUCCEEDED;
+
         return $this;
     }
 
-    public function markAsCancelled()
+    public function markAsCancelled(): static
     {
-        $this->status =  self::STATUS_CANCELLED;
+        $this->status = self::STATUS_CANCELLED;
+
         return $this;
     }
 
-    public function isNegativeAmount()
+    public function isNegativeAmount(): bool
     {
         return $this->amount < 0;
     }
@@ -211,40 +239,37 @@ class Invoice
         return $this->grossAmount < $minimumAmount;
     }
 
-    public function isZeroAmount()
+    public function isZeroAmount(): bool
     {
         return $this->grossAmount === 0;
     }
 
-   
-    public function getDiscountTotal()
+    public function getDiscountTotal(): float
     {
         $total = 0;
         foreach ($this->discounts as $discount) {
-            if ($discount instanceof Discount) {
-                $total += $discount->getAmount();
-            }
+            $total += $discount->getAmount();
         }
+
         return $total;
     }
 
-    public function getDiscountsAsArray()
+    public function getDiscountsAsArray(): array
     {
         $discountArray = [];
         foreach ($this->discounts as $discount) {
-            if ($discount instanceof Discount) {
-                $discountArray[] = $discount->toArray();
-            }
+            $discountArray[] = $discount->toArray();
         }
+
         return $discountArray;
     }
 
-    public function getCredits()
+    public function getCredits(): array
     {
         return $this->credits;
     }
 
-    public function setCredits(array $credits)
+    public function setCredits(array $credits): static
     {
         // Validate that all items are Credit objects
         $creditObjects = [];
@@ -252,32 +277,34 @@ class Invoice
             if ($credit instanceof Credit) {
                 $creditObjects[] = $credit;
             } elseif (is_array($credit)) {
-
                 $creditObjects[] = Credit::fromArray($credit);
             } else {
                 throw new \InvalidArgumentException('All items in credits array must be Credit objects or arrays with id and credits keys');
             }
         }
         $this->credits = $creditObjects;
+
         return $this;
     }
 
-    public function addCredit(Credit $credit)
+    public function addCredit(Credit $credit): static
     {
         $this->credits[] = $credit;
+
         return $this;
     }
 
-    public function getTotalAvailableCredits()
+    public function getTotalAvailableCredits(): float
     {
         $total = 0;
         foreach ($this->credits as $credit) {
             $total += $credit->getCredits();
         }
+
         return $total;
     }
 
-    public function applyCredits()
+    public function applyCredits(): static
     {
         $amount = $this->grossAmount;
         $totalCreditsUsed = 0;
@@ -288,20 +315,13 @@ class Invoice
                 break;
             }
 
-            $availableCredit = $credit->getCredits();
-            if ($amount >= $availableCredit) {
-                $amount = $amount - $availableCredit;
-                $creditsUsed = $availableCredit;
-                $availableCredit = 0;
-            } else {
-                $availableCredit = $availableCredit - $amount;
-                $creditsUsed = $amount;
-                $amount = 0;
-            }
-
-            $totalCreditsUsed += $creditsUsed;
-            $credit->useCredits($creditsUsed);
+            $creditToUse = $credit->useCredits($amount);
+            $amount = $amount - $creditToUse;
+            $totalCreditsUsed += $creditToUse;
             $creditsIds[] = $credit->getId();
+            if ($this->isZeroAmount()) {
+                continue;
+            }
         }
 
         $this->setGrossAmount($amount);
@@ -311,51 +331,40 @@ class Invoice
         return $this;
     }
 
-    public function applyDiscounts()
+    public function applyDiscounts(): static
     {
         $discounts = $this->discounts;
-        $discountObjects = [];
         $amount = $this->grossAmount;
 
         foreach ($discounts as $discount) {
-            // Handle both Discount objects and arrays
-            if ($discount instanceof Discount) {
-                $discountAmount = $discount->getAmount();
-                $discountObjects[] = $discount;
-            } else {
-                $discountAmount = $discount['amount'] ?? 0;
-                $discountDescription = $discount['description'] ?? '';
-                $discountObject = new Discount(
-                    $discount['id'] ?? uniqid('discount_'),
-                    $discount['value'] ?? $discountAmount,
-                    $discountAmount,
-                    $discountDescription,
-                    $discount['type'] ?? Discount::TYPE_FIXED
-                );
-                $discountObjects[] = $discountObject;
+            if ($amount == 0) {
+                break;
             }
+            $discountToUse = $discount->calculateDiscount($amount);
 
-            if ($discountAmount > 0) {
-                $amount -= $discountAmount;
-                if ($amount < 0) {
-                    $amount = 0;
-                }
+            if ($discountToUse <= 0) {
+                continue;
             }
+            $amount -= $discountToUse;
         }
 
-        $this->setDiscounts($discountObjects);
         $this->setGrossAmount($amount);
+
         return $this;
     }
 
-    public function finalize()
+    public function finalize(): static
     {
+        $this->grossAmount = $this->amount;
         // Apply discounts first
         $this->applyDiscounts();
-        
+
+        // add tax and VAT
+        $this->grossAmount += $this->taxAmount + $this->vatAmount;
+
         // Then apply credits
         $this->applyCredits();
-        
+
         // Update status based on final amount
         if ($this->isZeroAmount()) {
             $this->markAsSucceeded();
@@ -364,83 +373,67 @@ class Invoice
         } else {
             $this->markAsDue();
         }
-        
+
         return $this;
     }
 
-    public function hasDiscounts()
+    public function hasDiscounts(): bool
     {
-        return !empty($this->discounts);
+        return ! empty($this->discounts);
     }
 
-    public function hasCredits()
+    public function hasCredits(): bool
     {
-        return !empty($this->credits);
+        return ! empty($this->credits);
     }
 
-    public function getDiscountCount()
-    {
-        return count($this->discounts);
-    }
-
-    public function getCreditCount()
-    {
-        return count($this->credits);
-    }
-
-    public function clearDiscounts()
-    {
-        $this->discounts = [];
-        return $this;
-    }
-
-    public function clearCredits()
-    {
-        $this->credits = [];
-        return $this;
-    }
-
-    public function getCreditsAsArray()
+    public function getCreditsAsArray(): array
     {
         $creditsArray = [];
         foreach ($this->credits as $credit) {
-            if ($credit instanceof Credit) {
-                $creditsArray[] = [
-                    'id' => $credit->getId(),
-                    'credits' => $credit->getCredits(),
-                    'creditsUsed' => $credit->getCreditsUsed(),
-                    'status' => $credit->getStatus()
-                ];
-            }
+            $creditsArray[] = $credit->toArray();
         }
+
         return $creditsArray;
     }
 
-    public function findDiscountById(string $id)
+    public function findDiscountById(string $id): ?Discount
     {
         foreach ($this->discounts as $discount) {
             if ($discount->getId() === $id) {
                 return $discount;
             }
         }
+
         return null;
     }
 
-    public function findCreditById(string $id)
+    public function findCreditById(string $id): ?Credit
     {
         foreach ($this->credits as $credit) {
             if ($credit->getId() === $id) {
                 return $credit;
             }
         }
+
         return null;
     }
 
-    public function removeDiscountById(string $id)
+    public function removeDiscountById(string $id): static
     {
-        $this->discounts = array_filter($this->discounts, function($discount) use ($id) {
+        $this->discounts = array_filter($this->discounts, function ($discount) use ($id) {
             return $discount->getId() !== $id;
         });
+
+        return $this;
+    }
+
+    public function removeCreditById(string $id): static
+    {
+        $this->credits = array_filter($this->credits, function ($credit) use ($id) {
+            return $credit->getId() !== $id;
+        });
+
         return $this;
     }
 }
