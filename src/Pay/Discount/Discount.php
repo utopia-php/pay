@@ -114,7 +114,6 @@ class Discount
             $data['amount'] ?? 0,
             $data['description'] ?? '',
             $data['type'] ?? self::TYPE_FIXED,
-            $data['id'] ?? null
         );
 
         return $discount;
