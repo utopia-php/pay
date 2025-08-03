@@ -293,22 +293,64 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testPurchase
+     * Test retryPurchase: create a payment with a failing payment method, then retry with a succeeding one.
+     *
+     * @depends testCreateCustomer
      *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
     public function testRetryPurchase(array $data): array
     {
-        $paymentId = $data['paymentId'];
-        $paymentMethodId = $data['paymentMethodId'];
-        // Attempt to retry the purchase
-        $result = $this->stripe->retryPurchase($paymentId, $paymentMethodId);
+        $customerId = $data['customerId'];
+        // Create a payment method that will fail (card_declined)
+        $failingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
+            'number' => '4000000000000341',
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $this->assertNotEmpty($failingPm['id']);
+        $failingPmId = $failingPm['id'];
+
+        // Create a payment intent with the failing payment method
+        $paymentIntentId = null;
+        try {
+            $purchase = $this->stripe->purchase(5000, $customerId, $failingPmId);
+            $this->fail('Expected payment to fail');
+        } catch (Exception $e) {
+            $this->assertEquals(Exception::GENERIC_DECLINE, $e->getType());
+            $this->assertEquals(402, $e->getCode());
+            $paymentIntentMeta = $e->getMetadata()['payment_intent'] ?? null;
+            if (is_array($paymentIntentMeta) && isset($paymentIntentMeta['id'])) {
+                $paymentIntentId = $paymentIntentMeta['id'];
+            } else {
+                $paymentIntentId = $paymentIntentMeta;
+            }
+            $this->assertNotEmpty($paymentIntentId);
+        }
+
+        // Create a succeeding payment method
+        $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
+            'number' => '4242424242424242', // Stripe test card: always succeeds
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $this->assertNotEmpty($succeedingPm['id']);
+        $succeedingPmId = $succeedingPm['id'];
+
+        // Retry the payment intent with the succeeding payment method
+        $result = $this->stripe->retryPurchase((string) $paymentIntentId, $succeedingPmId);
         $this->assertNotEmpty($result['id']);
-        $this->assertEquals($paymentId, $result['id']);
+        $this->assertEquals($paymentIntentId, $result['id']);
         $this->assertEquals('payment_intent', $result['object']);
-        // Status may vary depending on Stripe's state, but should be present
         $this->assertArrayHasKey('status', $result);
+        $this->assertEquals('succeeded', $result['status']);
+
+        // Save for further tests if needed
+        $data['paymentId'] = $paymentIntentId;
+        $data['paymentMethodId'] = $succeedingPmId;
 
         return $data;
     }
