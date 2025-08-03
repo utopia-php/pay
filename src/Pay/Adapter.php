@@ -81,6 +81,16 @@ abstract class Adapter
     abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
 
     /**
+     * Retry a purchase for a payment intent
+     *
+     * @param  string  $paymentId The payment intent ID to retry
+     * @param  string|null  $paymentMethodId The payment method to use (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
+     * @return array<mixed> The result of the retry attempt
+     */
+    abstract public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array;
+
+    /**
      * Refund payment
      *
      * @param  string  $paymentId
