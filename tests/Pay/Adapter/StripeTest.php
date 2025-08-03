@@ -294,6 +294,27 @@ class StripeTest extends TestCase
 
     /**
      * @depends testPurchase
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testRetryPurchase(array $data): array
+    {
+        $paymentId = $data['paymentId'];
+        $paymentMethodId = $data['paymentMethodId'];
+        // Attempt to retry the purchase
+        $result = $this->stripe->retryPurchase($paymentId, $paymentMethodId);
+        $this->assertNotEmpty($result['id']);
+        $this->assertEquals($paymentId, $result['id']);
+        $this->assertEquals('payment_intent', $result['object']);
+        // Status may vary depending on Stripe's state, but should be present
+        $this->assertArrayHasKey('status', $result);
+
+        return $data;
+    }
+
+    /**
+     * @depends testPurchase
      */
     public function testGetPayment(array $data): array
     {
