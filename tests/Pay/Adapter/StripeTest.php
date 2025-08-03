@@ -316,27 +316,23 @@ class StripeTest extends TestCase
         // Create a payment intent with the failing payment method
         $paymentIntentId = null;
         try {
-            $purchase = $this->stripe->purchase(5000, $customerId, $failingPmId);
+            $this->stripe->purchase(5000, $customerId, $failingPmId);
             $this->fail('Expected payment to fail');
         } catch (Exception $e) {
             $this->assertEquals(Exception::GENERIC_DECLINE, $e->getType());
             $this->assertEquals(402, $e->getCode());
             $paymentIntentMeta = $e->getMetadata()['payment_intent'] ?? null;
-            if (is_array($paymentIntentMeta) && isset($paymentIntentMeta['id'])) {
-                $paymentIntentId = $paymentIntentMeta['id'];
-            } else {
-                $paymentIntentId = $paymentIntentMeta;
-            }
+            $paymentIntentId = is_array($paymentIntentMeta) && isset($paymentIntentMeta['id']) ? $paymentIntentMeta['id'] : $paymentIntentMeta;
             $this->assertNotEmpty($paymentIntentId);
         }
 
-        // Create a succeeding payment method
-        $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => '4242424242424242', // Stripe test card: always succeeds
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
+         // Create a succeeding payment method
+         $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
+             'number' => '4242424242424242', // Stripe test card: always succeeds
+             'exp_month' => 8,
+             'exp_year' => 2030,
+             'cvc' => 123,
+         ]);
         $this->assertNotEmpty($succeedingPm['id']);
         $succeedingPmId = $succeedingPm['id'];
 
