@@ -367,6 +367,60 @@ class StripeTest extends TestCase
     }
 
     /**
+     * Test updatePayment: create a payment intent in a non-succeeded state, update its payment method and amount, and assert the update.
+     *
+     * @depends testCreateCustomer
+     *
+     * @param  array<mixed>  $data
+     * @return void
+     */
+    public function testUpdatePayment(array $data): void
+    {
+        $customerId = $data['customerId'];
+        // Create a payment method that will fail (card_declined)
+        $failingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
+            'number' => '4000000000000341',
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $this->assertNotEmpty($failingPm['id']);
+        $failingPmId = $failingPm['id'];
+
+        // Create a payment intent with the failing payment method
+        $paymentIntentId = null;
+        try {
+            $this->stripe->purchase(5000, $customerId, $failingPmId);
+            $this->fail('Expected payment to fail');
+        } catch (Exception $e) {
+            $this->assertEquals(Exception::GENERIC_DECLINE, $e->getType());
+            $this->assertEquals(402, $e->getCode());
+            $paymentIntentMeta = $e->getMetadata()['payment_intent'] ?? null;
+            $paymentIntentId = is_array($paymentIntentMeta) && isset($paymentIntentMeta['id']) ? $paymentIntentMeta['id'] : $paymentIntentMeta;
+            $this->assertNotEmpty($paymentIntentId);
+        }
+
+        // Create a succeeding payment method
+        $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
+            'number' => '4242424242424242',
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $this->assertNotEmpty($succeedingPm['id']);
+        $succeedingPmId = $succeedingPm['id'];
+
+        // Update the payment intent with the new payment method and amount
+        $newAmount = 6000;
+        $updated = $this->stripe->updatePayment((string) $paymentIntentId, $succeedingPmId, $newAmount);
+        $this->assertNotEmpty($updated['id']);
+        $this->assertEquals($paymentIntentId, $updated['id']);
+        $this->assertEquals('payment_intent', $updated['object']);
+        $this->assertEquals($newAmount, $updated['amount']);
+        $this->assertEquals($succeedingPmId, $updated['payment_method']);
+    }
+
+    /**
      * @depends testPurchase
      *
      * @param  array<mixed>  $data

@@ -123,6 +123,21 @@ class Pay
     }
 
     /**
+     * Update a payment intent
+     *
+     * @param  string  $paymentId Payment intent ID
+     * @param  string|null  $paymentMethodId Payment method ID (optional)
+     * @param  int|null  $amount Amount to update (optional)
+     * @param  string|null  $currency Currency to update (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the update
+     */
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array
+    {
+        return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $additionalParams);
+    }
+
+    /**
      * Delete Payment Method
      *
      * @param  string  $paymentMethodId
