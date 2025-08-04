@@ -48,6 +48,30 @@ class Stripe extends Adapter
     }
 
     /**
+     * Retry a purchase for a payment intent
+     *
+     * @param  string  $paymentId The payment intent ID to retry
+     * @param  string|null  $paymentMethodId The payment method to use (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
+     * @return array<mixed> The result of the retry attempt
+     */
+    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    {
+        $path = '/payment_intents/'.$paymentId.'/confirm';
+        $requestBody = [];
+        if (! empty($paymentMethodId)) {
+            $requestBody = [
+                'payment_method' => $paymentMethodId,
+            ];
+        }
+
+        $requestBody = array_merge($requestBody, $additionalParams);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return $result;
+    }
+
+    /**
      * Refund payment
      */
     public function refund(string $paymentId, int $amount = null, string $reason = null): array
@@ -76,6 +100,36 @@ class Stripe extends Adapter
         $path = '/payment_intents/'.$paymentId;
 
         return $this->execute(self::METHOD_GET, $path);
+    }
+
+    /**
+     * Update a payment intent
+     *
+     * @param  string  $paymentId Payment intent ID
+     * @param  string|null  $paymentMethodId Payment method ID (optional)
+     * @param  int|null  $amount Amount to update (optional)
+     * @param  string|null  $currency Currency to update (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the update
+     */
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array
+    {
+        $path = '/payment_intents/'.$paymentId;
+        $requestBody = [];
+        if ($paymentMethodId != null) {
+            $requestBody['payment_method'] = $paymentMethodId;
+        }
+        if ($amount != null) {
+            $requestBody['amount'] = $amount;
+        }
+
+        if ($currency != null) {
+            $requestBody['currency'] = $currency;
+        }
+
+        $requestBody = array_merge($requestBody, $additionalParams);
+
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
     /**

@@ -87,6 +87,19 @@ class Pay
     }
 
     /**
+     * Retry a purchase for a payment intent
+     *
+     * @param  string  $paymentId The payment intent ID to retry
+     * @param  string|null  $paymentMethodId The payment method to use (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
+     * @return array<mixed> The result of the retry attempt
+     */
+    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    {
+        return $this->adapter->retryPurchase($paymentId, $paymentMethodId, $additionalParams);
+    }
+
+    /**
      * Refund Payment
      *
      * @param  string  $paymentId
@@ -107,6 +120,21 @@ class Pay
     public function getPayment(string $paymentId): array
     {
         return $this->adapter->getPayment($paymentId);
+    }
+
+    /**
+     * Update a payment intent
+     *
+     * @param  string  $paymentId Payment intent ID
+     * @param  string|null  $paymentMethodId Payment method ID (optional)
+     * @param  int|null  $amount Amount to update (optional)
+     * @param  string|null  $currency Currency to update (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the update
+     */
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array
+    {
+        return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $additionalParams);
     }
 
     /**

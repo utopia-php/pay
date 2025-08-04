@@ -72,13 +72,35 @@ abstract class Adapter
     /**
      * Make a purchase request
      *
-     * @param  int  $amount
-     * @param  string  $customerId
-     * @param  string|null  $paymentMethodId
-     * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
+     * @param  int  $amount Amount to charge
+     * @param  string  $customerId Customer ID
+     * @param  string|null  $paymentMethodId Payment method ID (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the purchase
      */
     abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
+
+    /**
+     * Update a payment intent
+     *
+     * @param  string  $paymentId Payment intent ID
+     * @param  string|null  $paymentMethodId Payment method ID (optional)
+     * @param  int|null  $amount Amount to update (optional)
+     * @param  string|null  $currency Currency to update (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the update
+     */
+    abstract public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array;
+
+    /**
+     * Retry a purchase for a payment intent
+     *
+     * @param  string  $paymentId The payment intent ID to retry
+     * @param  string|null  $paymentMethodId The payment method to use (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
+     * @return array<mixed> The result of the retry attempt
+     */
+    abstract public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array;
 
     /**
      * Refund payment
