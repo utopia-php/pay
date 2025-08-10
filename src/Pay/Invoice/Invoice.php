@@ -29,9 +29,9 @@ class Invoice
      * @param  Discount[]  $discounts
      * @param  Credit[]  $credits
      * @param  array  $address
-     * @param  int  $grossAmount
-     * @param  int  $taxAmount
-     * @param  int  $vatAmount
+     * @param  float  $grossAmount
+     * @param  float  $taxAmount
+     * @param  float  $vatAmount
      * @param  float  $creditsUsed
      * @param  string[]  $creditsIds
      */
@@ -49,19 +49,12 @@ class Invoice
         private float $creditsUsed = 0,
         private array $creditsIds = [],
     ) {
-        $this->id = $id;
-        $this->amount = $amount;
-        $this->currency = $currency;
-        $this->status = self::STATUS_PENDING;
-        $this->grossAmount = $grossAmount;
-        $this->taxAmount = $taxAmount;
-        $this->vatAmount = $vatAmount;
-        $this->address = $address;
+        // Properties are already set by promotion, just ensure discounts/credits are objects
         $this->setDiscounts($discounts);
         $this->setCredits($credits);
     }
 
-    public function getid(): string
+    public function getId(): string
     {
         return $this->id;
     }
@@ -81,11 +74,12 @@ class Invoice
         return $this->status;
     }
 
+    /**
+     * Mark invoice as paid (alias for markAsSucceeded).
+     */
     public function markAsPaid(): static
     {
-        $this->status = self::STATUS_SUCCEEDED;
-
-        return $this;
+        return $this->markAsSucceeded();
     }
 
     public function getGrossAmount(): float
@@ -215,10 +209,12 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Mark invoice as succeeded.
+     */
     public function markAsSucceeded(): static
     {
         $this->status = self::STATUS_SUCCEEDED;
-
         return $this;
     }
 
