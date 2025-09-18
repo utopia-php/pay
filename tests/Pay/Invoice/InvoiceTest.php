@@ -414,7 +414,7 @@ class InvoiceTest extends TestCase
 
         $this->assertEquals('invoice-array', $invoice->getid());
         $this->assertEquals(200.0, $invoice->getAmount());
-        $this->assertEquals(Invoice::STATUS_PENDING, $invoice->getStatus());
+        $this->assertEquals(Invoice::STATUS_DUE, $invoice->getStatus());
         $this->assertEquals('EUR', $invoice->getCurrency());
         $this->assertEquals(180.0, $invoice->getGrossAmount());
         $this->assertEquals(10.0, $invoice->getTaxAmount());
