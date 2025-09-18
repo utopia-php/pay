@@ -215,6 +215,7 @@ class Invoice
     public function markAsSucceeded(): static
     {
         $this->status = self::STATUS_SUCCEEDED;
+
         return $this;
     }
 
