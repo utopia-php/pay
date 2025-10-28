@@ -24,7 +24,6 @@ class DiscountTest extends TestCase
         $this->fixedDiscount = new Discount(
             $this->discountId,
             $this->fixedValue,
-            $this->fixedValue,
             $this->description,
             Discount::TYPE_FIXED
         );
@@ -32,7 +31,6 @@ class DiscountTest extends TestCase
         $this->percentageDiscount = new Discount(
             'discount-456',
             $this->percentageValue,
-            0, // Initial amount is calculated when applied
             'Percentage Discount',
             Discount::TYPE_PERCENTAGE
         );
@@ -42,7 +40,6 @@ class DiscountTest extends TestCase
     {
         $this->assertEquals($this->discountId, $this->fixedDiscount->getId());
         $this->assertEquals($this->fixedValue, $this->fixedDiscount->getValue());
-        $this->assertEquals($this->fixedValue, $this->fixedDiscount->getAmount());
         $this->assertEquals($this->description, $this->fixedDiscount->getDescription());
         $this->assertEquals(Discount::TYPE_FIXED, $this->fixedDiscount->getType());
     }
@@ -50,20 +47,17 @@ class DiscountTest extends TestCase
     public function testGettersAndSetters(): void
     {
         $newId = 'discount-789';
-        $newValue = 50.0;
-        $newAmount = 50.0;
+        $newDiscountValue = 50.0;
         $newDescription = 'Updated Discount';
         $newType = Discount::TYPE_PERCENTAGE;
 
         $this->fixedDiscount->setId($newId);
-        $this->fixedDiscount->setValue($newValue);
-        $this->fixedDiscount->setAmount($newAmount);
+        $this->fixedDiscount->setValue($newDiscountValue);
         $this->fixedDiscount->setDescription($newDescription);
         $this->fixedDiscount->setType($newType);
 
         $this->assertEquals($newId, $this->fixedDiscount->getId());
-        $this->assertEquals($newValue, $this->fixedDiscount->getValue());
-        $this->assertEquals($newAmount, $this->fixedDiscount->getAmount());
+        $this->assertEquals($newDiscountValue, $this->fixedDiscount->getValue());
         $this->assertEquals($newDescription, $this->fixedDiscount->getDescription());
         $this->assertEquals($newType, $this->fixedDiscount->getType());
     }
@@ -73,7 +67,7 @@ class DiscountTest extends TestCase
         $invoiceAmount = 100.0;
         $discountAmount = $this->fixedDiscount->calculateDiscount($invoiceAmount);
 
-        // For fixed type, it uses the minimum of the discount amount and invoice amount
+        // For fixed type, it uses the minimum of the discount value and invoice amount
         $this->assertEquals(min($this->fixedValue, $invoiceAmount), $discountAmount);
     }
 
@@ -126,26 +120,19 @@ class DiscountTest extends TestCase
         $this->assertIsArray($array);
         $this->assertArrayHasKey('id', $array);
         $this->assertArrayHasKey('value', $array);
-        $this->assertArrayHasKey('amount', $array);
         $this->assertArrayHasKey('description', $array);
         $this->assertArrayHasKey('type', $array);
 
         $this->assertEquals($this->discountId, $array['id']);
         $this->assertEquals($this->fixedValue, $array['value']);
-        $this->assertEquals($this->fixedValue, $array['amount']);
         $this->assertEquals($this->description, $array['description']);
         $this->assertEquals(Discount::TYPE_FIXED, $array['type']);
     }
 
     public function testFromArray(): void
     {
-        // Data should match the order expected by fromArray method
-        // Check actual fromArray implementation
-        $this->markTestSkipped('fromArray method implementation is incorrect in the Discount class and needs to be fixed');
-
         $data = [
             'id' => 'discount-789',
-            'amount' => 30.0,
             'value' => 30.0,
             'description' => 'From Array Discount',
             'type' => Discount::TYPE_FIXED,
@@ -155,17 +142,12 @@ class DiscountTest extends TestCase
 
         $this->assertEquals($data['id'], $discount->getId());
         $this->assertEquals($data['value'], $discount->getValue());
-        $this->assertEquals($data['amount'], $discount->getAmount());
         $this->assertEquals($data['description'], $discount->getDescription());
         $this->assertEquals($data['type'], $discount->getType());
     }
 
     public function testFromArrayWithMinimalData(): void
     {
-        // Data should match the order expected by fromArray method
-        // Check actual fromArray implementation
-        $this->markTestSkipped('fromArray method implementation is incorrect in the Discount class and needs to be fixed');
-
         $data = [
             'id' => 'discount-789',
             'value' => 30.0,
@@ -175,8 +157,69 @@ class DiscountTest extends TestCase
 
         $this->assertEquals($data['id'], $discount->getId());
         $this->assertEquals($data['value'], $discount->getValue());
-        $this->assertEquals(0, $discount->getAmount());
         $this->assertEquals('', $discount->getDescription());
         $this->assertEquals(Discount::TYPE_FIXED, $discount->getType());
+    }
+
+    
+
+    public function testNegativeDiscountValueHandling(): void
+    {
+        // Test that negative values throw an exception in constructor
+        try {
+            new Discount(
+                'negative-discount',
+                -10.0,
+                'Negative test',
+                Discount::TYPE_FIXED
+            );
+            $this->fail('Expected InvalidArgumentException was not thrown');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertEquals('Discount value cannot be negative', $e->getMessage());
+        }
+    }
+
+    public function testSetNegativeDiscountValue(): void
+    {
+        // Test that setting negative value throws an exception
+        try {
+            $this->fixedDiscount->setValue(-20.0);
+            $this->fail('Expected InvalidArgumentException was not thrown');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertEquals('Discount value cannot be negative', $e->getMessage());
+        }
+    }
+
+    public function testFromArrayWithNegativeValue(): void
+    {
+        // Test that fromArray throws exception for negative values
+        $data = [
+            'id' => 'discount-negative',
+            'value' => -10.0,
+            'type' => Discount::TYPE_FIXED,
+        ];
+
+        try {
+            Discount::fromArray($data);
+            $this->fail('Expected InvalidArgumentException was not thrown');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertEquals('Discount value cannot be negative', $e->getMessage());
+        }
+    }
+
+    public function testFromArrayWithNullValue(): void
+    {
+        // Test that fromArray throws exception for null values
+        $data = [
+            'id' => 'discount-null',
+            'type' => Discount::TYPE_FIXED,
+        ];
+
+        try {
+            Discount::fromArray($data);
+            $this->fail('Expected InvalidArgumentException was not thrown');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertEquals('Discount value cannot be null', $e->getMessage());
+        }
     }
 }

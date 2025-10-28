@@ -9,14 +9,20 @@ class Discount
     public const TYPE_PERCENTAGE = 'percentage'; // Percentage discount
 
     /**
-     * @param  string  $id
-     * @param  float  $value
-     * @param  float  $amount
-     * @param  string  $description
-     * @param  string  $type
+     * @param  string  $id  Unique identifier for the discount
+     * @param  float  $value  The discount value - either a fixed amount (e.g., 10.00) or percentage (e.g., 15 for 15%) depending on $type
+     * @param  string  $description  Optional description of the discount
+     * @param  string  $type  The discount type (TYPE_FIXED or TYPE_PERCENTAGE)
      */
-    public function __construct(private string $id, private float $value, private float $amount, private string $description = '', private string $type = self::TYPE_FIXED)
-    {
+    public function __construct(
+        private string $id,
+        private float $value,
+        private string $description = '',
+        private string $type = self::TYPE_FIXED
+    ) {
+        if ($this->value < 0) {
+            throw new \InvalidArgumentException('Discount value cannot be negative');
+        }
     }
 
     public function getId(): string
@@ -31,14 +37,26 @@ class Discount
         return $this;
     }
 
-    public function getAmount(): float
+    /**
+     * Get the discount value (either fixed amount or percentage based on type)
+     */
+    public function getValue(): float
     {
-        return $this->amount;
+        return $this->value;
     }
 
-    public function setAmount(float $amount): static
+    /**
+     * Set the discount value (either fixed amount or percentage based on type)
+     * 
+     * @throws \InvalidArgumentException if value is negative
+     */
+    public function setValue(float $value): static
     {
-        $this->amount = $amount;
+        if ($value < 0) {
+            throw new \InvalidArgumentException('Discount value cannot be negative');
+        }
+        
+        $this->value = $value;
 
         return $this;
     }
@@ -67,22 +85,20 @@ class Discount
         return $this;
     }
 
-    public function getValue(): float
-    {
-        return $this->value;
-    }
-
-    public function setValue(float $value): static
-    {
-        $this->value = $value;
-
-        return $this;
-    }
-
+    /**
+     * Calculate the discount amount to apply
+     *
+     * @param  float  $amount  The original amount/subtotal to calculate the discount from
+     * @return float The calculated discount amount
+     */
     public function calculateDiscount(float $amount): float
     {
+        if ($amount <= 0) {
+            return 0;
+        }
+
         if ($this->type === self::TYPE_FIXED) {
-            return min($this->amount, $amount);
+            return min($this->value, $amount);
         } elseif ($this->type === self::TYPE_PERCENTAGE) {
             return ($this->value / 100) * $amount;
         }
@@ -90,16 +106,10 @@ class Discount
         return 0;
     }
 
-    public function isValid(): bool
-    {
-        return $this->amount > 0 && $this->type === self::TYPE_FIXED || $this->value > 0 && $this->type === self::TYPE_PERCENTAGE;
-    }
-
     public function toArray()
     {
         return [
             'id' => $this->id,
-            'amount' => $this->amount,
             'value' => $this->value,
             'description' => $this->description,
             'type' => $this->type,
@@ -108,10 +118,18 @@ class Discount
 
     public static function fromArray($data)
     {
+        $value = $data['value'] ?? null;
+        
+        if($value === null) {
+            throw new \InvalidArgumentException('Discount value cannot be null');
+        }
+        if ($value < 0) {
+            throw new \InvalidArgumentException('Discount value cannot be negative');
+        }
+
         $discount = new self(
             $data['id'] ?? $data['$id'] ?? '',
-            $data['value'] ?? 0,
-            $data['amount'] ?? 0,
+            $value,
             $data['description'] ?? '',
             $data['type'] ?? self::TYPE_FIXED,
         );

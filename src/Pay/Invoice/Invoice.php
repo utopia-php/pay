@@ -144,14 +144,8 @@ class Invoice
                 if ($discount instanceof Discount) {
                     $discountObjects[] = $discount;
                 } elseif (is_array($discount)) {
-                    // Convert array to Discount object for backward compatibility
-                    $discountObjects[] = new Discount(
-                        $discount['id'] ?? uniqid('discount_'),
-                        $discount['value'] ?? 0,
-                        $discount['amount'] ?? 0,
-                        $discount['description'] ?? '',
-                        $discount['type'] ?? Discount::TYPE_FIXED
-                    );
+                    // Convert array to Discount object using fromArray for backward compatibility
+                    $discountObjects[] = Discount::fromArray($discount);
                 } else {
                     throw new \InvalidArgumentException('Discount must be either a Discount object or an array');
                 }
@@ -244,8 +238,15 @@ class Invoice
     public function getDiscountTotal(): float
     {
         $total = 0;
+        $amount = $this->grossAmount;
+        
         foreach ($this->discounts as $discount) {
-            $total += $discount->getAmount();
+            if ($amount <= 0) {
+                break;
+            }
+            $discountAmount = $discount->calculateDiscount($amount);
+            $total += $discountAmount;
+            $amount -= $discountAmount;
         }
 
         return $total;
