@@ -538,9 +538,6 @@ class Invoice
             $amount = $amount - $creditToUse;
             $totalCreditsUsed += $creditToUse;
             $creditsIds[] = $credit->getId();
-            if ($this->isZeroAmount()) {
-                continue;
-            }
         }
 
         $amount = round($amount, 2);
