@@ -59,7 +59,7 @@ class InvoiceTest extends TestCase
 
     public function testConstructor(): void
     {
-        $this->assertEquals($this->invoiceId, $this->invoice->getid());
+        $this->assertEquals($this->invoiceId, $this->invoice->getId());
         $this->assertEquals($this->amount, $this->invoice->getAmount());
         $this->assertEquals($this->currency, $this->invoice->getCurrency());
         $this->assertEquals(Invoice::STATUS_PENDING, $this->invoice->getStatus());
@@ -84,7 +84,7 @@ class InvoiceTest extends TestCase
             [$this->credit]
         );
 
-        $this->assertEquals($this->invoiceId, $invoice->getid());
+        $this->assertEquals($this->invoiceId, $invoice->getId());
         $this->assertEquals($this->amount, $invoice->getAmount());
         $this->assertEquals($this->currency, $invoice->getCurrency());
         $this->assertEquals(Invoice::STATUS_PENDING, $invoice->getStatus());
@@ -412,7 +412,7 @@ class InvoiceTest extends TestCase
 
         $invoice = Invoice::fromArray($data);
 
-        $this->assertEquals('invoice-array', $invoice->getid());
+        $this->assertEquals('invoice-array', $invoice->getId());
         $this->assertEquals(200.0, $invoice->getAmount());
         $this->assertEquals(Invoice::STATUS_DUE, $invoice->getStatus());
         $this->assertEquals('EUR', $invoice->getCurrency());
