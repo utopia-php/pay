@@ -47,7 +47,7 @@ class Discount
 
     /**
      * Set the discount value (either fixed amount or percentage based on type)
-     * 
+     *
      * @throws \InvalidArgumentException if value is negative
      */
     public function setValue(float $value): static
@@ -55,7 +55,7 @@ class Discount
         if ($value < 0) {
             throw new \InvalidArgumentException('Discount value cannot be negative');
         }
-        
+
         $this->value = $value;
 
         return $this;
@@ -119,8 +119,8 @@ class Discount
     public static function fromArray($data)
     {
         $value = $data['value'] ?? null;
-        
-        if($value === null) {
+
+        if ($value === null) {
             throw new \InvalidArgumentException('Discount value cannot be null');
         }
         if ($value < 0) {

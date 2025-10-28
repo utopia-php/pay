@@ -239,7 +239,7 @@ class Invoice
     {
         $total = 0;
         $amount = $this->grossAmount;
-        
+
         foreach ($this->discounts as $discount) {
             if ($amount <= 0) {
                 break;

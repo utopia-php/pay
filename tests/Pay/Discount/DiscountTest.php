@@ -161,8 +161,6 @@ class DiscountTest extends TestCase
         $this->assertEquals(Discount::TYPE_FIXED, $discount->getType());
     }
 
-    
-
     public function testNegativeDiscountValueHandling(): void
     {
         // Test that negative values throw an exception in constructor
