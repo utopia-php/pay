@@ -5,35 +5,65 @@ namespace Utopia\Pay\Invoice;
 use Utopia\Pay\Credit\Credit;
 use Utopia\Pay\Discount\Discount;
 
+/**
+ * Invoice class for managing payment invoices.
+ *
+ * This class handles invoice creation, status management, discount and credit application,
+ * and invoice finalization with tax calculations.
+ */
 class Invoice
 {
+    /**
+     * Invoice is pending and not yet processed.
+     */
     public const STATUS_PENDING = 'pending';
 
+    /**
+     * Invoice is due and awaiting payment.
+     */
     public const STATUS_DUE = 'due';
 
+    /**
+     * Invoice has been refunded.
+     */
     public const STATUS_REFUNDED = 'refunded';
 
+    /**
+     * Invoice has been cancelled (e.g., below minimum amount).
+     */
     public const STATUS_CANCELLED = 'cancelled';
 
+    /**
+     * Invoice payment succeeded.
+     */
     public const STATUS_SUCCEEDED = 'succeeded';
 
+    /**
+     * Invoice payment is being processed.
+     */
     public const STATUS_PROCESSING = 'processing';
 
+    /**
+     * Invoice payment failed.
+     */
     public const STATUS_FAILED = 'failed';
 
     /**
-     * @param  string  $id
-     * @param  float  $amount
-     * @param  string  $status
-     * @param  string  $currency
-     * @param  Discount[]  $discounts
-     * @param  Credit[]  $credits
-     * @param  array  $address
-     * @param  float  $grossAmount
-     * @param  float  $taxAmount
-     * @param  float  $vatAmount
-     * @param  float  $creditsUsed
-     * @param  string[]  $creditsIds
+     * Create a new Invoice instance.
+     *
+     * @param  string  $id  Unique identifier for the invoice
+     * @param  float  $amount  Base amount before discounts, taxes, and credits
+     * @param  string  $status  Invoice status (use STATUS_* constants)
+     * @param  string  $currency  Currency code (default: 'USD')
+     * @param  Discount[]  $discounts  Array of Discount objects to apply
+     * @param  Credit[]  $credits  Array of Credit objects available for this invoice
+     * @param  array  $address  Billing address information
+     * @param  float  $grossAmount  Final amount after discounts, taxes, and credits
+     * @param  float  $taxAmount  Tax amount to add
+     * @param  float  $vatAmount  VAT amount to add
+     * @param  float  $creditsUsed  Total credits applied to this invoice
+     * @param  string[]  $creditsIds  IDs of credits that were applied
+     * @param  float  $discountTotal  Total discount amount applied to this invoice
      */
     public function __construct(
         private string $id,
@@ -48,27 +78,47 @@ class Invoice
         private float $vatAmount = 0,
         private float $creditsUsed = 0,
         private array $creditsIds = [],
+        private float $discountTotal = 0,
     ) {
-        // Properties are already set by promotion, just ensure discounts/credits are objects
         $this->setDiscounts($discounts);
         $this->setCredits($credits);
     }
 
+    /**
+     * Get the invoice ID.
+     *
+     * @return string The unique invoice identifier
+     */
     public function getId(): string
     {
         return $this->id;
     }
 
+    /**
+     * Get the base invoice amount (before discounts, taxes, and credits).
+     *
+     * @return float The base amount
+     */
     public function getAmount(): float
     {
         return $this->amount;
     }
 
+    /**
+     * Get the invoice currency code.
+     *
+     * @return string The currency code (e.g., 'USD', 'EUR')
+     */
     public function getCurrency(): string
     {
         return $this->currency;
     }
 
+    /**
+     * Get the current invoice status.
+     *
+     * @return string The status (one of STATUS_* constants)
+     */
     public function getStatus(): string
     {
         return $this->status;
@@ -76,17 +126,30 @@ class Invoice
 
     /**
      * Mark invoice as paid (alias for markAsSucceeded).
+     *
+     * @return static
      */
     public function markAsPaid(): static
     {
         return $this->markAsSucceeded();
     }
 
+    /**
+     * Get the gross amount (final amount after all calculations).
+     *
+     * @return float The gross amount
+     */
     public function getGrossAmount(): float
     {
         return $this->grossAmount;
     }
 
+    /**
+     * Set the gross amount.
+     *
+     * @param  float  $grossAmount  The gross amount to set
+     * @return static
+     */
     public function setGrossAmount(float $grossAmount): static
     {
         $this->grossAmount = $grossAmount;
@@ -94,11 +157,22 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Get the tax amount.
+     *
+     * @return float The tax amount
+     */
     public function getTaxAmount(): float
     {
         return $this->taxAmount;
     }
 
+    /**
+     * Set the tax amount to add to the invoice.
+     *
+     * @param  float  $taxAmount  The tax amount
+     * @return static
+     */
     public function setTaxAmount(float $taxAmount): static
     {
         $this->taxAmount = $taxAmount;
@@ -106,11 +180,22 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Get the VAT amount.
+     *
+     * @return float The VAT amount
+     */
     public function getVatAmount(): float
     {
         return $this->vatAmount;
     }
 
+    /**
+     * Set the VAT amount to add to the invoice.
+     *
+     * @param  float  $vatAmount  The VAT amount
+     * @return static
+     */
     public function setVatAmount(float $vatAmount): static
     {
         $this->vatAmount = $vatAmount;
@@ -118,11 +203,22 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Get the billing address.
+     *
+     * @return array The address array
+     */
     public function getAddress(): array
     {
         return $this->address;
     }
 
+    /**
+     * Set the billing address.
+     *
+     * @param  array  $address  The address information
+     * @return static
+     */
     public function setAddress(array $address): static
     {
         $this->address = $address;
@@ -130,11 +226,26 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Get all discounts attached to this invoice.
+     *
+     * @return Discount[] Array of Discount objects
+     */
     public function getDiscounts(): array
     {
         return $this->discounts;
     }
 
+    /**
+     * Set the discounts for this invoice.
+     *
+     * Accepts either Discount objects or arrays that will be converted to Discount objects.
+     *
+     * @param  array  $discounts  Array of Discount objects or arrays
+     * @return static
+     *
+     * @throws \InvalidArgumentException If invalid discount format is provided
+     */
     public function setDiscounts(array $discounts): static
     {
         // Handle both arrays of Discount objects and arrays of arrays
@@ -158,6 +269,12 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Add a discount to the invoice.
+     *
+     * @param  Discount  $discount  The discount to add
+     * @return static
+     */
     public function addDiscount(Discount $discount): static
     {
         $this->discounts[] = $discount;
@@ -165,11 +282,22 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Get the total amount of credits used on this invoice.
+     *
+     * @return float The total credits used
+     */
     public function getCreditsUsed(): float
     {
         return $this->creditsUsed;
     }
 
+    /**
+     * Set the total amount of credits used.
+     *
+     * @param  float  $creditsUsed  The credits used amount
+     * @return static
+     */
     public function setCreditsUsed(float $creditsUsed): static
     {
         $this->creditsUsed = $creditsUsed;
@@ -177,11 +305,22 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Get the IDs of credits that were applied to this invoice.
+     *
+     * @return string[] Array of credit IDs
+     */
     public function getCreditInternalIds(): array
     {
         return $this->creditsIds;
     }
 
+    /**
+     * Set the IDs of credits that were applied.
+     *
+     * @param  string[]  $creditsIds  Array of credit IDs
+     * @return static
+     */
     public function setCreditInternalIds(array $creditsIds): static
     {
         $this->creditsIds = $creditsIds;
@@ -189,6 +328,12 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Set the invoice status.
+     *
+     * @param  string  $status  The status to set (use STATUS_* constants)
+     * @return static
+     */
     public function setStatus(string $status): static
     {
         $this->status = $status;
@@ -196,6 +341,11 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Mark the invoice as due.
+     *
+     * @return static
+     */
     public function markAsDue(): static
     {
         $this->status = self::STATUS_DUE;
@@ -205,6 +355,8 @@ class Invoice
 
     /**
      * Mark invoice as succeeded.
+     *
+     * @return static
      */
     public function markAsSucceeded(): static
     {
@@ -213,6 +365,11 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Mark the invoice as cancelled.
+     *
+     * @return static
+     */
     public function markAsCancelled(): static
     {
         $this->status = self::STATUS_CANCELLED;
@@ -220,38 +377,68 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Check if the invoice amount is negative.
+     *
+     * @return bool True if amount is negative
+     */
     public function isNegativeAmount(): bool
     {
         return $this->amount < 0;
     }
 
+    /**
+     * Check if the gross amount is below the minimum threshold.
+     *
+     * @param  float  $minimumAmount  The minimum amount threshold (default: 0.50)
+     * @return bool True if below minimum
+     */
     public function isBelowMinimumAmount($minimumAmount = 0.50)
     {
         return $this->grossAmount < $minimumAmount;
     }
 
+    /**
+     * Check if the gross amount is zero.
+     *
+     * @return bool True if amount is zero
+     */
     public function isZeroAmount(): bool
     {
         return $this->grossAmount == 0;
     }
 
+    /**
+     * Get the total discount amount that was applied.
+     *
+     * Returns 0 if discounts haven't been applied yet.
+     * After applyDiscounts() is called, returns the actual discount amount applied.
+     *
+     * @return float The total discount amount applied
+     */
     public function getDiscountTotal(): float
     {
-        $total = 0;
-        $amount = $this->grossAmount;
-
-        foreach ($this->discounts as $discount) {
-            if ($amount <= 0) {
-                break;
-            }
-            $discountAmount = $discount->calculateDiscount($amount);
-            $total += $discountAmount;
-            $amount -= $discountAmount;
-        }
-
-        return $total;
+        return $this->discountTotal;
     }
 
+    /**
+     * Set the total discount amount applied.
+     *
+     * @param  float  $discountTotal  The total discount amount
+     * @return static
+     */
+    public function setDiscountTotal(float $discountTotal): static
+    {
+        $this->discountTotal = $discountTotal;
+
+        return $this;
+    }
+
+    /**
+     * Get discounts as array representation.
+     *
+     * @return array Array of discount data
+     */
     public function getDiscountsAsArray(): array
     {
         $discountArray = [];
@@ -262,11 +449,26 @@ class Invoice
         return $discountArray;
     }
 
+    /**
+     * Get all credits attached to this invoice.
+     *
+     * @return Credit[] Array of Credit objects
+     */
     public function getCredits(): array
     {
         return $this->credits;
     }
 
+    /**
+     * Set the credits for this invoice.
+     *
+     * Accepts either Credit objects or arrays that will be converted to Credit objects.
+     *
+     * @param  array  $credits  Array of Credit objects or arrays
+     * @return static
+     *
+     * @throws \InvalidArgumentException If invalid credit format is provided
+     */
     public function setCredits(array $credits): static
     {
         // Validate that all items are Credit objects
@@ -285,6 +487,12 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Add a credit to the invoice.
+     *
+     * @param  Credit  $credit  The credit to add
+     * @return static
+     */
     public function addCredit(Credit $credit): static
     {
         $this->credits[] = $credit;
@@ -292,6 +500,11 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Get the total available credits from all credit objects.
+     *
+     * @return float The total available credits
+     */
     public function getTotalAvailableCredits(): float
     {
         $total = 0;
@@ -302,6 +515,14 @@ class Invoice
         return $total;
     }
 
+    /**
+     * Apply available credits to the invoice amount.
+     *
+     * Credits are applied in order until the amount reaches zero or all credits are used.
+     * Updates the gross amount and tracks which credits were used.
+     *
+     * @return static
+     */
     public function applyCredits(): static
     {
         $amount = $this->grossAmount;
@@ -330,13 +551,37 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Apply all discounts to the invoice amount.
+     *
+     * Discounts are applied in the correct order:
+     * 1. Fixed amount discounts first
+     * 2. Percentage discounts second (applied to amount after fixed discounts)
+     *
+     * Updates the gross amount and tracks total discount applied.
+     *
+     * @return static
+     */
     public function applyDiscounts(): static
     {
         $discounts = $this->discounts;
         $amount = $this->grossAmount;
+        $totalDiscount = 0;
+
+        // Sort discounts: fixed first, then percentage
+        usort($discounts, function ($a, $b) {
+            if ($a->getType() === Discount::TYPE_FIXED && $b->getType() === Discount::TYPE_PERCENTAGE) {
+                return -1;
+            }
+            if ($a->getType() === Discount::TYPE_PERCENTAGE && $b->getType() === Discount::TYPE_FIXED) {
+                return 1;
+            }
+
+            return 0;
+        });
 
         foreach ($discounts as $discount) {
-            if ($amount == 0) {
+            if ($amount <= 0) {
                 break;
             }
             $discountToUse = $discount->calculateDiscount($amount);
@@ -345,17 +590,31 @@ class Invoice
                 continue;
             }
             $amount -= $discountToUse;
+            $totalDiscount += $discountToUse;
         }
 
         $amount = round($amount, 2);
+        $totalDiscount = round($totalDiscount, 2);
+
         $this->setGrossAmount($amount);
+        $this->setDiscountTotal($totalDiscount);
 
         return $this;
     }
 
+    /**
+     * Finalize the invoice by applying all discounts, taxes, and credits.
+     *
+     * Process order:
+     * 1. Apply discounts to the base amount
+     * 2. Add tax and VAT amounts
+     * 3. Apply available credits
+     * 4. Update invoice status based on final amount
+     *
+     * @return static
+     */
     public function finalize(): static
     {
-        // Set the initial gross amount and round to 2 decimal places
         $this->grossAmount = round($this->amount, 2);
 
         // Apply discounts first
@@ -383,16 +642,31 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Check if the invoice has any discounts.
+     *
+     * @return bool True if discounts exist
+     */
     public function hasDiscounts(): bool
     {
         return ! empty($this->discounts);
     }
 
+    /**
+     * Check if the invoice has any credits.
+     *
+     * @return bool True if credits exist
+     */
     public function hasCredits(): bool
     {
         return ! empty($this->credits);
     }
 
+    /**
+     * Get credits as array representation.
+     *
+     * @return array Array of credit data
+     */
     public function getCreditsAsArray(): array
     {
         $creditsArray = [];
@@ -403,6 +677,12 @@ class Invoice
         return $creditsArray;
     }
 
+    /**
+     * Find a discount by its ID.
+     *
+     * @param  string  $id  The discount ID to search for
+     * @return Discount|null The discount object or null if not found
+     */
     public function findDiscountById(string $id): ?Discount
     {
         foreach ($this->discounts as $discount) {
@@ -414,6 +694,12 @@ class Invoice
         return null;
     }
 
+    /**
+     * Find a credit by its ID.
+     *
+     * @param  string  $id  The credit ID to search for
+     * @return Credit|null The credit object or null if not found
+     */
     public function findCreditById(string $id): ?Credit
     {
         foreach ($this->credits as $credit) {
@@ -425,6 +711,12 @@ class Invoice
         return null;
     }
 
+    /**
+     * Remove a discount from the invoice by its ID.
+     *
+     * @param  string  $id  The discount ID to remove
+     * @return static
+     */
     public function removeDiscountById(string $id): static
     {
         $this->discounts = array_filter($this->discounts, function ($discount) use ($id) {
@@ -434,6 +726,12 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Remove a credit from the invoice by its ID.
+     *
+     * @param  string  $id  The credit ID to remove
+     * @return static
+     */
     public function removeCreditById(string $id): static
     {
         $this->credits = array_filter($this->credits, function ($credit) use ($id) {
@@ -443,6 +741,11 @@ class Invoice
         return $this;
     }
 
+    /**
+     * Convert the invoice to an array representation.
+     *
+     * @return array The invoice data as an array
+     */
     public function toArray(): array
     {
         return [
@@ -458,9 +761,16 @@ class Invoice
             'credits' => $this->getCreditsAsArray(),
             'creditsUsed' => $this->creditsUsed,
             'creditsIds' => $this->creditsIds,
+            'discountTotal' => $this->discountTotal,
         ];
     }
 
+    /**
+     * Create an Invoice instance from an array.
+     *
+     * @param  array  $data  The invoice data array
+     * @return self The created Invoice instance
+     */
     public static function fromArray(array $data): self
     {
         $id = $data['id'] ?? $data['$id'] ?? uniqid('invoice_');
@@ -475,6 +785,7 @@ class Invoice
         $credits = isset($data['credits']) ? array_map(fn ($c) => Credit::fromArray($c), $data['credits']) : [];
         $creditsUsed = $data['creditsUsed'] ?? 0;
         $creditsIds = $data['creditsIds'] ?? [];
+        $discountTotal = $data['discountTotal'] ?? 0;
 
         return new self(
             id: $id,
@@ -488,7 +799,8 @@ class Invoice
             taxAmount: $taxAmount,
             vatAmount: $vatAmount,
             creditsUsed: $creditsUsed,
-            creditsIds: $creditsIds
+            creditsIds: $creditsIds,
+            discountTotal: $discountTotal
         );
     }
 }
