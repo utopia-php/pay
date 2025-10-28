@@ -29,7 +29,6 @@ class InvoiceTest extends TestCase
         $this->fixedDiscount = new Discount(
             'discount-fixed',
             25.0,
-            25.0,
             'Fixed Discount',
             Discount::TYPE_FIXED
         );
@@ -37,7 +36,6 @@ class InvoiceTest extends TestCase
         $this->percentageDiscount = new Discount(
             'discount-percentage',
             10.0,
-            0, // Initially 0, will be calculated
             'Percentage Discount',
             Discount::TYPE_PERCENTAGE
         );
@@ -191,14 +189,12 @@ class InvoiceTest extends TestCase
             [
                 'id' => 'discount-array-1',
                 'value' => 15.0,
-                'amount' => 15.0,
                 'description' => 'Array Discount 1',
                 'type' => Discount::TYPE_FIXED,
             ],
             [
                 'id' => 'discount-array-2',
                 'value' => 5.0,
-                'amount' => 5.0,
                 'description' => 'Array Discount 2',
                 'type' => Discount::TYPE_PERCENTAGE,
             ],
@@ -247,16 +243,20 @@ class InvoiceTest extends TestCase
         // Fixed discount of 25.0
         $this->invoice->applyDiscounts();
         $this->assertEquals($this->amount - 25.0, $this->invoice->getGrossAmount());
+        $this->assertEquals(25.0, $this->invoice->getDiscountTotal());
 
         // Add percentage discount (10% of 75 = 7.5)
         $this->invoice->addDiscount($this->percentageDiscount);
         $this->invoice->setGrossAmount($this->amount); // Reset for test clarity
         $this->invoice->applyDiscounts();
 
-        $expectedAmount = $this->amount - 25.0; // First apply fixed
-        $expectedAmount -= ($expectedAmount * 0.1); // Then apply percentage
+        // Fixed discount applied first: 100 - 25 = 75
+        // Then percentage discount: 75 - (75 * 0.1) = 75 - 7.5 = 67.5
+        $expectedAmount = $this->amount - 25.0; // First apply fixed: 75
+        $expectedAmount -= ($expectedAmount * 0.1); // Then apply percentage: 67.5
 
         $this->assertEqualsWithDelta($expectedAmount, $this->invoice->getGrossAmount(), 0.01);
+        $this->assertEqualsWithDelta(32.5, $this->invoice->getDiscountTotal(), 0.01); // 25 + 7.5
     }
 
     public function testApplyCredits(): void
@@ -314,6 +314,7 @@ class InvoiceTest extends TestCase
         // Expected: 100 (amount) - 25 (discount) = 75 gross amount
         // Then apply 50 credit = 25 final amount
         $this->assertEquals(25.0, $this->invoice->getGrossAmount());
+        $this->assertEquals(25.0, $this->invoice->getDiscountTotal());
         $this->assertEquals(50.0, $this->invoice->getCreditsUsed());
         $this->assertEquals(Invoice::STATUS_DUE, $this->invoice->getStatus());
     }
@@ -342,11 +343,12 @@ class InvoiceTest extends TestCase
     {
         // Setup - amount that will be below minimum
         $this->invoice = new Invoice('invoice-min', 50.0);
-        $this->invoice->addDiscount(new Discount('discount-49.75', 49.75, 49.75, 'Large Discount'));
+        $this->invoice->addDiscount(new Discount('discount-49.75', 49.75, 'Large Discount', Discount::TYPE_FIXED));
 
         $this->invoice->finalize();
 
         $this->assertEquals(0.25, $this->invoice->getGrossAmount());
+        $this->assertEquals(49.75, $this->invoice->getDiscountTotal());
         $this->assertEquals(Invoice::STATUS_CANCELLED, $this->invoice->getStatus());
     }
 
@@ -361,6 +363,7 @@ class InvoiceTest extends TestCase
         $this->invoice->addCredit($this->credit);
         $this->invoice->setCreditsUsed(20.0);
         $this->invoice->setCreditInternalIds(['credit-123']);
+        $this->invoice->setDiscountTotal(25.0);
 
         $array = $this->invoice->toArray();
 
@@ -376,6 +379,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals(1, count($array['credits']));
         $this->assertEquals(20.0, $array['creditsUsed']);
         $this->assertEquals(['credit-123'], $array['creditsIds']);
+        $this->assertEquals(25.0, $array['discountTotal']);
     }
 
     public function testFromArray(): void
@@ -393,7 +397,6 @@ class InvoiceTest extends TestCase
                 [
                     'id' => 'discount-array',
                     'value' => 20.0,
-                    'amount' => 20.0,
                     'description' => 'From Array',
                     'type' => Discount::TYPE_FIXED,
                 ],
@@ -408,6 +411,7 @@ class InvoiceTest extends TestCase
             ],
             'creditsUsed' => 0,
             'creditsIds' => [],
+            'discountTotal' => 20.0,
         ];
 
         $invoice = Invoice::fromArray($data);
@@ -424,6 +428,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals(1, count($invoice->getCredits()));
         $this->assertEquals('discount-array', $invoice->getDiscounts()[0]->getId());
         $this->assertEquals('credit-array', $invoice->getCredits()[0]->getId());
+        $this->assertEquals(20.0, $invoice->getDiscountTotal());
     }
 
     public function testUtilityMethods(): void
