@@ -134,6 +134,10 @@ class Discount
      */
     public function setType(string $type): static
     {
+        if ($type !== self::TYPE_FIXED && $type !== self::TYPE_PERCENTAGE) {
+            throw new \InvalidArgumentException('Discount type must be TYPE_FIXED or TYPE_PERCENTAGE');
+        }
+
         $this->type = $type;
 
         return $this;
