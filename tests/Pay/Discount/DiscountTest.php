@@ -106,8 +106,8 @@ class DiscountTest extends TestCase
 
         // Assuming the implementation should handle negative amounts safely
         // Adjust based on the expected behavior in your application
-        $fixedDiscountAmount = max(0, $this->fixedDiscount->calculateDiscount($invoiceAmount));
-        $percentageDiscountAmount = max(0, $this->percentageDiscount->calculateDiscount($invoiceAmount));
+        $fixedDiscountAmount = $this->fixedDiscount->calculateDiscount($invoiceAmount);
+        $percentageDiscountAmount = $this->percentageDiscount->calculateDiscount($invoiceAmount);
 
         $this->assertEquals(0, $fixedDiscountAmount);
         $this->assertEquals(0, $percentageDiscountAmount);
