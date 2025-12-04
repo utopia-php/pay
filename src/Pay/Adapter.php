@@ -81,6 +81,39 @@ abstract class Adapter
     abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
 
     /**
+     * Authorize a payment (hold funds without capturing)
+     * Useful for scenarios where you need to ensure payment availability before providing service
+     *
+     * @param  int  $amount Amount to authorize
+     * @param  string  $customerId Customer ID
+     * @param  string|null  $paymentMethodId Payment method ID (optional)
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the authorization including authorization ID
+     */
+    abstract public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
+
+    /**
+     * Capture a previously authorized payment
+     * Completes the payment and transfers funds from customer
+     *
+     * @param  string  $paymentId The payment/authorization ID to capture
+     * @param  int|null  $amount Amount to capture (optional, defaults to full authorized amount)
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the capture
+     */
+    abstract public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array;
+
+    /**
+     * Cancel/void a payment authorization
+     * Releases the hold on funds without capturing
+     *
+     * @param  string  $paymentId The payment/authorization ID to cancel
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the cancellation
+     */
+    abstract public function cancelAuthorization(string $paymentId, array $additionalParams = []): array;
+
+    /**
      * Update a payment intent
      *
      * @param  string  $paymentId Payment intent ID
