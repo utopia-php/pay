@@ -4,6 +4,7 @@ namespace Utopia\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Adapter\Stripe;
+use Utopia\Pay\Address;
 use Utopia\Pay\Exception;
 
 class StripeTest extends TestCase
@@ -30,12 +31,13 @@ class StripeTest extends TestCase
      */
     public function testCreateCustomer(): array
     {
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
-        $this->assertNotEmpty($customer['id']);
-        $this->assertEquals($customer['name'], 'Test customer');
-        $this->assertEquals($customer['email'], 'testcustomer@email.com');
+        $address = new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati');
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', $address);
+        $this->assertNotEmpty($customer->getId());
+        $this->assertEquals('Test customer', $customer->getName());
+        $this->assertEquals('testcustomer@email.com', $customer->getEmail());
 
-        return ['customerId' => $customer['id']];
+        return ['customerId' => $customer->getId()];
     }
 
     /**
@@ -48,9 +50,9 @@ class StripeTest extends TestCase
     {
         $customerId = $data['customerId'];
         $customer = $this->stripe->getCustomer($customerId);
-        $this->assertNotEmpty($customer['id']);
-        $this->assertEquals($customer['name'], 'Test customer');
-        $this->assertEquals($customer['email'], 'testcustomer@email.com');
+        $this->assertNotEmpty($customer->getId());
+        $this->assertEquals('Test customer', $customer->getName());
+        $this->assertEquals('testcustomer@email.com', $customer->getEmail());
 
         return $data;
     }
@@ -65,9 +67,9 @@ class StripeTest extends TestCase
     {
         $customerId = $data['customerId'];
         $customer = $this->stripe->updateCustomer($customerId, 'Test Updated', 'testcustomerupdated@email.com');
-        $this->assertNotEmpty($customer['id']);
-        $this->assertEquals($customer['name'], 'Test Updated');
-        $this->assertEquals($customer['email'], 'testcustomerupdated@email.com');
+        $this->assertNotEmpty($customer->getId());
+        $this->assertEquals('Test Updated', $customer->getName());
+        $this->assertEquals('testcustomerupdated@email.com', $customer->getEmail());
 
         return $data;
     }
@@ -79,13 +81,12 @@ class StripeTest extends TestCase
      */
     public function testListCustomers(array $data): void
     {
-        $response = $this->stripe->listCustomers();
-        $this->assertIsArray($response['data']);
-        $this->assertNotEmpty($response['data']);
-        $customers = $response['data'];
-        $this->assertNotEmpty($customers[0]['id']);
-        $this->assertNotEmpty($customers[0]['name']);
-        $this->assertNotEmpty($customers[0]['email']);
+        $customers = $this->stripe->listCustomers();
+        $this->assertIsArray($customers);
+        $this->assertNotEmpty($customers);
+        $this->assertNotEmpty($customers[0]->getId());
+        $this->assertNotEmpty($customers[0]->getName());
+        $this->assertNotEmpty($customers[0]->getEmail());
     }
 
     /**
@@ -103,17 +104,16 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
+        $this->assertNotEmpty($pm->getId());
+        $this->assertTrue($pm->isCard());
 
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals(4242, $card['last4']);
+        $this->assertEquals('visa', $pm->getBrand());
+        $this->assertEquals('US', $pm->getCountry());
+        $this->assertEquals(2030, $pm->getExpiryYear());
+        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals('4242', $pm->getLast4());
 
-        $data['paymentMethodId'] = $pm['id'];
+        $data['paymentMethodId'] = $pm->getId();
 
         return $data;
     }
@@ -128,18 +128,18 @@ class StripeTest extends TestCase
     {
         $customerId = $data['customerId'];
         $pms = $this->stripe->listPaymentMethods($customerId);
-        $this->assertIsArray($pms['data']);
+        $this->assertIsArray($pms);
+        $this->assertNotEmpty($pms);
 
-        $pm = $pms['data'][0];
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
+        $pm = $pms[0];
+        $this->assertNotEmpty($pm->getId());
+        $this->assertTrue($pm->isCard());
 
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals(4242, $card['last4']);
+        $this->assertEquals('visa', $pm->getBrand());
+        $this->assertEquals('US', $pm->getCountry());
+        $this->assertEquals(2030, $pm->getExpiryYear());
+        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals('4242', $pm->getLast4());
 
         return $data;
     }
@@ -153,15 +153,14 @@ class StripeTest extends TestCase
         $customerId = $data['customerId'];
         $paymentMethodId = $data['paymentMethodId'];
         $pm = $this->stripe->getPaymentMethod($customerId, $paymentMethodId);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
+        $this->assertNotEmpty($pm->getId());
+        $this->assertTrue($pm->isCard());
 
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals(4242, $card['last4']);
+        $this->assertEquals('visa', $pm->getBrand());
+        $this->assertEquals('US', $pm->getCountry());
+        $this->assertEquals(2030, $pm->getExpiryYear());
+        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals('4242', $pm->getLast4());
 
         return $data;
     }
@@ -260,12 +259,11 @@ class StripeTest extends TestCase
             'exp_month' => 6,
             'exp_year' => 2031,
         ]);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
+        $this->assertNotEmpty($pm->getId());
+        $this->assertTrue($pm->isCard());
 
-        $card = $pm['card'];
-        $this->assertEquals(2031, $card['exp_year']);
-        $this->assertEquals(6, $card['exp_month']);
+        $this->assertEquals(2031, $pm->getExpiryYear());
+        $this->assertEquals(6, $pm->getExpiryMonth());
 
         return $data;
     }
@@ -282,12 +280,11 @@ class StripeTest extends TestCase
         $paymentMethodId = $data['paymentMethodId'];
         $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
 
-        $this->assertNotEmpty($purchase['id']);
-        $this->assertEquals(5000, $purchase['amount_received']);
-        $this->assertEquals('payment_intent', $purchase['object']);
-        $this->assertEquals('succeeded', $purchase['status']);
+        $this->assertNotEmpty($purchase->getId());
+        $this->assertEquals(5000, $purchase->getAmountReceived());
+        $this->assertTrue($purchase->isSucceeded());
 
-        $data['paymentId'] = $purchase['id'];
+        $data['paymentId'] = $purchase->getId();
 
         return $data;
     }
@@ -310,8 +307,8 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($failingPm['id']);
-        $failingPmId = $failingPm['id'];
+        $this->assertNotEmpty($failingPm->getId());
+        $failingPmId = $failingPm->getId();
 
         // Create a payment intent with the failing payment method
         $paymentIntentId = null;
@@ -326,23 +323,21 @@ class StripeTest extends TestCase
             $this->assertNotEmpty($paymentIntentId);
         }
 
-         // Create a succeeding payment method
-         $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
-             'number' => '4242424242424242', // Stripe test card: always succeeds
-             'exp_month' => 8,
-             'exp_year' => 2030,
-             'cvc' => 123,
-         ]);
-        $this->assertNotEmpty($succeedingPm['id']);
-        $succeedingPmId = $succeedingPm['id'];
+        // Create a succeeding payment method
+        $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
+            'number' => '4242424242424242', // Stripe test card: always succeeds
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $this->assertNotEmpty($succeedingPm->getId());
+        $succeedingPmId = $succeedingPm->getId();
 
         // Retry the payment intent with the succeeding payment method
         $result = $this->stripe->retryPurchase((string) $paymentIntentId, $succeedingPmId);
-        $this->assertNotEmpty($result['id']);
-        $this->assertEquals($paymentIntentId, $result['id']);
-        $this->assertEquals('payment_intent', $result['object']);
-        $this->assertArrayHasKey('status', $result);
-        $this->assertEquals('succeeded', $result['status']);
+        $this->assertNotEmpty($result->getId());
+        $this->assertEquals($paymentIntentId, $result->getId());
+        $this->assertTrue($result->isSucceeded());
 
         // Save for further tests if needed
         $data['paymentId'] = $paymentIntentId;
@@ -358,10 +353,9 @@ class StripeTest extends TestCase
     {
         $paymentId = $data['paymentId'];
         $payment = $this->stripe->getPayment($paymentId);
-        $this->assertNotEmpty($payment['id']);
-        $this->assertEquals(5000, $payment['amount_received']);
-        $this->assertEquals('payment_intent', $payment['object']);
-        $this->assertEquals('succeeded', $payment['status']);
+        $this->assertNotEmpty($payment->getId());
+        $this->assertEquals(5000, $payment->getAmountReceived());
+        $this->assertTrue($payment->isSucceeded());
 
         return $data;
     }
@@ -384,8 +378,8 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($failingPm['id']);
-        $failingPmId = $failingPm['id'];
+        $this->assertNotEmpty($failingPm->getId());
+        $failingPmId = $failingPm->getId();
 
         // Create a payment intent with the failing payment method
         $paymentIntentId = null;
@@ -407,17 +401,16 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($succeedingPm['id']);
-        $succeedingPmId = $succeedingPm['id'];
+        $this->assertNotEmpty($succeedingPm->getId());
+        $succeedingPmId = $succeedingPm->getId();
 
         // Update the payment intent with the new payment method and amount
         $newAmount = 6000;
         $updated = $this->stripe->updatePayment((string) $paymentIntentId, $succeedingPmId, $newAmount);
-        $this->assertNotEmpty($updated['id']);
-        $this->assertEquals($paymentIntentId, $updated['id']);
-        $this->assertEquals('payment_intent', $updated['object']);
-        $this->assertEquals($newAmount, $updated['amount']);
-        $this->assertEquals($succeedingPmId, $updated['payment_method']);
+        $this->assertNotEmpty($updated->getId());
+        $this->assertEquals($paymentIntentId, $updated->getId());
+        $this->assertEquals($newAmount, $updated->getAmount());
+        $this->assertEquals($succeedingPmId, $updated->getPaymentMethodId());
     }
 
     /**
@@ -427,11 +420,10 @@ class StripeTest extends TestCase
      */
     public function testRefund(array $data): void
     {
-        $purchase = $this->stripe->refund($data['paymentId'], 3000);
-        $this->assertNotEmpty($purchase['id']);
-        $this->assertEquals('refund', $purchase['object']);
-        $this->assertEquals('succeeded', $purchase['status']);
-        $this->assertEquals(3000, $purchase['amount']);
+        $refund = $this->stripe->refund($data['paymentId'], 3000);
+        $this->assertNotEmpty($refund->getId());
+        $this->assertTrue($refund->isSucceeded());
+        $this->assertEquals(3000, $refund->getAmount());
     }
 
     /**
@@ -464,21 +456,21 @@ class StripeTest extends TestCase
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deleteCustomer($customerId);
         $this->assertTrue($deleted);
-        $res = $this->stripe->getCustomer($customerId);
-        $this->assertTrue($res['deleted']);
+        $customer = $this->stripe->getCustomer($customerId);
+        $this->assertTrue($customer->isDeleted());
     }
 
     /**
      * Test list disputes
      *
-     * @param  array  $data
      * @return void
      */
     public function testListDisputes(): void
     {
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
-        $this->assertNotEmpty($customer['id']);
-        $customerId = $customer['id'];
+        $address = new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati');
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', $address);
+        $this->assertNotEmpty($customer->getId());
+        $customerId = $customer->getId();
 
         $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
             'number' => 4000000000000259,
@@ -486,27 +478,25 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
+        $this->assertNotEmpty($pm->getId());
+        $this->assertTrue($pm->isCard());
 
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals('0259', $card['last4']);
+        $this->assertEquals('visa', $pm->getBrand());
+        $this->assertEquals('US', $pm->getCountry());
+        $this->assertEquals(2030, $pm->getExpiryYear());
+        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals('0259', $pm->getLast4());
 
-        $paymentMethodId = $pm['id'];
+        $paymentMethodId = $pm->getId();
 
         $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
 
-        $this->assertNotEmpty($purchase['id']);
-        $this->assertEquals(5000, $purchase['amount_received']);
-        $this->assertEquals('payment_intent', $purchase['object']);
-        $this->assertEquals('succeeded', $purchase['status']);
+        $this->assertNotEmpty($purchase->getId());
+        $this->assertEquals(5000, $purchase->getAmountReceived());
+        $this->assertTrue($purchase->isSucceeded());
 
         // list disputes
-        $paymentIntentId = $purchase['id'];
+        $paymentIntentId = $purchase->getId();
 
         $disputes = $this->stripe->listDisputes(1);
         $this->assertIsArray($disputes);
@@ -526,10 +516,11 @@ class StripeTest extends TestCase
             $this->assertInstanceOf(Exception::class, $e);
         }
 
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
-        $this->assertNotEmpty($customer['id']);
+        $address = new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati');
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', $address);
+        $this->assertNotEmpty($customer->getId());
 
-        $customerId = $customer['id'];
+        $customerId = $customer->getId();
 
         // incorrect card number
         try {

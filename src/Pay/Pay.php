@@ -2,6 +2,11 @@
 
 namespace Utopia\Pay;
 
+use Utopia\Pay\Customer\Customer;
+use Utopia\Pay\Payment\Payment;
+use Utopia\Pay\PaymentMethod\PaymentMethod;
+use Utopia\Pay\Refund\Refund;
+
 class Pay
 {
     /**
@@ -73,15 +78,15 @@ class Pay
     /**
      * Purchase
      * Make a purchase request
-     * Returns payment ID on successfull payment
+     * Returns payment on successful payment
      *
-     * @param  int  $amount
-     * @param  string  $customerId
-     * @param  string|null  $paymentMethodId
-     * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
+     * @param  int  $amount  Amount in smallest currency unit
+     * @param  string  $customerId  Customer ID
+     * @param  string|null  $paymentMethodId  Payment method ID
+     * @param  array<string, mixed>  $additionalParams  Additional parameters
+     * @return Payment The payment result
      */
-    public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
+    public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): Payment
     {
         return $this->adapter->purchase($amount, $customerId, $paymentMethodId, $additionalParams);
     }
@@ -89,12 +94,12 @@ class Pay
     /**
      * Retry a purchase for a payment intent
      *
-     * @param  string  $paymentId The payment intent ID to retry
-     * @param  string|null  $paymentMethodId The payment method to use (optional)
-     * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
-     * @return array<mixed> The result of the retry attempt
+     * @param  string  $paymentId  The payment intent ID to retry
+     * @param  string|null  $paymentMethodId  The payment method to use (optional)
+     * @param  array<string, mixed>  $additionalParams  Additional parameters for the retry (optional)
+     * @return Payment The result of the retry attempt
      */
-    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
     {
         return $this->adapter->retryPurchase($paymentId, $paymentMethodId, $additionalParams);
     }
@@ -102,22 +107,24 @@ class Pay
     /**
      * Refund Payment
      *
-     * @param  string  $paymentId
-     * @param  int  $amount
-     * @return array<mixed>
+     * @param  string  $paymentId  The payment ID to refund
+     * @param  int|null  $amount  Amount to refund (null for full refund)
+     * @param  string|null  $reason  Reason for the refund
+     * @param  array<string, mixed>  $additionalParams  Additional parameters (supports Adapter::PARAM_IDEMPOTENCY_KEY)
+     * @return Refund The refund result
      */
-    public function refund(string $paymentId, int $amount): array
+    public function refund(string $paymentId, ?int $amount = null, ?string $reason = null, array $additionalParams = []): Refund
     {
-        return $this->adapter->refund($paymentId, $amount);
+        return $this->adapter->refund($paymentId, $amount, $reason, $additionalParams);
     }
 
     /**
      * Get a payment details
      *
-     * @param  string  $paymentId
-     * @return array<mixed>
+     * @param  string  $paymentId  The payment ID
+     * @return Payment The payment details
      */
-    public function getPayment(string $paymentId): array
+    public function getPayment(string $paymentId): Payment
     {
         return $this->adapter->getPayment($paymentId);
     }
@@ -125,14 +132,14 @@ class Pay
     /**
      * Update a payment intent
      *
-     * @param  string  $paymentId Payment intent ID
-     * @param  string|null  $paymentMethodId Payment method ID (optional)
-     * @param  int|null  $amount Amount to update (optional)
-     * @param  string|null  $currency Currency to update (optional)
-     * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the update
+     * @param  string  $paymentId  Payment intent ID
+     * @param  string|null  $paymentMethodId  Payment method ID (optional)
+     * @param  int|null  $amount  Amount to update (optional)
+     * @param  string|null  $currency  Currency to update (optional)
+     * @param  array<string, mixed>  $additionalParams  Additional parameters (optional)
+     * @return Payment Result of the update
      */
-    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): Payment
     {
         return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $additionalParams);
     }
@@ -140,8 +147,8 @@ class Pay
     /**
      * Delete Payment Method
      *
-     * @param  string  $paymentMethodId
-     * @return bool
+     * @param  string  $paymentMethodId  Payment method ID
+     * @return bool True if deleted successfully
      */
     public function deletePaymentMethod(string $paymentMethodId): bool
     {
@@ -151,12 +158,12 @@ class Pay
     /**
      * Create Payment Method
      *
-     * @param  string  $customerId
-     * @param  string  $type
-     * @param  array<mixed>  $details
-     * @return array<mixed>
+     * @param  string  $customerId  Customer ID
+     * @param  string  $type  Payment method type
+     * @param  array<string, mixed>  $details  Payment method details
+     * @return PaymentMethod The created payment method
      */
-    public function createPaymentMethod(string $customerId, string $type, array $details): array
+    public function createPaymentMethod(string $customerId, string $type, array $details): PaymentMethod
     {
         return $this->adapter->createPaymentMethod($customerId, $type, $details);
     }
@@ -164,15 +171,14 @@ class Pay
     /**
      * Update Payment Method Billing Details
      *
-     * @param  string  $paymentMethodId
-     * @param  string  $type
-     * @param  string  $name
-     * @param  string  $email
-     * @param  string  $phone
-     * @param  array<mixed>  $address
-     * @return array<mixed>
+     * @param  string  $paymentMethodId  Payment method ID
+     * @param  string|null  $name  Billing name
+     * @param  string|null  $email  Billing email
+     * @param  string|null  $phone  Billing phone
+     * @param  Address|null  $address  Billing address
+     * @return PaymentMethod The updated payment method
      */
-    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, string $name = null, string $email = null, string $phone = null, array $address = null): array
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, ?Address $address = null): PaymentMethod
     {
         return $this->adapter->updatePaymentMethodBillingDetails($paymentMethodId, $name, $email, $phone, $address);
     }
@@ -180,12 +186,12 @@ class Pay
     /**
      * Update Payment Method
      *
-     * @param  string  $paymentMethodId
-     * @param  string  $type
-     * @param  array<mixed>  $details
-     * @return array<mixed>
+     * @param  string  $paymentMethodId  Payment method ID
+     * @param  string  $type  Payment method type
+     * @param  array<string, mixed>  $details  Payment method details
+     * @return PaymentMethod The updated payment method
      */
-    public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
+    public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): PaymentMethod
     {
         return $this->adapter->updatePaymentMethod($paymentMethodId, $type, $details);
     }
@@ -193,11 +199,11 @@ class Pay
     /**
      * Get Payment Method
      *
-     * @param  string  $customerId
-     * @param  string  $paymentMethodId
-     * @return array<mixed>
+     * @param  string  $customerId  Customer ID
+     * @param  string  $paymentMethodId  Payment method ID
+     * @return PaymentMethod The payment method details
      */
-    public function getPaymentMethod(string $customerId, string $paymentMethodId): array
+    public function getPaymentMethod(string $customerId, string $paymentMethodId): PaymentMethod
     {
         return $this->adapter->getPaymentMethod($customerId, $paymentMethodId);
     }
@@ -205,8 +211,8 @@ class Pay
     /**
      * List Payment Methods
      *
-     * @param  string  $customerId
-     * @return array<mixed>
+     * @param  string  $customerId  Customer ID
+     * @return array<PaymentMethod> List of payment methods
      */
     public function listPaymentMethods(string $customerId): array
     {
@@ -216,7 +222,7 @@ class Pay
     /**
      * List Customers
      *
-     * @return array<mixed>
+     * @return array<Customer> List of customers
      */
     public function listCustomers(): array
     {
@@ -229,13 +235,13 @@ class Pay
      * Add new customer in the gateway database
      * returns the details of the newly created customer
      *
-     * @param  string  $name
-     * @param  string  $email
-     * @param  array<mixed>  $address
-     * @param  string|null  $paymentMethod
-     * @return array<mixed>
+     * @param  string  $name  Customer name
+     * @param  string  $email  Customer email
+     * @param  Address|null  $address  Customer address
+     * @param  string|null  $paymentMethod  Default payment method ID
+     * @return Customer The created customer
      */
-    public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer
     {
         return $this->adapter->createCustomer($name, $email, $address, $paymentMethod);
     }
@@ -243,10 +249,10 @@ class Pay
     /**
      * Get Customer
      *
-     * @param  string  $customerId
-     * @return array<mixed>
+     * @param  string  $customerId  Customer ID
+     * @return Customer The customer details
      */
-    public function getCustomer(string $customerId): array
+    public function getCustomer(string $customerId): Customer
     {
         return $this->adapter->getCustomer($customerId);
     }
@@ -254,14 +260,14 @@ class Pay
     /**
      * Update Customer
      *
-     * @param  string  $customerId
-     * @param  string  $name
-     * @param  string  $email
-     * @param  string  $paymentMethod
-     * @param  Address  $address
-     * @return array<mixed>
+     * @param  string  $customerId  Customer ID
+     * @param  string  $name  Customer name
+     * @param  string  $email  Customer email
+     * @param  Address|null  $address  Customer address
+     * @param  string|null  $paymentMethod  Default payment method ID
+     * @return Customer The updated customer
      */
-    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, ?string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, ?string $paymentMethod = null): Customer
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
@@ -269,8 +275,8 @@ class Pay
     /**
      * Delete Customer
      *
-     * @param  string  $customerId
-     * @return bool
+     * @param  string  $customerId  Customer ID
+     * @return bool True if deleted successfully
      */
     public function deleteCustomer(string $customerId): bool
     {
@@ -280,12 +286,12 @@ class Pay
     /**
      * Create Setup for accepting future payments
      *
-     * @param  string  $customerId
-     * @param  string|null  $paymentMethod
-     * @param  array<mixed>  $paymentMethodTypes
-     * @param  array<mixed>  $paymentMethodOptions
-     * @param  string  $paymentMethodConfiguration
-     * @return array<mixed>
+     * @param  string  $customerId  Customer ID
+     * @param  string|null  $paymentMethod  Payment method ID
+     * @param  array<string>  $paymentMethodTypes  Allowed payment method types
+     * @param  array<string, mixed>  $paymentMethodOptions  Payment method options
+     * @param  string|null  $paymentMethodConfiguration  Payment method configuration ID
+     * @return array<string, mixed> Setup intent data
      */
     public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
@@ -295,8 +301,8 @@ class Pay
     /**
      * Get future payment
      *
-     * @param  string  $id
-     * @return array<mixed>
+     * @param  string  $id  Setup intent ID
+     * @return array<string, mixed> Setup intent data
      */
     public function getFuturePayment(string $id): array
     {
@@ -306,12 +312,12 @@ class Pay
     /**
      * Update Future payment
      *
-     * @param  string  $id
-     * @param  string|null  $customerId
-     * @param  string|null  $paymentMethod
-     * @param  array<mixed>  $paymentMethodOptions
-     * @param  string|null  $paymentMethodConfiguration
-     * @return array<mixed>
+     * @param  string  $id  Setup intent ID
+     * @param  string|null  $customerId  Customer ID
+     * @param  string|null  $paymentMethod  Payment method ID
+     * @param  array<string, mixed>  $paymentMethodOptions  Payment method options
+     * @param  string|null  $paymentMethodConfiguration  Payment method configuration ID
+     * @return array<string, mixed> Updated setup intent data
      */
     public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
     {
@@ -321,9 +327,9 @@ class Pay
     /**
      * List future payment
      *
-     * @param  string|null  $customerId
-     * @param  string|null  $paymentMethodId
-     * @return array<mixed>
+     * @param  string|null  $customerId  Customer ID
+     * @param  string|null  $paymentMethodId  Payment method ID
+     * @return array<array<string, mixed>> List of setup intents
      */
     public function listFuturePayment(?string $customerId, ?string $paymentMethodId = null): array
     {
@@ -333,8 +339,8 @@ class Pay
     /**
      * Get mandate
      *
-     * @param  string  $id
-     * @return array<mixed>
+     * @param  string  $id  Mandate ID
+     * @return array<string, mixed> Mandate data
      */
     public function getMandate(string $id): array
     {
@@ -344,11 +350,11 @@ class Pay
     /**
      * List disputes
      *
-     * @param  int|null  $limit
-     * @param  string|null  $paymentIntentId
-     * @param  string|null  $chargeId
-     * @param  int|null  $createdAfter
-     * @return array
+     * @param  int|null  $limit  Maximum number of disputes to return
+     * @param  string|null  $paymentIntentId  Filter by payment intent ID
+     * @param  string|null  $chargeId  Filter by charge ID
+     * @param  int|null  $createdAfter  Filter by creation timestamp
+     * @return array<array<string, mixed>> List of disputes
      */
     public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
     {
