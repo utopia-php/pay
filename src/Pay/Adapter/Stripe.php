@@ -456,6 +456,8 @@ class Stripe extends Adapter
             throw new Exception($type, $message, $code, $error);
         }
 
-        throw new Exception($response, $code);
+        // Handle string or null responses
+        $message = is_string($response) ? $response : 'Unknown error';
+        throw new Exception(Exception::GENERAL_UNKNOWN, $message, $code);
     }
 }
