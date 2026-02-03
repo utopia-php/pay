@@ -28,6 +28,12 @@ abstract class Adapter
     protected const METHOD_TRACE = 'TRACE';
 
     /**
+     * Parameter key for idempotency key in additionalParams.
+     * Use this to prevent duplicate operations when retrying requests.
+     */
+    public const PARAM_IDEMPOTENCY_KEY = 'idempotency_key';
+
+    /**
      * @var bool
      */
     protected bool $testMode;
@@ -113,9 +119,10 @@ abstract class Adapter
      * @param  string  $paymentId  The payment ID to refund
      * @param  int|null  $amount  Amount to refund (null for full refund)
      * @param  string|null  $reason  Reason for the refund
+     * @param  array<string, mixed>  $additionalParams  Additional parameters (optional, supports PARAM_IDEMPOTENCY_KEY)
      * @return Refund The refund result
      */
-    abstract public function refund(string $paymentId, int $amount = null, string $reason = null): Refund;
+    abstract public function refund(string $paymentId, int $amount = null, string $reason = null, array $additionalParams = []): Refund;
 
     /**
      * Get a payment details

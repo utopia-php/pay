@@ -110,11 +110,12 @@ class Pay
      * @param  string  $paymentId  The payment ID to refund
      * @param  int|null  $amount  Amount to refund (null for full refund)
      * @param  string|null  $reason  Reason for the refund
+     * @param  array<string, mixed>  $additionalParams  Additional parameters (supports Adapter::PARAM_IDEMPOTENCY_KEY)
      * @return Refund The refund result
      */
-    public function refund(string $paymentId, ?int $amount = null, ?string $reason = null): Refund
+    public function refund(string $paymentId, ?int $amount = null, ?string $reason = null, array $additionalParams = []): Refund
     {
-        return $this->adapter->refund($paymentId, $amount, $reason);
+        return $this->adapter->refund($paymentId, $amount, $reason, $additionalParams);
     }
 
     /**

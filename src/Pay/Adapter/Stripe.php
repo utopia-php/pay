@@ -45,8 +45,15 @@ class Stripe extends Adapter
             'confirm' => 'true',
         ];
 
+        // Extract idempotency key if provided
+        $headers = [];
+        if (isset($additionalParams[parent::PARAM_IDEMPOTENCY_KEY])) {
+            $headers['Idempotency-Key'] = (string) $additionalParams[parent::PARAM_IDEMPOTENCY_KEY];
+            unset($additionalParams[parent::PARAM_IDEMPOTENCY_KEY]);
+        }
+
         $requestBody = array_merge($requestBody, $additionalParams);
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody, $headers);
 
         return Payment::fromArray($result);
     }
@@ -78,7 +85,7 @@ class Stripe extends Adapter
     /**
      * Refund payment
      */
-    public function refund(string $paymentId, int $amount = null, string $reason = null): Refund
+    public function refund(string $paymentId, int $amount = null, string $reason = null, array $additionalParams = []): Refund
     {
         $path = '/refunds';
         $requestBody = ['payment_intent' => $paymentId];
@@ -90,7 +97,15 @@ class Stripe extends Adapter
             $requestBody['reason'] = $reason;
         }
 
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        // Extract idempotency key if provided
+        $headers = [];
+        if (isset($additionalParams[parent::PARAM_IDEMPOTENCY_KEY])) {
+            $headers['Idempotency-Key'] = (string) $additionalParams[parent::PARAM_IDEMPOTENCY_KEY];
+            unset($additionalParams[parent::PARAM_IDEMPOTENCY_KEY]);
+        }
+
+        $requestBody = array_merge($requestBody, $additionalParams);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody, $headers);
 
         return Refund::fromArray($result);
     }

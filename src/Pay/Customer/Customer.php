@@ -23,6 +23,7 @@ class Customer
      * @param  string|null  $defaultPaymentMethod  Default payment method ID
      * @param  array<string, mixed>  $metadata  Additional metadata
      * @param  int|null  $createdAt  Unix timestamp when customer was created
+     * @param  bool  $deleted  Whether the customer has been deleted
      */
     public function __construct(
         private string $id,
@@ -32,7 +33,8 @@ class Customer
         private ?string $phone = null,
         private ?string $defaultPaymentMethod = null,
         private array $metadata = [],
-        private ?int $createdAt = null
+        private ?int $createdAt = null,
+        private bool $deleted = false
     ) {
         $this->createdAt = $createdAt ?? time();
     }
@@ -242,6 +244,29 @@ class Customer
     }
 
     /**
+     * Check if the customer has been deleted.
+     *
+     * @return bool True if customer is deleted
+     */
+    public function isDeleted(): bool
+    {
+        return $this->deleted;
+    }
+
+    /**
+     * Set the deleted status.
+     *
+     * @param  bool  $deleted  Whether the customer is deleted
+     * @return static
+     */
+    public function setDeleted(bool $deleted): static
+    {
+        $this->deleted = $deleted;
+
+        return $this;
+    }
+
+    /**
      * Convert the customer to an array representation.
      *
      * @return array<string, mixed> The customer data as an array
@@ -257,6 +282,7 @@ class Customer
             'defaultPaymentMethod' => $this->defaultPaymentMethod,
             'metadata' => $this->metadata,
             'createdAt' => $this->createdAt,
+            'deleted' => $this->deleted,
         ];
     }
 
@@ -281,7 +307,8 @@ class Customer
             phone: $data['phone'] ?? null,
             defaultPaymentMethod: $data['defaultPaymentMethod'] ?? $data['default_payment_method'] ?? null,
             metadata: $data['metadata'] ?? [],
-            createdAt: $data['createdAt'] ?? $data['created'] ?? null
+            createdAt: $data['createdAt'] ?? $data['created'] ?? null,
+            deleted: $data['deleted'] ?? false
         );
     }
 }
