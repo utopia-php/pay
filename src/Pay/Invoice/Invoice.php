@@ -9,29 +9,22 @@ use Utopia\Pay\Discount\Discount;
  * Invoice class for managing payment invoices.
  *
  * This class handles invoice creation, status management, discount and credit application,
- * and invoice finalization with tax calculations.
+ * and invoice finalization with tax calculations. Designed to be extended for application-specific
+ * invoice implementations.
  */
 class Invoice
 {
+    // ==================== STATUS CONSTANTS ====================
+
     /**
-     * Invoice is pending and not yet processed.
+     * Invoice is in draft state, amounts can still be adjusted.
      */
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_DRAFT = 'draft';
 
     /**
      * Invoice is due and awaiting payment.
      */
     public const STATUS_DUE = 'due';
-
-    /**
-     * Invoice has been refunded.
-     */
-    public const STATUS_REFUNDED = 'refunded';
-
-    /**
-     * Invoice has been cancelled (e.g., below minimum amount).
-     */
-    public const STATUS_CANCELLED = 'cancelled';
 
     /**
      * Invoice payment succeeded.
@@ -47,6 +40,100 @@ class Invoice
      * Invoice payment failed.
      */
     public const STATUS_FAILED = 'failed';
+
+    /**
+     * Invoice has been refunded.
+     */
+    public const STATUS_REFUNDED = 'refunded';
+
+    /**
+     * Invoice has been cancelled (e.g., below minimum amount).
+     */
+    public const STATUS_CANCELLED = 'cancelled';
+
+    /**
+     * Invoice requires 3D Secure or other authentication.
+     */
+    public const STATUS_REQUIRES_AUTH = 'requires_authentication';
+
+    /**
+     * Invoice was abandoned (e.g., associated entity not found).
+     */
+    public const STATUS_ABANDONED = 'abandoned';
+
+    /**
+     * Invoice payment is disputed.
+     */
+    public const STATUS_DISPUTED = 'disputed';
+
+    // ==================== INVOICE TYPES ====================
+
+    /**
+     * Recurring subscription invoice.
+     */
+    public const TYPE_SUBSCRIPTION = 'subscription';
+
+    /**
+     * One-time payment invoice.
+     */
+    public const TYPE_ONE_TIME = 'one_time';
+
+    /**
+     * Custom invoice type.
+     */
+    public const TYPE_CUSTOM = 'custom';
+
+    // ==================== STATE MACHINE ====================
+
+    /**
+     * Valid state transitions.
+     * Key: current state, Value: array of allowed next states.
+     * Can be overridden by extending classes to add more transitions.
+     */
+    protected const TRANSITIONS = [
+        self::STATUS_DRAFT => [self::STATUS_DUE, self::STATUS_SUCCEEDED, self::STATUS_CANCELLED],
+        self::STATUS_DUE => [self::STATUS_PROCESSING, self::STATUS_SUCCEEDED, self::STATUS_CANCELLED, self::STATUS_FAILED],
+        self::STATUS_PROCESSING => [self::STATUS_SUCCEEDED, self::STATUS_FAILED, self::STATUS_REQUIRES_AUTH],
+        self::STATUS_FAILED => [self::STATUS_DUE, self::STATUS_PROCESSING, self::STATUS_ABANDONED, self::STATUS_CANCELLED],
+        self::STATUS_REQUIRES_AUTH => [self::STATUS_SUCCEEDED, self::STATUS_FAILED],
+        self::STATUS_SUCCEEDED => [self::STATUS_DISPUTED, self::STATUS_REFUNDED],
+        self::STATUS_DISPUTED => [],
+        self::STATUS_CANCELLED => [],
+        self::STATUS_ABANDONED => [],
+        self::STATUS_REFUNDED => [],
+    ];
+
+    // ==================== PROPERTIES ====================
+
+    // Core invoice properties (protected for inheritance)
+    protected string $id;
+    protected float $amount;
+    protected string $status = self::STATUS_DRAFT;
+    protected string $currency = 'USD';
+    protected array $discounts = [];
+    protected array $credits = [];
+    protected array $address = [];
+    protected float $grossAmount = 0;
+    protected float $taxAmount = 0;
+    protected float $vatAmount = 0;
+    protected float $creditsUsed = 0;
+    protected array $creditsIds = [];
+    protected float $discountTotal = 0;
+
+    // Invoice type and period
+    protected string $type = self::TYPE_SUBSCRIPTION;
+    protected ?string $from = null;
+    protected ?string $to = null;
+    protected ?string $dueAt = null;
+    protected ?string $issuedAt = null;
+    protected ?string $paidAt = null;
+
+    // Payment tracking
+    protected ?string $paymentId = null;
+    protected ?string $clientSecret = null;
+    protected ?string $lastError = null;
+    protected int $attempts = 0;
+    protected ?string $nextAttemptAt = null;
 
     /**
      * Create a new Invoice instance.
@@ -66,23 +153,37 @@ class Invoice
      * @param  float  $discountTotal  Total discount amount applied to this invoice
      */
     public function __construct(
-        private string $id,
-        private float $amount,
-        private string $status = self::STATUS_PENDING,
-        private string $currency = 'USD',
-        private array $discounts = [],
-        private array $credits = [],
-        private array $address = [],
-        private float $grossAmount = 0,
-        private float $taxAmount = 0,
-        private float $vatAmount = 0,
-        private float $creditsUsed = 0,
-        private array $creditsIds = [],
-        private float $discountTotal = 0,
+        string $id,
+        float $amount,
+        string $status = self::STATUS_DRAFT,
+        string $currency = 'USD',
+        array $discounts = [],
+        array $credits = [],
+        array $address = [],
+        float $grossAmount = 0,
+        float $taxAmount = 0,
+        float $vatAmount = 0,
+        float $creditsUsed = 0,
+        array $creditsIds = [],
+        float $discountTotal = 0,
     ) {
+        $this->id = $id;
+        $this->amount = $amount;
+        $this->status = $status;
+        $this->currency = $currency;
+        $this->address = $address;
+        $this->grossAmount = $grossAmount;
+        $this->taxAmount = $taxAmount;
+        $this->vatAmount = $vatAmount;
+        $this->creditsUsed = $creditsUsed;
+        $this->creditsIds = $creditsIds;
+        $this->discountTotal = $discountTotal;
+
         $this->setDiscounts($discounts);
         $this->setCredits($credits);
     }
+
+    // ==================== CORE GETTERS ====================
 
     /**
      * Get the invoice ID.
@@ -125,16 +226,6 @@ class Invoice
     }
 
     /**
-     * Mark invoice as paid (alias for markAsSucceeded).
-     *
-     * @return static
-     */
-    public function markAsPaid(): static
-    {
-        return $this->markAsSucceeded();
-    }
-
-    /**
      * Get the gross amount (final amount after all calculations).
      *
      * @return float The gross amount
@@ -142,19 +233,6 @@ class Invoice
     public function getGrossAmount(): float
     {
         return $this->grossAmount;
-    }
-
-    /**
-     * Set the gross amount.
-     *
-     * @param  float  $grossAmount  The gross amount to set
-     * @return static
-     */
-    public function setGrossAmount(float $grossAmount): static
-    {
-        $this->grossAmount = $grossAmount;
-
-        return $this;
     }
 
     /**
@@ -168,19 +246,6 @@ class Invoice
     }
 
     /**
-     * Set the tax amount to add to the invoice.
-     *
-     * @param  float  $taxAmount  The tax amount
-     * @return static
-     */
-    public function setTaxAmount(float $taxAmount): static
-    {
-        $this->taxAmount = $taxAmount;
-
-        return $this;
-    }
-
-    /**
      * Get the VAT amount.
      *
      * @return float The VAT amount
@@ -188,19 +253,6 @@ class Invoice
     public function getVatAmount(): float
     {
         return $this->vatAmount;
-    }
-
-    /**
-     * Set the VAT amount to add to the invoice.
-     *
-     * @param  float  $vatAmount  The VAT amount
-     * @return static
-     */
-    public function setVatAmount(float $vatAmount): static
-    {
-        $this->vatAmount = $vatAmount;
-
-        return $this;
     }
 
     /**
@@ -214,19 +266,6 @@ class Invoice
     }
 
     /**
-     * Set the billing address.
-     *
-     * @param  array  $address  The address information
-     * @return static
-     */
-    public function setAddress(array $address): static
-    {
-        $this->address = $address;
-
-        return $this;
-    }
-
-    /**
      * Get all discounts attached to this invoice.
      *
      * @return Discount[] Array of Discount objects
@@ -237,25 +276,346 @@ class Invoice
     }
 
     /**
-     * Set the discounts for this invoice.
+     * Get the total amount of credits used on this invoice.
      *
-     * Accepts either Discount objects or arrays that will be converted to Discount objects.
+     * @return float The total credits used
+     */
+    public function getCreditsUsed(): float
+    {
+        return $this->creditsUsed;
+    }
+
+    /**
+     * Get the IDs of credits that were applied to this invoice.
+     *
+     * @return string[] Array of credit IDs
+     */
+    public function getCreditInternalIds(): array
+    {
+        return $this->creditsIds;
+    }
+
+    /**
+     * Get the total discount amount that was applied.
+     *
+     * @return float The total discount amount applied
+     */
+    public function getDiscountTotal(): float
+    {
+        return $this->discountTotal;
+    }
+
+    /**
+     * Get all credits attached to this invoice.
+     *
+     * @return Credit[] Array of Credit objects
+     */
+    public function getCredits(): array
+    {
+        return $this->credits;
+    }
+
+    // ==================== TYPE AND PERIOD ====================
+
+    /**
+     * Get the invoice type.
+     *
+     * @return string The invoice type (one of TYPE_* constants)
+     */
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * Set the invoice type.
+     *
+     * @param  string  $type  The invoice type
+     * @return static
+     */
+    public function setType(string $type): static
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * Get the period start date.
+     *
+     * @return string|null The period start date
+     */
+    public function getFrom(): ?string
+    {
+        return $this->from;
+    }
+
+    /**
+     * Get the period end date.
+     *
+     * @return string|null The period end date
+     */
+    public function getTo(): ?string
+    {
+        return $this->to;
+    }
+
+    /**
+     * Get the due date.
+     *
+     * @return string|null The due date
+     */
+    public function getDueAt(): ?string
+    {
+        return $this->dueAt;
+    }
+
+    /**
+     * Set the invoice period.
+     *
+     * @param  string  $from  Period start date
+     * @param  string  $to  Period end date
+     * @return static
+     */
+    public function setPeriod(string $from, string $to): static
+    {
+        $this->from = $from;
+        $this->to = $to;
+        return $this;
+    }
+
+    /**
+     * Set the due date.
+     *
+     * @param  string  $dueAt  The due date
+     * @return static
+     */
+    public function setDueAt(string $dueAt): static
+    {
+        $this->dueAt = $dueAt;
+        return $this;
+    }
+
+    /**
+     * Get the issued date.
+     *
+     * @return string|null The issued date
+     */
+    public function getIssuedAt(): ?string
+    {
+        return $this->issuedAt;
+    }
+
+    /**
+     * Set the issued date.
+     *
+     * @param  string|null  $issuedAt  The issued date
+     * @return static
+     */
+    protected function setIssuedAt(?string $issuedAt): static
+    {
+        $this->issuedAt = $issuedAt;
+        return $this;
+    }
+
+    /**
+     * Get the paid date.
+     *
+     * @return string|null The paid date
+     */
+    public function getPaidAt(): ?string
+    {
+        return $this->paidAt;
+    }
+
+    /**
+     * Set the paid date.
+     *
+     * @param  string|null  $paidAt  The paid date
+     * @return static
+     */
+    protected function setPaidAt(?string $paidAt): static
+    {
+        $this->paidAt = $paidAt;
+        return $this;
+    }
+
+    // ==================== PAYMENT TRACKING ====================
+
+    /**
+     * Get the payment ID.
+     *
+     * @return string|null The payment ID
+     */
+    public function getPaymentId(): ?string
+    {
+        return $this->paymentId;
+    }
+
+    /**
+     * Set the payment ID.
+     *
+     * @param  string|null  $paymentId  The payment ID
+     * @return static
+     */
+    public function setPaymentId(?string $paymentId): static
+    {
+        $this->paymentId = $paymentId;
+        return $this;
+    }
+
+    /**
+     * Get the client secret for authentication.
+     *
+     * @return string|null The client secret
+     */
+    public function getClientSecret(): ?string
+    {
+        return $this->clientSecret;
+    }
+
+    /**
+     * Set the client secret for authentication.
+     *
+     * @param  string|null  $clientSecret  The client secret
+     * @return static
+     */
+    public function setClientSecret(?string $clientSecret): static
+    {
+        $this->clientSecret = $clientSecret;
+        return $this;
+    }
+
+    /**
+     * Get the last error message.
+     *
+     * @return string|null The last error message
+     */
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
+
+    /**
+     * Set the last error message.
+     *
+     * @param  string|null  $lastError  The error message
+     * @return static
+     */
+    public function setLastError(?string $lastError): static
+    {
+        $this->lastError = $lastError;
+        return $this;
+    }
+
+    /**
+     * Get the number of payment attempts.
+     *
+     * @return int The number of attempts
+     */
+    public function getAttempts(): int
+    {
+        return $this->attempts;
+    }
+
+    /**
+     * Set the number of payment attempts.
+     *
+     * @param  int  $attempts  The number of attempts
+     * @return static
+     */
+    public function setAttempts(int $attempts): static
+    {
+        $this->attempts = $attempts;
+        return $this;
+    }
+
+    /**
+     * Get the next retry attempt date.
+     *
+     * @return string|null The next attempt date
+     */
+    public function getNextAttemptAt(): ?string
+    {
+        return $this->nextAttemptAt;
+    }
+
+    /**
+     * Set the next retry attempt date.
+     *
+     * @param  string|null  $nextAttemptAt  The next attempt date
+     * @return static
+     */
+    public function setNextAttemptAt(?string $nextAttemptAt): static
+    {
+        $this->nextAttemptAt = $nextAttemptAt;
+        return $this;
+    }
+
+    // ==================== CORE SETTERS ====================
+
+    /**
+     * Set the gross amount.
+     *
+     * @param  float  $grossAmount  The gross amount to set
+     * @return static
+     */
+    public function setGrossAmount(float $grossAmount): static
+    {
+        $this->grossAmount = $grossAmount;
+        return $this;
+    }
+
+    /**
+     * Set the tax amount to add to the invoice.
+     *
+     * @param  float  $taxAmount  The tax amount
+     * @return static
+     */
+    public function setTaxAmount(float $taxAmount): static
+    {
+        $this->taxAmount = $taxAmount;
+        return $this;
+    }
+
+    /**
+     * Set the VAT amount to add to the invoice.
+     *
+     * @param  float  $vatAmount  The VAT amount
+     * @return static
+     */
+    public function setVatAmount(float $vatAmount): static
+    {
+        $this->vatAmount = $vatAmount;
+        return $this;
+    }
+
+    /**
+     * Set the billing address.
+     *
+     * @param  array  $address  The address information
+     * @return static
+     */
+    public function setAddress(array $address): static
+    {
+        $this->address = $address;
+        return $this;
+    }
+
+    /**
+     * Set the discounts for this invoice.
      *
      * @param  array  $discounts  Array of Discount objects or arrays
      * @return static
-     *
      * @throws \InvalidArgumentException If invalid discount format is provided
      */
     public function setDiscounts(array $discounts): static
     {
-        // Handle both arrays of Discount objects and arrays of arrays
         if (is_array($discounts)) {
             $discountObjects = [];
             foreach ($discounts as $discount) {
                 if ($discount instanceof Discount) {
                     $discountObjects[] = $discount;
                 } elseif (is_array($discount)) {
-                    // Convert array to Discount object using fromArray for backward compatibility
                     $discountObjects[] = Discount::fromArray($discount);
                 } else {
                     throw new \InvalidArgumentException('Discount must be either a Discount object or an array');
@@ -278,18 +638,7 @@ class Invoice
     public function addDiscount(Discount $discount): static
     {
         $this->discounts[] = $discount;
-
         return $this;
-    }
-
-    /**
-     * Get the total amount of credits used on this invoice.
-     *
-     * @return float The total credits used
-     */
-    public function getCreditsUsed(): float
-    {
-        return $this->creditsUsed;
     }
 
     /**
@@ -301,18 +650,7 @@ class Invoice
     public function setCreditsUsed(float $creditsUsed): static
     {
         $this->creditsUsed = $creditsUsed;
-
         return $this;
-    }
-
-    /**
-     * Get the IDs of credits that were applied to this invoice.
-     *
-     * @return string[] Array of credit IDs
-     */
-    public function getCreditInternalIds(): array
-    {
-        return $this->creditsIds;
     }
 
     /**
@@ -324,7 +662,6 @@ class Invoice
     public function setCreditInternalIds(array $creditsIds): static
     {
         $this->creditsIds = $creditsIds;
-
         return $this;
     }
 
@@ -337,8 +674,67 @@ class Invoice
     public function setStatus(string $status): static
     {
         $this->status = $status;
+        return $this;
+    }
+
+    /**
+     * Set the total discount amount applied.
+     *
+     * @param  float  $discountTotal  The total discount amount
+     * @return static
+     */
+    public function setDiscountTotal(float $discountTotal): static
+    {
+        $this->discountTotal = $discountTotal;
+        return $this;
+    }
+
+    /**
+     * Set the credits for this invoice.
+     *
+     * @param  array  $credits  Array of Credit objects or arrays
+     * @return static
+     * @throws \InvalidArgumentException If invalid credit format is provided
+     */
+    public function setCredits(array $credits): static
+    {
+        $creditObjects = [];
+        foreach ($credits as $credit) {
+            if ($credit instanceof Credit) {
+                $creditObjects[] = $credit;
+            } elseif (is_array($credit)) {
+                $creditObjects[] = Credit::fromArray($credit);
+            } else {
+                throw new \InvalidArgumentException('All items in credits array must be Credit objects or arrays with id and credits keys');
+            }
+        }
+        $this->credits = $creditObjects;
 
         return $this;
+    }
+
+    /**
+     * Add a credit to the invoice.
+     *
+     * @param  Credit  $credit  The credit to add
+     * @return static
+     */
+    public function addCredit(Credit $credit): static
+    {
+        $this->credits[] = $credit;
+        return $this;
+    }
+
+    // ==================== STATUS METHODS ====================
+
+    /**
+     * Mark invoice as paid (alias for markAsSucceeded).
+     *
+     * @return static
+     */
+    public function markAsPaid(): static
+    {
+        return $this->markAsSucceeded();
     }
 
     /**
@@ -349,7 +745,6 @@ class Invoice
     public function markAsDue(): static
     {
         $this->status = self::STATUS_DUE;
-
         return $this;
     }
 
@@ -361,7 +756,6 @@ class Invoice
     public function markAsSucceeded(): static
     {
         $this->status = self::STATUS_SUCCEEDED;
-
         return $this;
     }
 
@@ -373,8 +767,166 @@ class Invoice
     public function markAsCancelled(): static
     {
         $this->status = self::STATUS_CANCELLED;
-
         return $this;
+    }
+
+    /**
+     * Begin payment processing.
+     *
+     * @return static
+     */
+    public function beginPayment(): static
+    {
+        $this->status = self::STATUS_PROCESSING;
+        return $this;
+    }
+
+    /**
+     * Record successful payment.
+     *
+     * @param  string|null  $paymentId  The payment ID
+     * @return static
+     */
+    public function recordPayment(?string $paymentId = null): static
+    {
+        $this->status = self::STATUS_SUCCEEDED;
+        $this->paymentId = $paymentId;
+        $this->lastError = null;
+        $this->paidAt = date('Y-m-d H:i:s');
+        return $this;
+    }
+
+    /**
+     * Record payment failure.
+     *
+     * @param  string  $error  The error message
+     * @return static
+     */
+    public function recordFailure(string $error): static
+    {
+        $this->status = self::STATUS_FAILED;
+        $this->lastError = $error;
+        $this->attempts++;
+        return $this;
+    }
+
+    /**
+     * Mark as requiring authentication (e.g., 3D Secure).
+     *
+     * @param  string  $clientSecret  The client secret for authentication
+     * @return static
+     */
+    public function requireAuthentication(string $clientSecret): static
+    {
+        $this->status = self::STATUS_REQUIRES_AUTH;
+        $this->clientSecret = $clientSecret;
+        return $this;
+    }
+
+    /**
+     * Mark as abandoned.
+     *
+     * @param  string  $error  The error message
+     * @return static
+     */
+    public function markAsAbandoned(string $error = 'Not found'): static
+    {
+        $this->status = self::STATUS_ABANDONED;
+        $this->lastError = $error;
+        return $this;
+    }
+
+    /**
+     * Mark as disputed.
+     *
+     * @return static
+     */
+    public function markAsDisputed(): static
+    {
+        $this->status = self::STATUS_DISPUTED;
+        return $this;
+    }
+
+    /**
+     * Mark as refunded.
+     *
+     * @return static
+     */
+    public function markAsRefunded(): static
+    {
+        $this->status = self::STATUS_REFUNDED;
+        return $this;
+    }
+
+    // ==================== STATUS CHECKS ====================
+
+    /**
+     * Check if invoice is paid.
+     *
+     * @return bool
+     */
+    public function isPaid(): bool
+    {
+        return $this->status === self::STATUS_SUCCEEDED;
+    }
+
+    /**
+     * Check if invoice payment failed.
+     *
+     * @return bool
+     */
+    public function isFailed(): bool
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
+    /**
+     * Check if invoice is being processed.
+     *
+     * @return bool
+     */
+    public function isProcessing(): bool
+    {
+        return $this->status === self::STATUS_PROCESSING;
+    }
+
+    /**
+     * Check if invoice requires payment.
+     *
+     * @return bool
+     */
+    public function requiresPayment(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_DUE,
+            self::STATUS_FAILED,
+            self::STATUS_REQUIRES_AUTH,
+        ], true);
+    }
+
+    /**
+     * Check if invoice is in a terminal (final) state.
+     *
+     * @return bool
+     */
+    public function isTerminal(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_SUCCEEDED,
+            self::STATUS_CANCELLED,
+            self::STATUS_ABANDONED,
+            self::STATUS_REFUNDED,
+        ], true);
+    }
+
+    /**
+     * Check if invoice requires authentication.
+     *
+     * @return bool
+     */
+    public function requiresAuthentication(): bool
+    {
+        return $this->status === self::STATUS_REQUIRES_AUTH;
     }
 
     /**
@@ -408,31 +960,21 @@ class Invoice
         return $this->grossAmount == 0;
     }
 
-    /**
-     * Get the total discount amount that was applied.
-     *
-     * Returns 0 if discounts haven't been applied yet.
-     * After applyDiscounts() is called, returns the actual discount amount applied.
-     *
-     * @return float The total discount amount applied
-     */
-    public function getDiscountTotal(): float
-    {
-        return $this->discountTotal;
-    }
+    // ==================== STATE MACHINE ====================
 
     /**
-     * Set the total discount amount applied.
+     * Check if a state transition is allowed.
      *
-     * @param  float  $discountTotal  The total discount amount
-     * @return static
+     * @param  string  $newStatus  The target status
+     * @return bool True if transition is allowed
      */
-    public function setDiscountTotal(float $discountTotal): static
+    public function canTransitionTo(string $newStatus): bool
     {
-        $this->discountTotal = $discountTotal;
-
-        return $this;
+        $allowed = static::TRANSITIONS[$this->status] ?? [];
+        return in_array($newStatus, $allowed, true);
     }
+
+    // ==================== DISCOUNT AND CREDIT OPERATIONS ====================
 
     /**
      * Get discounts as array representation.
@@ -447,57 +989,6 @@ class Invoice
         }
 
         return $discountArray;
-    }
-
-    /**
-     * Get all credits attached to this invoice.
-     *
-     * @return Credit[] Array of Credit objects
-     */
-    public function getCredits(): array
-    {
-        return $this->credits;
-    }
-
-    /**
-     * Set the credits for this invoice.
-     *
-     * Accepts either Credit objects or arrays that will be converted to Credit objects.
-     *
-     * @param  array  $credits  Array of Credit objects or arrays
-     * @return static
-     *
-     * @throws \InvalidArgumentException If invalid credit format is provided
-     */
-    public function setCredits(array $credits): static
-    {
-        // Validate that all items are Credit objects
-        $creditObjects = [];
-        foreach ($credits as $credit) {
-            if ($credit instanceof Credit) {
-                $creditObjects[] = $credit;
-            } elseif (is_array($credit)) {
-                $creditObjects[] = Credit::fromArray($credit);
-            } else {
-                throw new \InvalidArgumentException('All items in credits array must be Credit objects or arrays with id and credits keys');
-            }
-        }
-        $this->credits = $creditObjects;
-
-        return $this;
-    }
-
-    /**
-     * Add a credit to the invoice.
-     *
-     * @param  Credit  $credit  The credit to add
-     * @return static
-     */
-    public function addCredit(Credit $credit): static
-    {
-        $this->credits[] = $credit;
-
-        return $this;
     }
 
     /**
@@ -517,9 +1008,6 @@ class Invoice
 
     /**
      * Apply available credits to the invoice amount.
-     *
-     * Credits are applied in order until the amount reaches zero or all credits are used.
-     * Updates the gross amount and tracks which credits were used.
      *
      * @return static
      */
@@ -550,12 +1038,6 @@ class Invoice
 
     /**
      * Apply all discounts to the invoice amount.
-     *
-     * Discounts are applied in the correct order:
-     * 1. Fixed amount discounts first
-     * 2. Percentage discounts second (applied to amount after fixed discounts)
-     *
-     * Updates the gross amount and tracks total discount applied.
      *
      * @return static
      */
@@ -601,12 +1083,6 @@ class Invoice
 
     /**
      * Finalize the invoice by applying all discounts, taxes, and credits.
-     *
-     * Process order:
-     * 1. Apply discounts to the base amount
-     * 2. Add tax and VAT amounts
-     * 3. Apply available credits
-     * 4. Update invoice status based on final amount
      *
      * @return static
      */
@@ -738,6 +1214,8 @@ class Invoice
         return $this;
     }
 
+    // ==================== SERIALIZATION ====================
+
     /**
      * Convert the invoice to an array representation.
      *
@@ -759,6 +1237,17 @@ class Invoice
             'creditsUsed' => $this->creditsUsed,
             'creditsIds' => $this->creditsIds,
             'discountTotal' => $this->discountTotal,
+            'type' => $this->type,
+            'from' => $this->from,
+            'to' => $this->to,
+            'dueAt' => $this->dueAt,
+            'issuedAt' => $this->issuedAt,
+            'paidAt' => $this->paidAt,
+            'paymentId' => $this->paymentId,
+            'clientSecret' => $this->clientSecret,
+            'lastError' => $this->lastError,
+            'attempts' => $this->attempts,
+            'nextAttemptAt' => $this->nextAttemptAt,
         ];
     }
 
@@ -766,13 +1255,13 @@ class Invoice
      * Create an Invoice instance from an array.
      *
      * @param  array  $data  The invoice data array
-     * @return self The created Invoice instance
+     * @return static The created Invoice instance
      */
-    public static function fromArray(array $data): self
+    public static function fromArray(array $data): static
     {
         $id = $data['id'] ?? $data['$id'] ?? uniqid('invoice_');
         $amount = $data['amount'] ?? 0;
-        $status = $data['status'] ?? self::STATUS_PENDING;
+        $status = $data['status'] ?? self::STATUS_DRAFT;
         $currency = $data['currency'] ?? 'USD';
         $grossAmount = $data['grossAmount'] ?? 0;
         $taxAmount = $data['taxAmount'] ?? 0;
@@ -784,7 +1273,7 @@ class Invoice
         $creditsIds = $data['creditsIds'] ?? [];
         $discountTotal = $data['discountTotal'] ?? 0;
 
-        return new self(
+        $invoice = new static(
             id: $id,
             amount: $amount,
             status: $status,
@@ -799,5 +1288,20 @@ class Invoice
             creditsIds: $creditsIds,
             discountTotal: $discountTotal
         );
+
+        // Set additional properties
+        $invoice->type = $data['type'] ?? self::TYPE_SUBSCRIPTION;
+        $invoice->from = $data['from'] ?? null;
+        $invoice->to = $data['to'] ?? null;
+        $invoice->dueAt = $data['dueAt'] ?? null;
+        $invoice->issuedAt = $data['issuedAt'] ?? null;
+        $invoice->paidAt = $data['paidAt'] ?? null;
+        $invoice->paymentId = $data['paymentId'] ?? null;
+        $invoice->clientSecret = $data['clientSecret'] ?? null;
+        $invoice->lastError = $data['lastError'] ?? null;
+        $invoice->attempts = $data['attempts'] ?? 0;
+        $invoice->nextAttemptAt = $data['nextAttemptAt'] ?? null;
+
+        return $invoice;
     }
 }
