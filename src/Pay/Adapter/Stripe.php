@@ -94,8 +94,7 @@ class Stripe extends Adapter
     public function cancelAuthorization(string $paymentId, array $additionalParams = []): array
     {
         $path = '/payment_intents/'.$paymentId.'/cancel';
-        $requestBody = array_merge([], $additionalParams);
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(self::METHOD_POST, $path, $additionalParams);
 
         return $result;
     }
