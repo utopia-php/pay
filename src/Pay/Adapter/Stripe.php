@@ -48,6 +48,58 @@ class Stripe extends Adapter
     }
 
     /**
+     * Authorize a payment (hold funds without capturing)
+     * Creates a payment intent with capture_method set to manual
+     */
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    {
+        $path = '/payment_intents';
+        $requestBody = [
+            'amount' => $amount,
+            'currency' => $this->currency,
+            'customer' => $customerId,
+            'payment_method' => $paymentMethodId,
+            'capture_method' => 'manual',
+            'off_session' => 'true',
+            'confirm' => 'true',
+        ];
+
+        $requestBody = array_merge($requestBody, $additionalParams);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return $result;
+    }
+
+    /**
+     * Capture a previously authorized payment
+     */
+    public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array
+    {
+        $path = '/payment_intents/'.$paymentId.'/capture';
+        $requestBody = [];
+
+        if ($amount !== null) {
+            $requestBody['amount_to_capture'] = $amount;
+        }
+
+        $requestBody = array_merge($requestBody, $additionalParams);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return $result;
+    }
+
+    /**
+     * Cancel/void a payment authorization
+     */
+    public function cancelAuthorization(string $paymentId, array $additionalParams = []): array
+    {
+        $path = '/payment_intents/'.$paymentId.'/cancel';
+        $result = $this->execute(self::METHOD_POST, $path, $additionalParams);
+
+        return $result;
+    }
+
+    /**
      * Retry a purchase for a payment intent
      *
      * @param  string  $paymentId The payment intent ID to retry

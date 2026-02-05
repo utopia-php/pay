@@ -87,6 +87,52 @@ class Pay
     }
 
     /**
+     * Authorize
+     * Authorize a payment (hold funds without capturing)
+     * Useful for scenarios where you need to ensure payment availability before providing service
+     * Returns authorization ID on successful authorization
+     *
+     * @param  int  $amount
+     * @param  string  $customerId
+     * @param  string|null  $paymentMethodId
+     * @param  array<mixed>  $additionalParams
+     * @return array<mixed>
+     */
+    public function authorize(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
+    {
+        return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $additionalParams);
+    }
+
+    /**
+     * Capture
+     * Capture a previously authorized payment
+     * Completes the payment and transfers funds from customer
+     *
+     * @param  string  $paymentId
+     * @param  int|null  $amount
+     * @param  array<mixed>  $additionalParams
+     * @return array<mixed>
+     */
+    public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array
+    {
+        return $this->adapter->capture($paymentId, $amount, $additionalParams);
+    }
+
+    /**
+     * Cancel Authorization
+     * Cancel/void a payment authorization
+     * Releases the hold on funds without capturing
+     *
+     * @param  string  $paymentId
+     * @param  array<mixed>  $additionalParams
+     * @return array<mixed>
+     */
+    public function cancelAuthorization(string $paymentId, array $additionalParams = []): array
+    {
+        return $this->adapter->cancelAuthorization($paymentId, $additionalParams);
+    }
+
+    /**
      * Retry a purchase for a payment intent
      *
      * @param  string  $paymentId The payment intent ID to retry
