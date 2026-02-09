@@ -81,7 +81,7 @@ class Pay
      * @param  array<mixed>  $additionalParams
      * @return array<mixed>
      */
-    public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
+    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
     {
         return $this->adapter->purchase($amount, $customerId, $paymentMethodId, $additionalParams);
     }
@@ -98,7 +98,7 @@ class Pay
      * @param  array<mixed>  $additionalParams
      * @return array<mixed>
      */
-    public function authorize(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): array
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
     {
         return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $additionalParams);
     }
@@ -178,7 +178,7 @@ class Pay
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
      * @return array<mixed> Result of the update
      */
-    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): array
     {
         return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $additionalParams);
     }
@@ -218,7 +218,7 @@ class Pay
      * @param  array<mixed>  $address
      * @return array<mixed>
      */
-    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, string $name = null, string $email = null, string $phone = null, array $address = null): array
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): array
     {
         return $this->adapter->updatePaymentMethodBillingDetails($paymentMethodId, $name, $email, $phone, $address);
     }
@@ -307,7 +307,7 @@ class Pay
      * @param  Address  $address
      * @return array<mixed>
      */
-    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, ?string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): array
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }

@@ -23,7 +23,7 @@ class Exception extends \Exception
      */
     protected array $metadata = [];
 
-    public function __construct(string $type = Exception::GENERAL_UNKNOWN, string $message = null, int $code = null, array $metadata = [], \Throwable $previous = null)
+    public function __construct(string $type = Exception::GENERAL_UNKNOWN, ?string $message = null, ?int $code = null, array $metadata = [], ?\Throwable $previous = null)
     {
         $this->type = $type;
         $this->code = $code ?? 500;
