@@ -126,7 +126,7 @@ class Stripe extends Adapter
     /**
      * Refund payment
      */
-    public function refund(string $paymentId, int $amount = null, string $reason = null): array
+    public function refund(string $paymentId, ?int $amount = null, ?string $reason = null): array
     {
         $path = '/refunds';
         $requestBody = ['payment_intent' => $paymentId];
@@ -164,7 +164,7 @@ class Stripe extends Adapter
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
      * @return array<mixed> Result of the update
      */
-    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): array
     {
         $path = '/payment_intents/'.$paymentId;
         $requestBody = [];
@@ -236,7 +236,7 @@ class Stripe extends Adapter
      * @param  array<mixed>|null  $address
      * @return array<mixed>
      */
-    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): array
     {
         $path = '/payment_methods/'.$paymentMethodId;
         $requestBody = [];
@@ -285,7 +285,7 @@ class Stripe extends Adapter
      *
      * @throws \Exception
      */
-    public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
     {
         $path = '/customers';
         $requestBody = [
@@ -325,7 +325,7 @@ class Stripe extends Adapter
     /**
      * Update customer details
      */
-    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): array
     {
         $path = '/customers/'.$customerId;
         $requestBody = [

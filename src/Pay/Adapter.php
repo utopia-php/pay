@@ -123,7 +123,7 @@ abstract class Adapter
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
      * @return array<mixed> Result of the update
      */
-    abstract public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): array;
+    abstract public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): array;
 
     /**
      * Retry a purchase for a payment intent
@@ -143,7 +143,7 @@ abstract class Adapter
      * @param  string  $reason
      * @return array<mixed>
      */
-    abstract public function refund(string $paymentId, int $amount = null, string $reason = null): array;
+    abstract public function refund(string $paymentId, ?int $amount = null, ?string $reason = null): array;
 
     /**
      * Get a payment details
@@ -173,7 +173,7 @@ abstract class Adapter
      * @param  array<mixed>|null  $address
      * @return array<mixed>
      */
-    abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, array $address = null): array;
+    abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): array;
 
     /**
      * Update payment method
@@ -210,7 +210,7 @@ abstract class Adapter
      * @param  string|null  $paymentMethod
      * @return array<mixed>
      */
-    abstract public function createCustomer(string $name, string $email, array $address = [], string $paymentMethod = null): array;
+    abstract public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array;
 
     /**
      * List customers
@@ -237,7 +237,7 @@ abstract class Adapter
      * @param  string|null  $paymentMethod
      * @return array<mixed>
      */
-    abstract public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, string $paymentMethod = null): array;
+    abstract public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): array;
 
     /**
      * Delete Customer
