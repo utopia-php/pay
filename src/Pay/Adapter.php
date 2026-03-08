@@ -81,8 +81,13 @@ abstract class Adapter
     abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
 
     /**
-     * Authorize a payment (hold funds without capturing)
-     * Useful for scenarios where you need to ensure payment availability before providing service
+     * Authorize a payment
+     * Creates a payment intent without confirming it. Always call confirmAuthorization() after this.
+     *
+     * Flow with 'automatic' (default): authorize() → confirmAuthorization() → funds captured automatically.
+     * Flow with 'manual': authorize() → confirmAuthorization() → capture() to collect funds.
+     *
+     * You may call cancelAuthorization() before confirmAuthorization() to abort.
      *
      * @param  int  $amount Amount to authorize
      * @param  string  $customerId Customer ID

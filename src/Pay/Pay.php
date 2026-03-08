@@ -88,9 +88,12 @@ class Pay
 
     /**
      * Authorize
-     * Authorize a payment (hold funds without capturing)
-     * Useful for scenarios where you need to ensure payment availability before providing service
-     * Returns authorization ID on successful authorization
+     * Creates a payment intent without confirming it. Always call confirmAuthorization() after this.
+     *
+     * Flow with 'automatic' (default): authorize() → confirmAuthorization() → funds captured automatically.
+     * Flow with 'manual': authorize() → confirmAuthorization() → capture() to collect funds.
+     *
+     * You may call cancelAuthorization() before confirmAuthorization() to abort.
      *
      * @param  int  $amount
      * @param  string  $customerId

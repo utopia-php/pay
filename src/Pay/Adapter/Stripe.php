@@ -48,8 +48,13 @@ class Stripe extends Adapter
     }
 
     /**
-     * Authorize a payment (hold funds without capturing)
-     * Creates a payment intent with capture_method set to manual
+     * Authorize a payment
+     * Creates a payment intent without confirming it. Always call confirmAuthorization() after this.
+     *
+     * Flow with 'automatic' (default): authorize() → confirmAuthorization() → funds captured automatically.
+     * Flow with 'manual': authorize() → confirmAuthorization() → capture() to collect funds.
+     *
+     * You may call cancelAuthorization() before confirmAuthorization() to abort.
      */
     public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, string $captureMethod = 'automatic', array $additionalParams = []): array
     {
