@@ -632,7 +632,7 @@ class StripeTest extends TestCase
         $paymentMethodId = $data['paymentMethodId'];
 
         // Authorize payment - creates intent without confirming
-        $authorization = $this->stripe->authorize(10000, $customerId, $paymentMethodId);
+        $authorization = $this->stripe->authorize(10000, $customerId, $paymentMethodId, 'manual');
 
         $this->assertNotEmpty($authorization['id']);
         $this->assertEquals('payment_intent', $authorization['object']);
@@ -688,7 +688,7 @@ class StripeTest extends TestCase
         $paymentMethodId = $data['paymentMethodId'];
 
         // Authorize payment
-        $authorization = $this->stripe->authorize(15000, $customerId, $paymentMethodId);
+        $authorization = $this->stripe->authorize(15000, $customerId, $paymentMethodId, 'manual');
         $authorizationId = $authorization['id'];
 
         $this->assertEquals('requires_confirmation', $authorization['status']);
@@ -720,7 +720,7 @@ class StripeTest extends TestCase
         $paymentMethodId = $data['paymentMethodId'];
 
         // Authorize payment
-        $authorization = $this->stripe->authorize(8000, $customerId, $paymentMethodId);
+        $authorization = $this->stripe->authorize(8000, $customerId, $paymentMethodId, 'manual');
         $authorizationId = $authorization['id'];
 
         $this->assertEquals('requires_confirmation', $authorization['status']);
@@ -752,6 +752,7 @@ class StripeTest extends TestCase
             12000,
             $customerId,
             $paymentMethodId,
+            'manual',
             [
                 'metadata' => [
                     'domain' => 'example.com',

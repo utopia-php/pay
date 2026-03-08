@@ -95,12 +95,13 @@ class Pay
      * @param  int  $amount
      * @param  string  $customerId
      * @param  string|null  $paymentMethodId
+     * @param  string  $captureMethod
      * @param  array<mixed>  $additionalParams
      * @return array<mixed>
      */
-    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, string $captureMethod = 'automatic', array $additionalParams = []): array
     {
-        return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $additionalParams);
+        return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $captureMethod, $additionalParams);
     }
 
     /**

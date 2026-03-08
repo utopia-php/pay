@@ -87,10 +87,11 @@ abstract class Adapter
      * @param  int  $amount Amount to authorize
      * @param  string  $customerId Customer ID
      * @param  string|null  $paymentMethodId Payment method ID (optional)
+     * @param  string  $captureMethod Capture method: 'automatic' (default) or 'manual'
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
      * @return array<mixed> Result of the authorization including authorization ID
      */
-    abstract public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
+    abstract public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, string $captureMethod = 'automatic', array $additionalParams = []): array;
 
     /**
      * Capture a previously authorized payment

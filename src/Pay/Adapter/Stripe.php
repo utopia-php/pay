@@ -51,7 +51,7 @@ class Stripe extends Adapter
      * Authorize a payment (hold funds without capturing)
      * Creates a payment intent with capture_method set to manual
      */
-    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, string $captureMethod = 'automatic', array $additionalParams = []): array
     {
         $path = '/payment_intents';
         $requestBody = [
@@ -59,7 +59,7 @@ class Stripe extends Adapter
             'currency' => $this->currency,
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
-            'capture_method' => 'manual',
+            'capture_method' => $captureMethod,
         ];
 
         $requestBody = array_merge($requestBody, $additionalParams);
