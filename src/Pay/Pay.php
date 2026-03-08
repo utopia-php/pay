@@ -104,6 +104,19 @@ class Pay
     }
 
     /**
+     * Confirm Authorization
+     * Confirm a previously created authorization
+     *
+     * @param  string  $paymentId
+     * @param  array<mixed>  $additionalParams
+     * @return array<mixed>
+     */
+    public function confirmAuthorization(string $paymentId, array $additionalParams = []): array
+    {
+        return $this->adapter->confirmAuthorization($paymentId, $additionalParams);
+    }
+
+    /**
      * Capture
      * Capture a previously authorized payment
      * Completes the payment and transfers funds from customer

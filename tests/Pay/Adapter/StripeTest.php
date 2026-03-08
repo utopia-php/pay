@@ -631,16 +631,22 @@ class StripeTest extends TestCase
         $customerId = $data['customerId'];
         $paymentMethodId = $data['paymentMethodId'];
 
-        // Authorize payment - hold funds without capturing
+        // Authorize payment - creates intent without confirming
         $authorization = $this->stripe->authorize(10000, $customerId, $paymentMethodId);
 
         $this->assertNotEmpty($authorization['id']);
         $this->assertEquals('payment_intent', $authorization['object']);
         $this->assertEquals(10000, $authorization['amount']);
-        $this->assertEquals('requires_capture', $authorization['status']);
+        $this->assertEquals('requires_confirmation', $authorization['status']);
         $this->assertEquals('manual', $authorization['capture_method']);
 
-        $data['authorizationId'] = $authorization['id'];
+        // Confirm the authorization
+        $confirmed = $this->stripe->confirmAuthorization($authorization['id']);
+
+        $this->assertEquals($authorization['id'], $confirmed['id']);
+        $this->assertEquals('requires_capture', $confirmed['status']);
+
+        $data['authorizationId'] = $confirmed['id'];
 
         return $data;
     }
@@ -685,7 +691,11 @@ class StripeTest extends TestCase
         $authorization = $this->stripe->authorize(15000, $customerId, $paymentMethodId);
         $authorizationId = $authorization['id'];
 
-        $this->assertEquals('requires_capture', $authorization['status']);
+        $this->assertEquals('requires_confirmation', $authorization['status']);
+
+        // Confirm the authorization
+        $confirmed = $this->stripe->confirmAuthorization($authorizationId);
+        $this->assertEquals('requires_capture', $confirmed['status']);
 
         // Capture partial amount (only 10000 of 15000)
         $captured = $this->stripe->capture($authorizationId, 10000);
@@ -713,9 +723,9 @@ class StripeTest extends TestCase
         $authorization = $this->stripe->authorize(8000, $customerId, $paymentMethodId);
         $authorizationId = $authorization['id'];
 
-        $this->assertEquals('requires_capture', $authorization['status']);
+        $this->assertEquals('requires_confirmation', $authorization['status']);
 
-        // Cancel the authorization - release the hold
+        // Cancel the authorization - release the hold (can cancel before confirming)
         $cancelled = $this->stripe->cancelAuthorization($authorizationId);
 
         $this->assertNotEmpty($cancelled['id']);
@@ -753,7 +763,7 @@ class StripeTest extends TestCase
         );
 
         $this->assertNotEmpty($authorization['id']);
-        $this->assertEquals('requires_capture', $authorization['status']);
+        $this->assertEquals('requires_confirmation', $authorization['status']);
         $this->assertEquals('example.com', $authorization['metadata']['domain']);
         $this->assertEquals('ORD-12345', $authorization['metadata']['order_id']);
         $this->assertEquals('domain_registration', $authorization['metadata']['resource_type']);

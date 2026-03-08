@@ -104,6 +104,16 @@ abstract class Adapter
     abstract public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array;
 
     /**
+     * Confirm a previously created authorization
+     * Sends confirmation to process the authorization (e.g., off_session for saved cards)
+     *
+     * @param  string  $paymentId The payment/authorization ID to confirm
+     * @param  array<mixed>  $additionalParams Additional parameters (optional)
+     * @return array<mixed> Result of the confirmation
+     */
+    abstract public function confirmAuthorization(string $paymentId, array $additionalParams = []): array;
+
+    /**
      * Cancel/void a payment authorization
      * Releases the hold on funds without capturing
      *

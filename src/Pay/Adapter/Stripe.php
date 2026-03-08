@@ -60,8 +60,23 @@ class Stripe extends Adapter
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
             'capture_method' => 'manual',
+        ];
+
+        $requestBody = array_merge($requestBody, $additionalParams);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return $result;
+    }
+
+    /**
+     * Confirm a previously created authorization
+     * Sends off_session: true to confirm without customer interaction (for saved cards)
+     */
+    public function confirmAuthorization(string $paymentId, array $additionalParams = []): array
+    {
+        $path = '/payment_intents/'.$paymentId.'/confirm';
+        $requestBody = [
             'off_session' => 'true',
-            'confirm' => 'true',
         ];
 
         $requestBody = array_merge($requestBody, $additionalParams);
