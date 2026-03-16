@@ -6,6 +6,7 @@ use Utopia\Pay\Customer\Customer;
 use Utopia\Pay\Payment\Payment;
 use Utopia\Pay\PaymentMethod\PaymentMethod;
 use Utopia\Pay\Refund\Refund;
+use Utopia\Pay\SetupIntent\SetupIntent;
 
 class Pay
 {
@@ -254,21 +255,25 @@ class Pay
      * List Payment Methods
      *
      * @param  string  $customerId  Customer ID
+     * @param  int|null  $limit  Maximum number of results
+     * @param  string|null  $startingAfter  Cursor for pagination
      * @return array<PaymentMethod> List of payment methods
      */
-    public function listPaymentMethods(string $customerId): array
+    public function listPaymentMethods(string $customerId, ?int $limit = null, ?string $startingAfter = null): array
     {
-        return $this->adapter->listPaymentMethods($customerId);
+        return $this->adapter->listPaymentMethods($customerId, $limit, $startingAfter);
     }
 
     /**
      * List Customers
      *
+     * @param  int|null  $limit  Maximum number of results
+     * @param  string|null  $startingAfter  Cursor for pagination
      * @return array<Customer> List of customers
      */
-    public function listCustomers(): array
+    public function listCustomers(?int $limit = null, ?string $startingAfter = null): array
     {
-        return $this->adapter->listCustomers();
+        return $this->adapter->listCustomers($limit, $startingAfter);
     }
 
     /**
@@ -330,9 +335,9 @@ class Pay
      * @param  array<string>  $paymentMethodTypes  Allowed payment method types
      * @param  array<string, mixed>  $paymentMethodOptions  Payment method options
      * @param  string|null  $paymentMethodConfiguration  Payment method configuration ID
-     * @return array<string, mixed> Setup intent data
+     * @return SetupIntent The created setup intent
      */
-    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent
     {
         return $this->adapter->createFuturePayment($customerId, $paymentMethod, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
     }
@@ -341,9 +346,9 @@ class Pay
      * Get future payment
      *
      * @param  string  $id  Setup intent ID
-     * @return array<string, mixed> Setup intent data
+     * @return SetupIntent The setup intent
      */
-    public function getFuturePayment(string $id): array
+    public function getFuturePayment(string $id): SetupIntent
     {
         return $this->adapter->getFuturePayment($id);
     }
@@ -356,21 +361,21 @@ class Pay
      * @param  string|null  $paymentMethod  Payment method ID
      * @param  array<string, mixed>  $paymentMethodOptions  Payment method options
      * @param  string|null  $paymentMethodConfiguration  Payment method configuration ID
-     * @return array<string, mixed> Updated setup intent data
+     * @return SetupIntent The updated setup intent
      */
-    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent
     {
         return $this->adapter->updateFuturePayment($id, $customerId, $paymentMethod, $paymentMethodOptions, $paymentMethodConfiguration);
     }
 
     /**
-     * List future payment
+     * List future payments
      *
      * @param  string|null  $customerId  Customer ID
      * @param  string|null  $paymentMethodId  Payment method ID
-     * @return array<array<string, mixed>> List of setup intents
+     * @return array<SetupIntent> List of setup intents
      */
-    public function listFuturePayment(?string $customerId, ?string $paymentMethodId = null): array
+    public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array
     {
         return $this->adapter->listFuturePayments($customerId, $paymentMethodId);
     }
@@ -398,5 +403,29 @@ class Pay
     public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
     {
         return $this->adapter->listDisputes($limit, $paymentIntentId, $chargeId, $createdAfter);
+    }
+
+    /**
+     * Get a dispute by ID
+     *
+     * @param  string  $disputeId  The dispute ID
+     * @return array<string, mixed> The dispute data
+     */
+    public function getDispute(string $disputeId): array
+    {
+        return $this->adapter->getDispute($disputeId);
+    }
+
+    /**
+     * Submit evidence for a dispute
+     *
+     * @param  string  $disputeId  The dispute ID
+     * @param  array<string, mixed>  $evidence  Evidence data
+     * @param  bool  $submit  Whether to submit immediately or save as draft
+     * @return array<string, mixed> The updated dispute data
+     */
+    public function submitDisputeEvidence(string $disputeId, array $evidence, bool $submit = true): array
+    {
+        return $this->adapter->submitDisputeEvidence($disputeId, $evidence, $submit);
     }
 }

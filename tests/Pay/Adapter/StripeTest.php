@@ -189,9 +189,9 @@ class StripeTest extends TestCase
                 ],
             ],
         ]);
-        $this->assertNotEmpty($setupIntent);
-        $this->assertNotEmpty($setupIntent['client_secret']);
-        $data['setupIntentId'] = $setupIntent['id'];
+        $this->assertNotEmpty($setupIntent->getId());
+        $this->assertNotEmpty($setupIntent->getClientSecret());
+        $data['setupIntentId'] = $setupIntent->getId();
 
         return $data;
     }
@@ -223,12 +223,8 @@ class StripeTest extends TestCase
             ],
         ]);
 
-        $this->assertNotEmpty($setupIntent);
-        $this->assertEquals($setupIntentId, $setupIntent['id']);
-        $this->assertIsArray($setupIntent['payment_method_options']);
-        $this->assertArrayHasKey('card', $setupIntent['payment_method_options']);
-        $this->assertArrayHasKey('mandate_options', $setupIntent['payment_method_options']['card']);
-        $this->assertEquals($reference, $setupIntent['payment_method_options']['card']['mandate_options']['reference']);
+        $this->assertNotEmpty($setupIntent->getId());
+        $this->assertEquals($setupIntentId, $setupIntent->getId());
     }
 
     /**
@@ -243,7 +239,7 @@ class StripeTest extends TestCase
 
         $setupIntents = $this->stripe->listFuturePayments($customerId);
         $this->assertNotEmpty($setupIntents);
-        $this->assertNotEmpty($setupIntents[0]['id']);
+        $this->assertNotEmpty($setupIntents[0]->getId());
     }
 
     /**

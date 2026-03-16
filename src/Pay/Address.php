@@ -62,9 +62,9 @@ class Address
      *
      * @return string|null
      */
-    public function getCity(): ?string
+    public function getCity(): string
     {
-        return $this->city ?? null;
+        return $this->city;
     }
 
     /**
@@ -110,7 +110,7 @@ class Address
      */
     public function getLine1(): ?string
     {
-        return $this->line1 ?? null;
+        return $this->line1;
     }
 
     /**
@@ -133,7 +133,7 @@ class Address
      */
     public function getLine2(): ?string
     {
-        return $this->line2 ?? null;
+        return $this->line2;
     }
 
     /**
@@ -156,7 +156,7 @@ class Address
      */
     public function getPostalCode(): ?string
     {
-        return $this->postalCode ?? null;
+        return $this->postalCode;
     }
 
     /**
@@ -179,7 +179,7 @@ class Address
      */
     public function getState(): ?string
     {
-        return $this->state ?? null;
+        return $this->state;
     }
 
     /**
@@ -205,12 +205,12 @@ class Address
     public function asArray(): array
     {
         return [
-            'city' => $this->city ?? null,
-            'country' => $this->country ?? null,
-            'line1' => $this->line1 ?? null,
-            'line2' => $this->line2 ?? null,
-            'postal_code' => $this->postalCode ?? null,
-            'state' => $this->state ?? null,
+            'city' => $this->city,
+            'country' => $this->country,
+            'line1' => $this->line1,
+            'line2' => $this->line2,
+            'postal_code' => $this->postalCode,
+            'state' => $this->state,
         ];
     }
 
@@ -222,12 +222,12 @@ class Address
     public function toArray(): array
     {
         return [
-            'city' => $this->city ?? null,
-            'country' => $this->country ?? null,
-            'line1' => $this->line1 ?? null,
-            'line2' => $this->line2 ?? null,
-            'postal_code' => $this->postalCode ?? null,
-            'state' => $this->state ?? null,
+            'city' => $this->city,
+            'country' => $this->country,
+            'line1' => $this->line1,
+            'line2' => $this->line2,
+            'postal_code' => $this->postalCode,
+            'state' => $this->state,
         ];
     }
 

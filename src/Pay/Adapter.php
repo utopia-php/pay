@@ -6,6 +6,7 @@ use Utopia\Pay\Customer\Customer;
 use Utopia\Pay\Payment\Payment;
 use Utopia\Pay\PaymentMethod\PaymentMethod;
 use Utopia\Pay\Refund\Refund;
+use Utopia\Pay\SetupIntent\SetupIntent;
 
 abstract class Adapter
 {
@@ -201,9 +202,11 @@ abstract class Adapter
      * List payment methods
      *
      * @param  string  $customerId  Customer ID
+     * @param  int|null  $limit  Maximum number of results
+     * @param  string|null  $startingAfter  Cursor for pagination (ID of last item from previous page)
      * @return array<PaymentMethod> List of payment methods
      */
-    abstract public function listPaymentMethods(string $customerId): array;
+    abstract public function listPaymentMethods(string $customerId, ?int $limit = null, ?string $startingAfter = null): array;
 
     /**
      * Remove payment method
@@ -227,9 +230,11 @@ abstract class Adapter
     /**
      * List customers
      *
+     * @param  int|null  $limit  Maximum number of results
+     * @param  string|null  $startingAfter  Cursor for pagination (ID of last item from previous page)
      * @return array<Customer> List of customers
      */
-    abstract public function listCustomers(): array;
+    abstract public function listCustomers(?int $limit = null, ?string $startingAfter = null): array;
 
     /**
      * Get customer details by ID
@@ -276,16 +281,16 @@ abstract class Adapter
      * @param  array<string>  $paymentMethodTypes  Allowed payment method types
      * @param  array<string, mixed>  $paymentMethodOptions  Payment method options
      * @param  string|null  $paymentMethodConfiguration  Payment method configuration ID
-     * @return array<string, mixed> Setup intent data
+     * @return SetupIntent The created setup intent
      */
-    abstract public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = [], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
+    abstract public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = [], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent;
 
     /**
      * List future payments associated with the provided customer or payment method
      *
      * @param  string|null  $customerId  Customer ID
      * @param  string|null  $paymentMethodId  Payment method ID
-     * @return array<array<string, mixed>> List of setup intents
+     * @return array<SetupIntent> List of setup intents
      */
     abstract public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array;
 
@@ -293,9 +298,9 @@ abstract class Adapter
      * Get Future payment
      *
      * @param  string  $id  Setup intent ID
-     * @return array<string, mixed> Setup intent data
+     * @return SetupIntent The setup intent
      */
-    abstract public function getFuturePayment(string $id): array;
+    abstract public function getFuturePayment(string $id): SetupIntent;
 
     /**
      * Update future payment setup
@@ -305,9 +310,9 @@ abstract class Adapter
      * @param  string|null  $paymentMethod  Payment method ID
      * @param  array<string, mixed>  $paymentMethodOptions  Payment method options
      * @param  string|null  $paymentMethodConfiguration  Payment method configuration ID
-     * @return array<string, mixed> Updated setup intent data
+     * @return SetupIntent The updated setup intent
      */
-    abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
+    abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent;
 
     /**
      * Get mandate
@@ -327,6 +332,50 @@ abstract class Adapter
      * @return array<array<string, mixed>> List of disputes
      */
     abstract public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array;
+
+    /**
+     * Get a dispute by ID
+     *
+     * @param  string  $disputeId  The dispute ID
+     * @return array<string, mixed> The dispute data
+     */
+    abstract public function getDispute(string $disputeId): array;
+
+    /**
+     * Submit evidence for a dispute
+     *
+     * @param  string  $disputeId  The dispute ID
+     * @param  array<string, mixed>  $evidence  Evidence data
+     * @param  bool  $submit  Whether to submit immediately (true) or save as draft (false)
+     * @return array<string, mixed> The updated dispute data
+     */
+    abstract public function submitDisputeEvidence(string $disputeId, array $evidence, bool $submit = true): array;
+
+    /**
+     * Validate payment parameters before making an API call.
+     *
+     * @param  int  $amount  Amount in smallest currency unit
+     *
+     * @throws Exception If validation fails
+     */
+    protected function validatePayment(int $amount): void
+    {
+        if (! isset($this->currency) || empty($this->currency)) {
+            throw new Exception(Exception::GENERAL_INVALID_REQUEST, 'Currency must be set before making payments');
+        }
+
+        if (! Currency::isValid($this->currency)) {
+            throw new Exception(Exception::CURRENCY_NOT_SUPPORTED, 'Invalid currency: '.$this->currency);
+        }
+
+        if ($amount <= 0) {
+            throw new Exception(Exception::AMOUNT_TOO_SMALL, 'Amount must be greater than zero');
+        }
+
+        if (! Currency::meetsMinimum($amount, $this->currency)) {
+            throw new Exception(Exception::AMOUNT_TOO_SMALL, 'Amount does not meet minimum for '.$this->currency);
+        }
+    }
 
     /**
      * Call
@@ -416,12 +465,20 @@ abstract class Adapter
 
     protected function handleError(int $code, mixed $response): void
     {
+        $type = match (true) {
+            $code === 401 => Exception::AUTHENTICATION_FAILED,
+            $code === 429 => Exception::GENERAL_RATE_LIMIT,
+            $code >= 500 => Exception::GENERAL_API_ERROR,
+            default => Exception::GENERAL_UNKNOWN,
+        };
+
         if (is_array($response)) {
-            /** @phpstan-ignore-next-line */
-            throw new \Exception(json_encode($response), $code);
+            $message = $response['message'] ?? $response['error']['message'] ?? json_encode($response);
+            throw new Exception($type, $message, $code, $response);
         }
 
-        throw new \Exception($response, $code);
+        $message = is_string($response) ? $response : 'Unknown error';
+        throw new Exception($type, $message, $code);
     }
 
     /**
@@ -431,7 +488,7 @@ abstract class Adapter
      * @param  string  $prefix
      * @return array<string, mixed>
      */
-    protected function flatten(array $data, $prefix = ''): array
+    protected function flatten(array $data, string $prefix = ''): array
     {
         $output = [];
 
@@ -439,7 +496,7 @@ abstract class Adapter
             $finalKey = $prefix ? "{$prefix}[{$key}]" : $key;
 
             if (is_array($value)) {
-                $output += $this->flatten($value, $finalKey); // @todo: handle name collision here if needed
+                $output = array_replace($output, $this->flatten($value, $finalKey));
             } else {
                 $output[$finalKey] = $value;
             }

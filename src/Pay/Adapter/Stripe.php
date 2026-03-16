@@ -9,6 +9,7 @@ use Utopia\Pay\Exception;
 use Utopia\Pay\Payment\Payment;
 use Utopia\Pay\PaymentMethod\PaymentMethod;
 use Utopia\Pay\Refund\Refund;
+use Utopia\Pay\SetupIntent\SetupIntent;
 
 class Stripe extends Adapter
 {
@@ -35,14 +36,15 @@ class Stripe extends Adapter
      */
     public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
     {
+        $this->validatePayment($amount);
         $path = '/payment_intents';
         $requestBody = [
             'amount' => $amount,
             'currency' => $this->currency,
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
-            'off_session' => 'true',
-            'confirm' => 'true',
+            'off_session' => true,
+            'confirm' => true,
         ];
 
         // Extract idempotency key if provided
@@ -64,6 +66,7 @@ class Stripe extends Adapter
      */
     public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
     {
+        $this->validatePayment($amount);
         $path = '/payment_intents';
         $requestBody = [
             'amount' => $amount,
@@ -71,8 +74,8 @@ class Stripe extends Adapter
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
             'capture_method' => 'manual',
-            'off_session' => 'true',
-            'confirm' => 'true',
+            'off_session' => true,
+            'confirm' => true,
         ];
 
         // Extract idempotency key if provided
@@ -224,14 +227,21 @@ class Stripe extends Adapter
     }
 
     /**
-     * List cards
+     * List payment methods
      *
      * @return array<PaymentMethod>
      */
-    public function listPaymentMethods(string $customerId): array
+    public function listPaymentMethods(string $customerId, ?int $limit = null, ?string $startingAfter = null): array
     {
         $path = '/customers/'.$customerId.'/payment_methods';
-        $result = $this->execute(self::METHOD_GET, $path);
+        $params = [];
+        if ($limit !== null) {
+            $params['limit'] = $limit;
+        }
+        if ($startingAfter !== null) {
+            $params['starting_after'] = $startingAfter;
+        }
+        $result = $this->execute(self::METHOD_GET, $path, $params);
 
         $paymentMethods = [];
         foreach ($result['data'] ?? [] as $pm) {
@@ -297,9 +307,9 @@ class Stripe extends Adapter
     public function deletePaymentMethod(string $paymentMethodId): bool
     {
         $path = '/payment_methods/'.$paymentMethodId.'/detach';
-        $this->execute(self::METHOD_POST, $path);
+        $result = $this->execute(self::METHOD_POST, $path);
 
-        return true;
+        return isset($result['id']) && $result['id'] === $paymentMethodId;
     }
 
     /**
@@ -331,9 +341,16 @@ class Stripe extends Adapter
      *
      * @return array<Customer>
      */
-    public function listCustomers(): array
+    public function listCustomers(?int $limit = null, ?string $startingAfter = null): array
     {
-        $result = $this->execute(self::METHOD_GET, '/customers');
+        $params = [];
+        if ($limit !== null) {
+            $params['limit'] = $limit;
+        }
+        if ($startingAfter !== null) {
+            $params['starting_after'] = $startingAfter;
+        }
+        $result = $this->execute(self::METHOD_GET, '/customers', $params);
 
         $customers = [];
         foreach ($result['data'] ?? [] as $customer) {
@@ -387,7 +404,7 @@ class Stripe extends Adapter
         return $result['deleted'] ?? false;
     }
 
-    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent
     {
         $path = '/setup_intents';
         $requestBody = [
@@ -402,7 +419,7 @@ class Stripe extends Adapter
         if ($paymentMethodConfiguration !== null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
             $requestBody['automatic_payment_methods'] = [
-                'enabled' => 'true',
+                'enabled' => true,
             ];
             unset($requestBody['payment_method_types']);
         }
@@ -413,17 +430,18 @@ class Stripe extends Adapter
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
 
-        return $result;
+        return SetupIntent::fromArray($result);
     }
 
-    public function getFuturePayment(string $id): array
+    public function getFuturePayment(string $id): SetupIntent
     {
         $path = '/setup_intents/'.$id;
+        $result = $this->execute(self::METHOD_GET, $path);
 
-        return $this->execute(self::METHOD_GET, $path);
+        return SetupIntent::fromArray($result);
     }
 
-    public function listFuturePayments(?string $customerId = null, ?string $pyamentMethodId = null): array
+    public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array
     {
         $path = '/setup_intents';
         $requestBody = [];
@@ -431,15 +449,20 @@ class Stripe extends Adapter
             $requestBody['customer'] = $customerId;
         }
 
-        if ($pyamentMethodId !== null) {
-            $requestBody['payment_method'] = $pyamentMethodId;
+        if ($paymentMethodId !== null) {
+            $requestBody['payment_method'] = $paymentMethodId;
         }
         $result = $this->execute(self::METHOD_GET, $path, $requestBody);
 
-        return $result['data'];
+        $setupIntents = [];
+        foreach ($result['data'] ?? [] as $item) {
+            $setupIntents[] = SetupIntent::fromArray($item);
+        }
+
+        return $setupIntents;
     }
 
-    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent
     {
         $path = '/setup_intents/'.$id;
         $requestBody = [];
@@ -456,7 +479,9 @@ class Stripe extends Adapter
             $requestBody['payment_method_options'] = $paymentMethodOptions;
         }
 
-        return $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+
+        return SetupIntent::fromArray($result);
     }
 
     /**
@@ -505,6 +530,31 @@ class Stripe extends Adapter
         $result = $this->execute(self::METHOD_GET, $path, $requestBody);
 
         return $result['data'];
+    }
+
+    /**
+     * Get a dispute by ID
+     */
+    public function getDispute(string $disputeId): array
+    {
+        $path = '/disputes/'.$disputeId;
+
+        return $this->execute(self::METHOD_GET, $path);
+    }
+
+    /**
+     * Submit evidence for a dispute
+     */
+    public function submitDisputeEvidence(string $disputeId, array $evidence, bool $submit = true): array
+    {
+        $path = '/disputes/'.$disputeId;
+        $requestBody = ['evidence' => $evidence];
+
+        if ($submit) {
+            $requestBody['submit'] = true;
+        }
+
+        return $this->execute(self::METHOD_POST, $path, $requestBody);
     }
 
     /**
