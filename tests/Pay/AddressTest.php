@@ -82,7 +82,7 @@ class AddressTest extends TestCase
         $this->assertEquals('US', $array['country']);
         $this->assertEquals('123 Main St', $array['line1']);
         $this->assertEquals('Apt 4B', $array['line2']);
-        $this->assertEquals('10001', $array['postalCode']); // Note: camelCase
+        $this->assertEquals('10001', $array['postal_code']);
         $this->assertEquals('NY', $array['state']);
     }
 
