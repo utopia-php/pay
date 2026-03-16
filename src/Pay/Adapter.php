@@ -92,6 +92,39 @@ abstract class Adapter
     abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment;
 
     /**
+     * Authorize a payment (hold funds without capturing)
+     * Useful for scenarios where you need to ensure payment availability before providing service
+     *
+     * @param  int  $amount  Amount to authorize
+     * @param  string  $customerId  Customer ID
+     * @param  string|null  $paymentMethodId  Payment method ID (optional)
+     * @param  array<string, mixed>  $additionalParams  Additional parameters (optional)
+     * @return Payment Result of the authorization including authorization ID
+     */
+    abstract public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment;
+
+    /**
+     * Capture a previously authorized payment
+     * Completes the payment and transfers funds from customer
+     *
+     * @param  string  $paymentId  The payment/authorization ID to capture
+     * @param  int|null  $amount  Amount to capture (optional, defaults to full authorized amount)
+     * @param  array<string, mixed>  $additionalParams  Additional parameters (optional)
+     * @return Payment Result of the capture
+     */
+    abstract public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): Payment;
+
+    /**
+     * Cancel/void a payment authorization
+     * Releases the hold on funds without capturing
+     *
+     * @param  string  $paymentId  The payment/authorization ID to cancel
+     * @param  array<string, mixed>  $additionalParams  Additional parameters (optional)
+     * @return Payment Result of the cancellation
+     */
+    abstract public function cancelAuthorization(string $paymentId, array $additionalParams = []): Payment;
+
+    /**
      * Update a payment intent
      *
      * @param  string  $paymentId  Payment intent ID
@@ -101,7 +134,7 @@ abstract class Adapter
      * @param  array<string, mixed>  $additionalParams  Additional parameters (optional)
      * @return Payment The updated payment
      */
-    abstract public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): Payment;
+    abstract public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): Payment;
 
     /**
      * Retry a purchase for a payment intent
@@ -122,7 +155,7 @@ abstract class Adapter
      * @param  array<string, mixed>  $additionalParams  Additional parameters (optional, supports PARAM_IDEMPOTENCY_KEY)
      * @return Refund The refund result
      */
-    abstract public function refund(string $paymentId, int $amount = null, string $reason = null, array $additionalParams = []): Refund;
+    abstract public function refund(string $paymentId, ?int $amount = null, ?string $reason = null, array $additionalParams = []): Refund;
 
     /**
      * Get a payment details
@@ -152,7 +185,7 @@ abstract class Adapter
      * @param  Address|null  $address  Billing address
      * @return PaymentMethod The updated payment method
      */
-    abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, ?Address $address = null): PaymentMethod;
+    abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?Address $address = null): PaymentMethod;
 
     /**
      * Update payment method
@@ -189,7 +222,7 @@ abstract class Adapter
      * @param  string|null  $paymentMethod  Default payment method ID
      * @return Customer The created customer
      */
-    abstract public function createCustomer(string $name, string $email, ?Address $address = null, string $paymentMethod = null): Customer;
+    abstract public function createCustomer(string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer;
 
     /**
      * List customers
@@ -216,7 +249,7 @@ abstract class Adapter
      * @param  string|null  $paymentMethod  Default payment method ID
      * @return Customer The updated customer
      */
-    abstract public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, string $paymentMethod = null): Customer;
+    abstract public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer;
 
     /**
      * Delete Customer

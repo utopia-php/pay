@@ -112,7 +112,7 @@ class Exception extends \Exception
      * @param  array<string, mixed>  $metadata  Additional error metadata
      * @param  \Throwable|null  $previous  Previous exception for chaining
      */
-    public function __construct(string $type = Exception::GENERAL_UNKNOWN, string $message = null, int $code = null, array $metadata = [], \Throwable $previous = null)
+    public function __construct(string $type = Exception::GENERAL_UNKNOWN, ?string $message = null, ?int $code = null, array $metadata = [], ?\Throwable $previous = null)
     {
         $this->type = $type;
         $this->code = $code ?? 500;

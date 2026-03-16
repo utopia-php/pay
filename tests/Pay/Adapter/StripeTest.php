@@ -580,4 +580,177 @@ class StripeTest extends TestCase
             $this->assertInstanceOf(Exception::class, $e);
         }
     }
+
+    /**
+     * Test authorize, capture, and cancel authorization flow
+     *
+     * @return array<mixed>
+     */
+    public function testAuthorizeCaptureCancelFlow(): array
+    {
+        // Create customer
+        $customer = $this->stripe->createCustomer('Test Auth Customer', 'testauth@email.com');
+        $customerId = $customer->getId();
+        $this->assertNotEmpty($customerId);
+
+        // Create payment method
+        $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
+            'number' => 4242424242424242,
+            'exp_month' => 8,
+            'exp_year' => 2030,
+            'cvc' => 123,
+        ]);
+        $paymentMethodId = $pm->getId();
+        $this->assertNotEmpty($paymentMethodId);
+
+        return [
+            'customerId' => $customerId,
+            'paymentMethodId' => $paymentMethodId,
+        ];
+    }
+
+    /**
+     * Test authorize payment (hold funds)
+     *
+     * @depends testAuthorizeCaptureCancelFlow
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testAuthorize(array $data): array
+    {
+        $customerId = $data['customerId'];
+        $paymentMethodId = $data['paymentMethodId'];
+
+        // Authorize payment - hold funds without capturing
+        $authorization = $this->stripe->authorize(10000, $customerId, $paymentMethodId);
+
+        $this->assertNotEmpty($authorization->getId());
+        $this->assertEquals(10000, $authorization->getAmount());
+        $this->assertEquals('requires_capture', $authorization->getStatus());
+
+        $data['authorizationId'] = $authorization->getId();
+
+        return $data;
+    }
+
+    /**
+     * Test capture authorized payment
+     *
+     * @depends testAuthorize
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testCapture(array $data): array
+    {
+        $authorizationId = $data['authorizationId'];
+
+        // Capture the full amount
+        $captured = $this->stripe->capture($authorizationId);
+
+        $this->assertNotEmpty($captured->getId());
+        $this->assertEquals($authorizationId, $captured->getId());
+        $this->assertTrue($captured->isSucceeded());
+        $this->assertEquals(10000, $captured->getAmountReceived());
+
+        return $data;
+    }
+
+    /**
+     * Test partial capture of authorized payment
+     *
+     * @depends testAuthorizeCaptureCancelFlow
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testPartialCapture(array $data): array
+    {
+        $customerId = $data['customerId'];
+        $paymentMethodId = $data['paymentMethodId'];
+
+        // Authorize payment
+        $authorization = $this->stripe->authorize(15000, $customerId, $paymentMethodId);
+        $authorizationId = $authorization->getId();
+
+        $this->assertEquals('requires_capture', $authorization->getStatus());
+
+        // Capture partial amount (only 10000 of 15000)
+        $captured = $this->stripe->capture($authorizationId, 10000);
+
+        $this->assertTrue($captured->isSucceeded());
+        $this->assertEquals(10000, $captured->getAmountReceived());
+
+        return $data;
+    }
+
+    /**
+     * Test cancel authorization (release hold)
+     *
+     * @depends testAuthorizeCaptureCancelFlow
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function testCancelAuthorization(array $data): array
+    {
+        $customerId = $data['customerId'];
+        $paymentMethodId = $data['paymentMethodId'];
+
+        // Authorize payment
+        $authorization = $this->stripe->authorize(8000, $customerId, $paymentMethodId);
+        $authorizationId = $authorization->getId();
+
+        $this->assertEquals('requires_capture', $authorization->getStatus());
+
+        // Cancel the authorization - release the hold
+        $cancelled = $this->stripe->cancelAuthorization($authorizationId);
+
+        $this->assertNotEmpty($cancelled->getId());
+        $this->assertEquals($authorizationId, $cancelled->getId());
+        $this->assertTrue($cancelled->isCancelled());
+
+        return $data;
+    }
+
+    /**
+     * Test authorize with additional parameters
+     *
+     * @depends testAuthorizeCaptureCancelFlow
+     *
+     * @param  array<mixed>  $data
+     */
+    public function testAuthorizeWithMetadata(array $data): void
+    {
+        $customerId = $data['customerId'];
+        $paymentMethodId = $data['paymentMethodId'];
+
+        // Authorize with metadata (e.g., domain name, order ID)
+        $authorization = $this->stripe->authorize(
+            12000,
+            $customerId,
+            $paymentMethodId,
+            [
+                'metadata' => [
+                    'domain' => 'example.com',
+                    'order_id' => 'ORD-12345',
+                    'resource_type' => 'domain_registration',
+                ],
+                'description' => 'Domain registration hold for example.com',
+            ]
+        );
+
+        $this->assertNotEmpty($authorization->getId());
+        $this->assertEquals('requires_capture', $authorization->getStatus());
+        $metadata = $authorization->getMetadata();
+        $this->assertEquals('example.com', $metadata['domain']);
+        $this->assertEquals('ORD-12345', $metadata['order_id']);
+        $this->assertEquals('domain_registration', $metadata['resource_type']);
+        $this->assertEquals('Domain registration hold for example.com', $authorization->getDescription());
+
+        // Clean up
+        $this->stripe->cancelAuthorization($authorization->getId());
+        $this->stripe->deleteCustomer($customerId);
+    }
 }

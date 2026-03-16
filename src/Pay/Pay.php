@@ -86,9 +86,51 @@ class Pay
      * @param  array<string, mixed>  $additionalParams  Additional parameters
      * @return Payment The payment result
      */
-    public function purchase(int $amount, string $customerId, string $paymentMethodId = null, array $additionalParams = []): Payment
+    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
     {
         return $this->adapter->purchase($amount, $customerId, $paymentMethodId, $additionalParams);
+    }
+
+    /**
+     * Authorize
+     * Authorize a payment (hold funds without capturing)
+     *
+     * @param  int  $amount
+     * @param  string  $customerId
+     * @param  string|null  $paymentMethodId
+     * @param  array<string, mixed>  $additionalParams
+     * @return Payment
+     */
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
+    {
+        return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $additionalParams);
+    }
+
+    /**
+     * Capture
+     * Capture a previously authorized payment
+     *
+     * @param  string  $paymentId
+     * @param  int|null  $amount
+     * @param  array<string, mixed>  $additionalParams
+     * @return Payment
+     */
+    public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): Payment
+    {
+        return $this->adapter->capture($paymentId, $amount, $additionalParams);
+    }
+
+    /**
+     * Cancel Authorization
+     * Cancel/void a payment authorization
+     *
+     * @param  string  $paymentId
+     * @param  array<string, mixed>  $additionalParams
+     * @return Payment
+     */
+    public function cancelAuthorization(string $paymentId, array $additionalParams = []): Payment
+    {
+        return $this->adapter->cancelAuthorization($paymentId, $additionalParams);
     }
 
     /**
@@ -139,7 +181,7 @@ class Pay
      * @param  array<string, mixed>  $additionalParams  Additional parameters (optional)
      * @return Payment Result of the update
      */
-    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, string $currency = null, array $additionalParams = []): Payment
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): Payment
     {
         return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $additionalParams);
     }
@@ -178,7 +220,7 @@ class Pay
      * @param  Address|null  $address  Billing address
      * @return PaymentMethod The updated payment method
      */
-    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $name = null, string $email = null, string $phone = null, ?Address $address = null): PaymentMethod
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?Address $address = null): PaymentMethod
     {
         return $this->adapter->updatePaymentMethodBillingDetails($paymentMethodId, $name, $email, $phone, $address);
     }
@@ -232,9 +274,6 @@ class Pay
     /**
      * Create Customer
      *
-     * Add new customer in the gateway database
-     * returns the details of the newly created customer
-     *
      * @param  string  $name  Customer name
      * @param  string  $email  Customer email
      * @param  Address|null  $address  Customer address
@@ -267,7 +306,7 @@ class Pay
      * @param  string|null  $paymentMethod  Default payment method ID
      * @return Customer The updated customer
      */
-    public function updateCustomer(string $customerId, string $name, string $email, Address $address = null, ?string $paymentMethod = null): Customer
+    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
