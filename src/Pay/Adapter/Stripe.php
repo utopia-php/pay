@@ -43,8 +43,8 @@ class Stripe extends Adapter
             'currency' => $this->currency,
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
-            'off_session' => true,
-            'confirm' => true,
+            'off_session' => 'true',
+            'confirm' => 'true',
         ];
 
         // Extract idempotency key if provided
@@ -74,8 +74,8 @@ class Stripe extends Adapter
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
             'capture_method' => 'manual',
-            'off_session' => true,
-            'confirm' => true,
+            'off_session' => 'true',
+            'confirm' => 'true',
         ];
 
         // Extract idempotency key if provided
@@ -419,7 +419,7 @@ class Stripe extends Adapter
         if ($paymentMethodConfiguration !== null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
             $requestBody['automatic_payment_methods'] = [
-                'enabled' => true,
+                'enabled' => 'true',
             ];
             unset($requestBody['payment_method_types']);
         }
@@ -551,7 +551,7 @@ class Stripe extends Adapter
         $requestBody = ['evidence' => $evidence];
 
         if ($submit) {
-            $requestBody['submit'] = true;
+            $requestBody['submit'] = 'true';
         }
 
         return $this->execute(self::METHOD_POST, $path, $requestBody);
