@@ -143,11 +143,11 @@ class Stripe extends Adapter
     {
         $path = '/refunds';
         $requestBody = ['payment_intent' => $paymentId];
-        if ($amount != null) {
+        if ($amount !== null) {
             $requestBody['amount'] = $amount;
         }
 
-        if ($reason != null) {
+        if ($reason !== null) {
             $requestBody['reason'] = $reason;
         }
 
@@ -182,14 +182,14 @@ class Stripe extends Adapter
     {
         $path = '/payment_intents/'.$paymentId;
         $requestBody = [];
-        if ($paymentMethodId != null) {
+        if ($paymentMethodId !== null) {
             $requestBody['payment_method'] = $paymentMethodId;
         }
-        if ($amount != null) {
+        if ($amount !== null) {
             $requestBody['amount'] = $amount;
         }
 
-        if ($currency != null) {
+        if ($currency !== null) {
             $requestBody['currency'] = $currency;
         }
 
@@ -270,7 +270,7 @@ class Stripe extends Adapter
             $requestBody['billing_details']['phone'] = $phone;
         }
         if (! is_null($address)) {
-            $requestBody['billing_details']['address'] = $address->asArray();
+            $requestBody['billing_details']['address'] = $address->toArray();
         }
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
@@ -319,7 +319,7 @@ class Stripe extends Adapter
             $requestBody['payment_method'] = $paymentMethod;
         }
         if (! is_null($address)) {
-            $requestBody['address'] = $address->asArray();
+            $requestBody['address'] = $address->toArray();
         }
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
 
@@ -368,7 +368,7 @@ class Stripe extends Adapter
             $requestBody['payment_method'] = $paymentMethod;
         }
         if (! is_null($address)) {
-            $requestBody['address'] = $address->asArray();
+            $requestBody['address'] = $address->toArray();
         }
 
         $result = $this->execute(self::METHOD_POST, $path, $requestBody);
@@ -395,11 +395,11 @@ class Stripe extends Adapter
             'payment_method_types' => $paymentMethodTypes,
         ];
 
-        if ($paymentMethod != null) {
+        if ($paymentMethod !== null) {
             $requestBody['payment_method'] = $paymentMethod;
         }
 
-        if ($paymentMethodConfiguration != null) {
+        if ($paymentMethodConfiguration !== null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
             $requestBody['automatic_payment_methods'] = [
                 'enabled' => 'true',
@@ -427,11 +427,11 @@ class Stripe extends Adapter
     {
         $path = '/setup_intents';
         $requestBody = [];
-        if ($customerId != null) {
+        if ($customerId !== null) {
             $requestBody['customer'] = $customerId;
         }
 
-        if ($pyamentMethodId != null) {
+        if ($pyamentMethodId !== null) {
             $requestBody['payment_method'] = $pyamentMethodId;
         }
         $result = $this->execute(self::METHOD_GET, $path, $requestBody);
@@ -443,13 +443,13 @@ class Stripe extends Adapter
     {
         $path = '/setup_intents/'.$id;
         $requestBody = [];
-        if ($customerId != null) {
+        if ($customerId !== null) {
             $requestBody['customer'] = $customerId;
         }
-        if ($paymentMethod != null) {
+        if ($paymentMethod !== null) {
             $requestBody['payment_method'] = $paymentMethod;
         }
-        if ($paymentMethodConfiguration != null) {
+        if ($paymentMethodConfiguration !== null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
         }
         if (! empty($paymentMethodOptions)) {

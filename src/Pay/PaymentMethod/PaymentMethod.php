@@ -517,6 +517,12 @@ class PaymentMethod
         $cardData = $data['card'] ?? $data;
         $billingDetails = $data['billing_details'] ?? [];
 
+        // Normalize expiration year: convert 2-digit to 4-digit
+        $expYear = isset($cardData['exp_year']) ? (int) $cardData['exp_year'] : ($data['expYear'] ?? null);
+        if ($expYear !== null && $expYear > 0 && $expYear < 100) {
+            $expYear = 2000 + $expYear;
+        }
+
         return new self(
             id: $data['id'] ?? $data['$id'] ?? uniqid('pm_'),
             type: $data['type'] ?? self::TYPE_CARD,
@@ -524,7 +530,7 @@ class PaymentMethod
             brand: $cardData['brand'] ?? $data['brand'] ?? null,
             last4: $cardData['last4'] ?? $data['last4'] ?? null,
             expMonth: isset($cardData['exp_month']) ? (int) $cardData['exp_month'] : ($data['expMonth'] ?? null),
-            expYear: isset($cardData['exp_year']) ? (int) $cardData['exp_year'] : ($data['expYear'] ?? null),
+            expYear: $expYear,
             funding: $cardData['funding'] ?? $data['funding'] ?? null,
             country: $cardData['country'] ?? $data['country'] ?? null,
             billingAddress: $billingAddress,

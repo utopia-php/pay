@@ -230,10 +230,9 @@ class Currency
      *
      * @param  int  $amount  The amount in smallest currency unit
      * @param  string  $currency  The three-letter currency code
-     * @param  string|null  $locale  The locale for formatting (default: en_US)
      * @return string The formatted amount string
      */
-    public static function format(int $amount, string $currency, ?string $locale = null): string
+    public static function format(int $amount, string $currency): string
     {
         $decimalAmount = self::fromSmallestUnit($amount, $currency);
         $decimals = self::getDecimalPlaces($currency);
@@ -297,10 +296,13 @@ class Currency
      */
     public static function meetsMinimum(int $amount, string $currency, int $minimumCents = 50): bool
     {
-        // Adjust minimum for zero-decimal currencies
         if (self::isZeroDecimal($currency)) {
-            // For zero-decimal currencies, minimum is typically 1 unit
             return $amount >= 1;
+        }
+
+        if (self::isThreeDecimal($currency)) {
+            // Scale minimum from cents (2-decimal) to millis (3-decimal): 50 cents = 500 millis
+            return $amount >= ($minimumCents * 10);
         }
 
         return $amount >= $minimumCents;

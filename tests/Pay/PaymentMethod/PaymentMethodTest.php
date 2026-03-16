@@ -278,4 +278,28 @@ class PaymentMethodTest extends TestCase
         $this->assertSame($this->paymentMethod, $result);
         $this->assertEquals('pm_fluent', $this->paymentMethod->getId());
     }
+
+    public function testFromArrayNormalizesTwoDigitYear(): void
+    {
+        $data = [
+            'id' => 'pm_2digit',
+            'type' => 'card',
+            'card' => [
+                'exp_month' => 12,
+                'exp_year' => 25,
+                'brand' => 'visa',
+                'last4' => '4242',
+            ],
+        ];
+
+        $pm = PaymentMethod::fromArray($data);
+
+        $this->assertEquals(2025, $pm->getExpYear());
+        $this->assertEquals(12, $pm->getExpMonth());
+
+        // 4-digit year should remain unchanged
+        $data['card']['exp_year'] = 2030;
+        $pm2 = PaymentMethod::fromArray($data);
+        $this->assertEquals(2030, $pm2->getExpYear());
+    }
 }

@@ -125,6 +125,12 @@ class CurrencyTest extends TestCase
         // Zero-decimal currencies
         $this->assertTrue(Currency::meetsMinimum(1, 'JPY'));
         $this->assertFalse(Currency::meetsMinimum(0, 'JPY'));
+
+        // Three-decimal currencies (50 cents = 500 millis)
+        $this->assertTrue(Currency::meetsMinimum(500, 'BHD'));
+        $this->assertFalse(Currency::meetsMinimum(499, 'BHD'));
+        $this->assertTrue(Currency::meetsMinimum(1000, 'KWD', 100));
+        $this->assertFalse(Currency::meetsMinimum(999, 'KWD', 100));
     }
 
     public function testGetAllCurrencies(): void

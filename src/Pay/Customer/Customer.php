@@ -205,7 +205,7 @@ class Customer
      *
      * @return int|null Unix timestamp when customer was created
      */
-    public function getCreatedAt(): ?int
+    public function getCreatedAt(): int
     {
         return $this->createdAt;
     }
