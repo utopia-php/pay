@@ -2,6 +2,8 @@
 
 namespace Utopia\Pay\Refund;
 
+use Utopia\Pay\Currency;
+
 /**
  * Refund class for managing refund data.
  *
@@ -376,12 +378,21 @@ class Refund
     /**
      * Get the amount as a formatted decimal (for display).
      *
-     * @param  int  $decimals  Number of decimal places (default: 2)
+     * Uses the Currency utility to correctly handle zero-decimal
+     * and three-decimal currencies.
+     *
+     * @param  int|null  $decimals  Number of decimal places (null to auto-detect from currency)
      * @return float The amount as a decimal
      */
-    public function getAmountDecimal(int $decimals = 2): float
+    public function getAmountDecimal(?int $decimals = null): float
     {
-        return round($this->amount / 100, $decimals);
+        if ($decimals !== null) {
+            $divisor = pow(10, Currency::getDecimalPlaces($this->currency));
+
+            return round($this->amount / $divisor, $decimals);
+        }
+
+        return Currency::fromSmallestUnit($this->amount, $this->currency);
     }
 
     /**

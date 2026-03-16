@@ -75,7 +75,7 @@ class PaginatedResult
             return $lastItem['id'];
         }
 
-        return $this->startingAfter;
+        return null;
     }
 
     /**
@@ -100,7 +100,7 @@ class PaginatedResult
             return $firstItem['id'];
         }
 
-        return $this->endingBefore;
+        return null;
     }
 
     /**

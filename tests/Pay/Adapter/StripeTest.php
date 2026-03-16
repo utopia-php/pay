@@ -109,8 +109,8 @@ class StripeTest extends TestCase
 
         $this->assertEquals('visa', $pm->getBrand());
         $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpiryYear());
-        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals(2030, $pm->getExpYear());
+        $this->assertEquals(8, $pm->getExpMonth());
         $this->assertEquals('4242', $pm->getLast4());
 
         $data['paymentMethodId'] = $pm->getId();
@@ -137,8 +137,8 @@ class StripeTest extends TestCase
 
         $this->assertEquals('visa', $pm->getBrand());
         $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpiryYear());
-        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals(2030, $pm->getExpYear());
+        $this->assertEquals(8, $pm->getExpMonth());
         $this->assertEquals('4242', $pm->getLast4());
 
         return $data;
@@ -158,8 +158,8 @@ class StripeTest extends TestCase
 
         $this->assertEquals('visa', $pm->getBrand());
         $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpiryYear());
-        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals(2030, $pm->getExpYear());
+        $this->assertEquals(8, $pm->getExpMonth());
         $this->assertEquals('4242', $pm->getLast4());
 
         return $data;
@@ -262,8 +262,8 @@ class StripeTest extends TestCase
         $this->assertNotEmpty($pm->getId());
         $this->assertTrue($pm->isCard());
 
-        $this->assertEquals(2031, $pm->getExpiryYear());
-        $this->assertEquals(6, $pm->getExpiryMonth());
+        $this->assertEquals(2031, $pm->getExpYear());
+        $this->assertEquals(6, $pm->getExpMonth());
 
         return $data;
     }
@@ -483,8 +483,8 @@ class StripeTest extends TestCase
 
         $this->assertEquals('visa', $pm->getBrand());
         $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpiryYear());
-        $this->assertEquals(8, $pm->getExpiryMonth());
+        $this->assertEquals(2030, $pm->getExpYear());
+        $this->assertEquals(8, $pm->getExpMonth());
         $this->assertEquals('0259', $pm->getLast4());
 
         $paymentMethodId = $pm->getId();

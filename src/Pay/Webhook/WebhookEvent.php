@@ -413,6 +413,13 @@ class WebhookEvent
      */
     public static function fromArray(array $data, ?string $provider = null): self
     {
+        // Extract requestId safely - Stripe sends request as an object {id, idempotency_key}
+        $requestId = $data['requestId'] ?? null;
+        if ($requestId === null && isset($data['request'])) {
+            $request = $data['request'];
+            $requestId = is_array($request) ? ($request['id'] ?? null) : (is_string($request) ? $request : null);
+        }
+
         return new self(
             id: $data['id'] ?? uniqid('evt_'),
             type: $data['type'] ?? '',
@@ -422,7 +429,7 @@ class WebhookEvent
             livemode: $data['livemode'] ?? false,
             createdAt: $data['createdAt'] ?? $data['created'] ?? null,
             pendingWebhooks: $data['pendingWebhooks'] ?? $data['pending_webhooks'] ?? 0,
-            requestId: $data['requestId'] ?? $data['request']['id'] ?? $data['request'] ?? null
+            requestId: $requestId
         );
     }
 }
