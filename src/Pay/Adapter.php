@@ -327,10 +327,9 @@ abstract class Adapter
      * @param  string  $url
      * @param  array<mixed>  $params
      * @param  array<mixed>  $headers
-     * @param  array<mixed>  $options
      * @return array<mixed>
      */
-    protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): array
+    protected function call(string $method, string $url, array $params = [], array $headers = []): array
     {
         $query = match ($headers['content-type'] ?? null) {
             'application/json' => json_encode($params),
@@ -355,7 +354,6 @@ abstract class Adapter
             );
         } catch (FetchException $e) {
             $this->handleError(0, $e->getMessage());
-            throw $e;
         }
 
         $responseHeaders = $response->getHeaders();
