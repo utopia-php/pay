@@ -397,8 +397,6 @@ abstract class Adapter
             $this->handleError($responseStatus, $responseBody);
         }
 
-        curl_close($ch);
-
         return $responseBody;
     }
 
