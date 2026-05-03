@@ -345,6 +345,7 @@ abstract class Adapter
             $client->addHeader($key, $value);
         }
 
+        $response = null;
         try {
             $response = $client->fetch(
                 url: $url,
@@ -361,7 +362,7 @@ abstract class Adapter
         $responseType = $responseHeaders['content-type'] ?? '';
         $responseStatus = $response->getStatusCode();
 
-        if (! empty($responseType)) {
+        if (str_contains($responseType, 'application/json')) {
             $responseBody = json_decode($responseBody, true);
         }
 
