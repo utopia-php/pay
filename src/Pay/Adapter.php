@@ -2,6 +2,9 @@
 
 namespace Utopia\Pay;
 
+use Utopia\Fetch\Client;
+use Utopia\Fetch\Exception as FetchException;
+
 abstract class Adapter
 {
     protected const METHOD_GET = 'GET';
@@ -324,80 +327,48 @@ abstract class Adapter
      * @param  string  $url
      * @param  array<mixed>  $params
      * @param  array<mixed>  $headers
-     * @param  array<mixed>  $options
      * @return array<mixed>
      */
-    protected function call(string $method, string $url, array $params = [], array $headers = [], array $options = []): array
+    protected function call(string $method, string $url, array $params = [], array $headers = []): array
     {
-        $responseHeaders = [];
-        $ch = \curl_init();
-        $query = null;
+        $query = match ($headers['content-type'] ?? null) {
+            'application/json' => json_encode($params),
+            'multipart/form-data' => $this->flatten($params),
+            default => \http_build_query($params),
+        };
 
-        switch ($headers['content-type'] ?? null) {
-            case 'application/json':
-                $query = json_encode($params);
-                break;
+        $client = (new Client())
+            ->setUserAgent(php_uname('s').'-'.php_uname('r').':php-'.phpversion())
+            ->setAllowRedirects(true);
 
-            case 'multipart/form-data':
-                $query = $this->flatten($params);
-                break;
-
-            default:
-                $query = \http_build_query($params);
-                break;
+        foreach ($headers as $key => $value) {
+            $client->addHeader($key, $value);
         }
 
-        foreach ($headers as $i => $header) {
-            $headers[] = $i.':'.$header;
-            unset($headers[$i]);
+        $response = null;
+        try {
+            $response = $client->fetch(
+                url: $url,
+                method: $method,
+                body: empty($query) ? null : $query,
+                query: [],
+            );
+        } catch (FetchException $e) {
+            $this->handleError(0, $e->getMessage());
         }
 
-        curl_setopt($ch, CURLOPT_HEADEROPT, \CURLHEADER_UNIFIED);
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_USERAGENT, php_uname('s').'-'.php_uname('r').':php-'.phpversion());
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$responseHeaders) {
-            $len = strlen($header);
-            $header = explode(':', strtolower($header), 2);
-
-            if (count($header) < 2) { // ignore invalid headers
-                return $len;
-            }
-
-            $responseHeaders[strtolower(trim($header[0]))] = trim($header[1]);
-
-            return $len;
-        });
-        if (! empty($query)) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
-        }
-
-        foreach ($options as $key => $value) {
-            curl_setopt($ch, $key, $value);
-        }
-
-        $responseBody = curl_exec($ch);
+        $responseHeaders = $response->getHeaders();
+        $responseBody = $response->text();
         $responseType = $responseHeaders['content-type'] ?? '';
-        $responseStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $responseStatus = $response->getStatusCode();
 
-        switch ($responseType && is_string($responseBody)) {
-            case 'application/json':
-                $responseBody = json_decode($responseBody, true);
-                break;
-        }
-
-        if (curl_errno($ch)) {
-            $this->handleError($responseStatus, curl_error($ch));
+        if (str_contains($responseType, 'application/json')) {
+            $responseBody = json_decode($responseBody, true);
         }
 
         if ($responseStatus >= 400) {
             $this->handleError($responseStatus, $responseBody);
         }
-
-        curl_close($ch);
 
         return $responseBody;
     }
