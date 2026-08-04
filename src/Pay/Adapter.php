@@ -2,29 +2,8 @@
 
 namespace Utopia\Pay;
 
-use Utopia\Fetch\Client;
-use Utopia\Fetch\Exception as FetchException;
-
 abstract class Adapter
 {
-    protected const METHOD_GET = 'GET';
-
-    protected const METHOD_POST = 'POST';
-
-    protected const METHOD_PUT = 'PUT';
-
-    protected const METHOD_PATCH = 'PATCH';
-
-    protected const METHOD_DELETE = 'DELETE';
-
-    protected const METHOD_HEAD = 'HEAD';
-
-    protected const METHOD_OPTIONS = 'OPTIONS';
-
-    protected const METHOD_CONNECT = 'CONNECT';
-
-    protected const METHOD_TRACE = 'TRACE';
-
     /**
      * @var bool
      */
@@ -318,92 +297,4 @@ abstract class Adapter
      * @return array
      */
     abstract public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array;
-
-    /**
-     * Call
-     * Make a request
-     *
-     * @param  string  $method
-     * @param  string  $url
-     * @param  array<mixed>  $params
-     * @param  array<mixed>  $headers
-     * @return array<mixed>
-     */
-    protected function call(string $method, string $url, array $params = [], array $headers = []): array
-    {
-        $query = match ($headers['content-type'] ?? null) {
-            'application/json' => json_encode($params),
-            'multipart/form-data' => $this->flatten($params),
-            default => \http_build_query($params),
-        };
-
-        $client = (new Client())
-            ->setUserAgent(php_uname('s').'-'.php_uname('r').':php-'.phpversion())
-            ->setAllowRedirects(true);
-
-        foreach ($headers as $key => $value) {
-            $client->addHeader($key, $value);
-        }
-
-        $response = null;
-        try {
-            $response = $client->fetch(
-                url: $url,
-                method: $method,
-                body: empty($query) ? null : $query,
-                query: [],
-            );
-        } catch (FetchException $e) {
-            $this->handleError(0, $e->getMessage());
-        }
-
-        $responseHeaders = $response->getHeaders();
-        $responseBody = $response->text();
-        $responseType = $responseHeaders['content-type'] ?? '';
-        $responseStatus = $response->getStatusCode();
-
-        if (str_contains($responseType, 'application/json')) {
-            $responseBody = json_decode($responseBody, true);
-        }
-
-        if ($responseStatus >= 400) {
-            $this->handleError($responseStatus, $responseBody);
-        }
-
-        return $responseBody;
-    }
-
-    protected function handleError(int $code, mixed $response)
-    {
-        if (is_array($response)) {
-            /** @phpstan-ignore-next-line */
-            throw new \Exception(json_encode($response), $code);
-        }
-
-        throw new \Exception($response, $code);
-    }
-
-    /**
-     * Flatten params array to PHP multiple format
-     *
-     * @param  array<mixed>  $data
-     * @param  string  $prefix
-     * @return array<mixed>
-     */
-    protected function flatten(array $data, $prefix = ''): array
-    {
-        $output = [];
-
-        foreach ($data as $key => $value) {
-            $finalKey = $prefix ? "{$prefix}[{$key}]" : $key;
-
-            if (is_array($value)) {
-                $output += $this->flatten($value, $finalKey); // @todo: handle name collision here if needed
-            } else {
-                $output[$finalKey] = $value;
-            }
-        }
-
-        return $output;
-    }
 }
