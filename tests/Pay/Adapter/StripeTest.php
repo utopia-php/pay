@@ -4,7 +4,6 @@ namespace Utopia\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Adapter\Stripe;
-use Utopia\Pay\Address;
 use Utopia\Pay\Exception;
 
 class StripeTest extends TestCase
@@ -31,13 +30,12 @@ class StripeTest extends TestCase
      */
     public function testCreateCustomer(): array
     {
-        $address = new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati');
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', $address);
-        $this->assertNotEmpty($customer->getId());
-        $this->assertEquals('Test customer', $customer->getName());
-        $this->assertEquals('testcustomer@email.com', $customer->getEmail());
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
+        $this->assertNotEmpty($customer['id']);
+        $this->assertEquals($customer['name'], 'Test customer');
+        $this->assertEquals($customer['email'], 'testcustomer@email.com');
 
-        return ['customerId' => $customer->getId()];
+        return ['customerId' => $customer['id']];
     }
 
     /**
@@ -50,9 +48,9 @@ class StripeTest extends TestCase
     {
         $customerId = $data['customerId'];
         $customer = $this->stripe->getCustomer($customerId);
-        $this->assertNotEmpty($customer->getId());
-        $this->assertEquals('Test customer', $customer->getName());
-        $this->assertEquals('testcustomer@email.com', $customer->getEmail());
+        $this->assertNotEmpty($customer['id']);
+        $this->assertEquals($customer['name'], 'Test customer');
+        $this->assertEquals($customer['email'], 'testcustomer@email.com');
 
         return $data;
     }
@@ -67,9 +65,9 @@ class StripeTest extends TestCase
     {
         $customerId = $data['customerId'];
         $customer = $this->stripe->updateCustomer($customerId, 'Test Updated', 'testcustomerupdated@email.com');
-        $this->assertNotEmpty($customer->getId());
-        $this->assertEquals('Test Updated', $customer->getName());
-        $this->assertEquals('testcustomerupdated@email.com', $customer->getEmail());
+        $this->assertNotEmpty($customer['id']);
+        $this->assertEquals($customer['name'], 'Test Updated');
+        $this->assertEquals($customer['email'], 'testcustomerupdated@email.com');
 
         return $data;
     }
@@ -81,12 +79,13 @@ class StripeTest extends TestCase
      */
     public function testListCustomers(array $data): void
     {
-        $customers = $this->stripe->listCustomers();
-        $this->assertIsArray($customers);
-        $this->assertNotEmpty($customers);
-        $this->assertNotEmpty($customers[0]->getId());
-        $this->assertNotEmpty($customers[0]->getName());
-        $this->assertNotEmpty($customers[0]->getEmail());
+        $response = $this->stripe->listCustomers();
+        $this->assertIsArray($response['data']);
+        $this->assertNotEmpty($response['data']);
+        $customers = $response['data'];
+        $this->assertNotEmpty($customers[0]['id']);
+        $this->assertNotEmpty($customers[0]['name']);
+        $this->assertNotEmpty($customers[0]['email']);
     }
 
     /**
@@ -104,16 +103,17 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($pm->getId());
-        $this->assertTrue($pm->isCard());
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
 
-        $this->assertEquals('visa', $pm->getBrand());
-        $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpYear());
-        $this->assertEquals(8, $pm->getExpMonth());
-        $this->assertEquals('4242', $pm->getLast4());
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
+        $this->assertEquals('US', $card['country']);
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals(4242, $card['last4']);
 
-        $data['paymentMethodId'] = $pm->getId();
+        $data['paymentMethodId'] = $pm['id'];
 
         return $data;
     }
@@ -128,18 +128,18 @@ class StripeTest extends TestCase
     {
         $customerId = $data['customerId'];
         $pms = $this->stripe->listPaymentMethods($customerId);
-        $this->assertIsArray($pms);
-        $this->assertNotEmpty($pms);
+        $this->assertIsArray($pms['data']);
 
-        $pm = $pms[0];
-        $this->assertNotEmpty($pm->getId());
-        $this->assertTrue($pm->isCard());
+        $pm = $pms['data'][0];
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
 
-        $this->assertEquals('visa', $pm->getBrand());
-        $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpYear());
-        $this->assertEquals(8, $pm->getExpMonth());
-        $this->assertEquals('4242', $pm->getLast4());
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
+        $this->assertEquals('US', $card['country']);
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals(4242, $card['last4']);
 
         return $data;
     }
@@ -153,14 +153,15 @@ class StripeTest extends TestCase
         $customerId = $data['customerId'];
         $paymentMethodId = $data['paymentMethodId'];
         $pm = $this->stripe->getPaymentMethod($customerId, $paymentMethodId);
-        $this->assertNotEmpty($pm->getId());
-        $this->assertTrue($pm->isCard());
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
 
-        $this->assertEquals('visa', $pm->getBrand());
-        $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpYear());
-        $this->assertEquals(8, $pm->getExpMonth());
-        $this->assertEquals('4242', $pm->getLast4());
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
+        $this->assertEquals('US', $card['country']);
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals(4242, $card['last4']);
 
         return $data;
     }
@@ -189,9 +190,9 @@ class StripeTest extends TestCase
                 ],
             ],
         ]);
-        $this->assertNotEmpty($setupIntent->getId());
-        $this->assertNotEmpty($setupIntent->getClientSecret());
-        $data['setupIntentId'] = $setupIntent->getId();
+        $this->assertNotEmpty($setupIntent);
+        $this->assertNotEmpty($setupIntent['client_secret']);
+        $data['setupIntentId'] = $setupIntent['id'];
 
         return $data;
     }
@@ -223,8 +224,12 @@ class StripeTest extends TestCase
             ],
         ]);
 
-        $this->assertNotEmpty($setupIntent->getId());
-        $this->assertEquals($setupIntentId, $setupIntent->getId());
+        $this->assertNotEmpty($setupIntent);
+        $this->assertEquals($setupIntentId, $setupIntent['id']);
+        $this->assertIsArray($setupIntent['payment_method_options']);
+        $this->assertArrayHasKey('card', $setupIntent['payment_method_options']);
+        $this->assertArrayHasKey('mandate_options', $setupIntent['payment_method_options']['card']);
+        $this->assertEquals($reference, $setupIntent['payment_method_options']['card']['mandate_options']['reference']);
     }
 
     /**
@@ -239,7 +244,7 @@ class StripeTest extends TestCase
 
         $setupIntents = $this->stripe->listFuturePayments($customerId);
         $this->assertNotEmpty($setupIntents);
-        $this->assertNotEmpty($setupIntents[0]->getId());
+        $this->assertNotEmpty($setupIntents[0]['id']);
     }
 
     /**
@@ -255,11 +260,12 @@ class StripeTest extends TestCase
             'exp_month' => 6,
             'exp_year' => 2031,
         ]);
-        $this->assertNotEmpty($pm->getId());
-        $this->assertTrue($pm->isCard());
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
 
-        $this->assertEquals(2031, $pm->getExpYear());
-        $this->assertEquals(6, $pm->getExpMonth());
+        $card = $pm['card'];
+        $this->assertEquals(2031, $card['exp_year']);
+        $this->assertEquals(6, $card['exp_month']);
 
         return $data;
     }
@@ -276,11 +282,12 @@ class StripeTest extends TestCase
         $paymentMethodId = $data['paymentMethodId'];
         $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
 
-        $this->assertNotEmpty($purchase->getId());
-        $this->assertEquals(5000, $purchase->getAmountReceived());
-        $this->assertTrue($purchase->isSucceeded());
+        $this->assertNotEmpty($purchase['id']);
+        $this->assertEquals(5000, $purchase['amount_received']);
+        $this->assertEquals('payment_intent', $purchase['object']);
+        $this->assertEquals('succeeded', $purchase['status']);
 
-        $data['paymentId'] = $purchase->getId();
+        $data['paymentId'] = $purchase['id'];
 
         return $data;
     }
@@ -303,8 +310,8 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($failingPm->getId());
-        $failingPmId = $failingPm->getId();
+        $this->assertNotEmpty($failingPm['id']);
+        $failingPmId = $failingPm['id'];
 
         // Create a payment intent with the failing payment method
         $paymentIntentId = null;
@@ -326,14 +333,16 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($succeedingPm->getId());
-        $succeedingPmId = $succeedingPm->getId();
+        $this->assertNotEmpty($succeedingPm['id']);
+        $succeedingPmId = $succeedingPm['id'];
 
         // Retry the payment intent with the succeeding payment method
         $result = $this->stripe->retryPurchase((string) $paymentIntentId, $succeedingPmId);
-        $this->assertNotEmpty($result->getId());
-        $this->assertEquals($paymentIntentId, $result->getId());
-        $this->assertTrue($result->isSucceeded());
+        $this->assertNotEmpty($result['id']);
+        $this->assertEquals($paymentIntentId, $result['id']);
+        $this->assertEquals('payment_intent', $result['object']);
+        $this->assertArrayHasKey('status', $result);
+        $this->assertEquals('succeeded', $result['status']);
 
         // Save for further tests if needed
         $data['paymentId'] = $paymentIntentId;
@@ -349,9 +358,10 @@ class StripeTest extends TestCase
     {
         $paymentId = $data['paymentId'];
         $payment = $this->stripe->getPayment($paymentId);
-        $this->assertNotEmpty($payment->getId());
-        $this->assertEquals(5000, $payment->getAmountReceived());
-        $this->assertTrue($payment->isSucceeded());
+        $this->assertNotEmpty($payment['id']);
+        $this->assertEquals(5000, $payment['amount_received']);
+        $this->assertEquals('payment_intent', $payment['object']);
+        $this->assertEquals('succeeded', $payment['status']);
 
         return $data;
     }
@@ -374,8 +384,8 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($failingPm->getId());
-        $failingPmId = $failingPm->getId();
+        $this->assertNotEmpty($failingPm['id']);
+        $failingPmId = $failingPm['id'];
 
         // Create a payment intent with the failing payment method
         $paymentIntentId = null;
@@ -397,16 +407,17 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($succeedingPm->getId());
-        $succeedingPmId = $succeedingPm->getId();
+        $this->assertNotEmpty($succeedingPm['id']);
+        $succeedingPmId = $succeedingPm['id'];
 
         // Update the payment intent with the new payment method and amount
         $newAmount = 6000;
         $updated = $this->stripe->updatePayment((string) $paymentIntentId, $succeedingPmId, $newAmount);
-        $this->assertNotEmpty($updated->getId());
-        $this->assertEquals($paymentIntentId, $updated->getId());
-        $this->assertEquals($newAmount, $updated->getAmount());
-        $this->assertEquals($succeedingPmId, $updated->getPaymentMethodId());
+        $this->assertNotEmpty($updated['id']);
+        $this->assertEquals($paymentIntentId, $updated['id']);
+        $this->assertEquals('payment_intent', $updated['object']);
+        $this->assertEquals($newAmount, $updated['amount']);
+        $this->assertEquals($succeedingPmId, $updated['payment_method']);
     }
 
     /**
@@ -416,10 +427,11 @@ class StripeTest extends TestCase
      */
     public function testRefund(array $data): void
     {
-        $refund = $this->stripe->refund($data['paymentId'], 3000);
-        $this->assertNotEmpty($refund->getId());
-        $this->assertTrue($refund->isSucceeded());
-        $this->assertEquals(3000, $refund->getAmount());
+        $purchase = $this->stripe->refund($data['paymentId'], 3000);
+        $this->assertNotEmpty($purchase['id']);
+        $this->assertEquals('refund', $purchase['object']);
+        $this->assertEquals('succeeded', $purchase['status']);
+        $this->assertEquals(3000, $purchase['amount']);
     }
 
     /**
@@ -452,21 +464,21 @@ class StripeTest extends TestCase
         $customerId = $data['customerId'];
         $deleted = $this->stripe->deleteCustomer($customerId);
         $this->assertTrue($deleted);
-        $customer = $this->stripe->getCustomer($customerId);
-        $this->assertTrue($customer->isDeleted());
+        $res = $this->stripe->getCustomer($customerId);
+        $this->assertTrue($res['deleted']);
     }
 
     /**
      * Test list disputes
      *
+     * @param  array  $data
      * @return void
      */
     public function testListDisputes(): void
     {
-        $address = new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati');
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', $address);
-        $this->assertNotEmpty($customer->getId());
-        $customerId = $customer->getId();
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
+        $this->assertNotEmpty($customer['id']);
+        $customerId = $customer['id'];
 
         $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
             'number' => 4000000000000259,
@@ -474,25 +486,27 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $this->assertNotEmpty($pm->getId());
-        $this->assertTrue($pm->isCard());
+        $this->assertNotEmpty($pm['id']);
+        $this->assertNotEmpty($pm['card']);
 
-        $this->assertEquals('visa', $pm->getBrand());
-        $this->assertEquals('US', $pm->getCountry());
-        $this->assertEquals(2030, $pm->getExpYear());
-        $this->assertEquals(8, $pm->getExpMonth());
-        $this->assertEquals('0259', $pm->getLast4());
+        $card = $pm['card'];
+        $this->assertEquals('visa', $card['brand']);
+        $this->assertEquals('US', $card['country']);
+        $this->assertEquals(2030, $card['exp_year']);
+        $this->assertEquals(8, $card['exp_month']);
+        $this->assertEquals('0259', $card['last4']);
 
-        $paymentMethodId = $pm->getId();
+        $paymentMethodId = $pm['id'];
 
         $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
 
-        $this->assertNotEmpty($purchase->getId());
-        $this->assertEquals(5000, $purchase->getAmountReceived());
-        $this->assertTrue($purchase->isSucceeded());
+        $this->assertNotEmpty($purchase['id']);
+        $this->assertEquals(5000, $purchase['amount_received']);
+        $this->assertEquals('payment_intent', $purchase['object']);
+        $this->assertEquals('succeeded', $purchase['status']);
 
         // list disputes
-        $paymentIntentId = $purchase->getId();
+        $paymentIntentId = $purchase['id'];
 
         $disputes = $this->stripe->listDisputes(1);
         $this->assertIsArray($disputes);
@@ -512,11 +526,10 @@ class StripeTest extends TestCase
             $this->assertInstanceOf(Exception::class, $e);
         }
 
-        $address = new Address('Kathmandu', 'NP', 'Gaurighat', 'Pambu Marga', '44600', 'Bagmati');
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', $address);
-        $this->assertNotEmpty($customer->getId());
+        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
+        $this->assertNotEmpty($customer['id']);
 
-        $customerId = $customer->getId();
+        $customerId = $customer['id'];
 
         // incorrect card number
         try {
@@ -586,7 +599,7 @@ class StripeTest extends TestCase
     {
         // Create customer
         $customer = $this->stripe->createCustomer('Test Auth Customer', 'testauth@email.com');
-        $customerId = $customer->getId();
+        $customerId = $customer['id'];
         $this->assertNotEmpty($customerId);
 
         // Create payment method
@@ -596,7 +609,7 @@ class StripeTest extends TestCase
             'exp_year' => 2030,
             'cvc' => 123,
         ]);
-        $paymentMethodId = $pm->getId();
+        $paymentMethodId = $pm['id'];
         $this->assertNotEmpty($paymentMethodId);
 
         return [
@@ -621,11 +634,13 @@ class StripeTest extends TestCase
         // Authorize payment - hold funds without capturing
         $authorization = $this->stripe->authorize(10000, $customerId, $paymentMethodId);
 
-        $this->assertNotEmpty($authorization->getId());
-        $this->assertEquals(10000, $authorization->getAmount());
-        $this->assertEquals('requires_capture', $authorization->getStatus());
+        $this->assertNotEmpty($authorization['id']);
+        $this->assertEquals('payment_intent', $authorization['object']);
+        $this->assertEquals(10000, $authorization['amount']);
+        $this->assertEquals('requires_capture', $authorization['status']);
+        $this->assertEquals('manual', $authorization['capture_method']);
 
-        $data['authorizationId'] = $authorization->getId();
+        $data['authorizationId'] = $authorization['id'];
 
         return $data;
     }
@@ -645,10 +660,10 @@ class StripeTest extends TestCase
         // Capture the full amount
         $captured = $this->stripe->capture($authorizationId);
 
-        $this->assertNotEmpty($captured->getId());
-        $this->assertEquals($authorizationId, $captured->getId());
-        $this->assertTrue($captured->isSucceeded());
-        $this->assertEquals(10000, $captured->getAmountReceived());
+        $this->assertNotEmpty($captured['id']);
+        $this->assertEquals($authorizationId, $captured['id']);
+        $this->assertEquals('succeeded', $captured['status']);
+        $this->assertEquals(10000, $captured['amount_received']);
 
         return $data;
     }
@@ -668,15 +683,15 @@ class StripeTest extends TestCase
 
         // Authorize payment
         $authorization = $this->stripe->authorize(15000, $customerId, $paymentMethodId);
-        $authorizationId = $authorization->getId();
+        $authorizationId = $authorization['id'];
 
-        $this->assertEquals('requires_capture', $authorization->getStatus());
+        $this->assertEquals('requires_capture', $authorization['status']);
 
         // Capture partial amount (only 10000 of 15000)
         $captured = $this->stripe->capture($authorizationId, 10000);
 
-        $this->assertTrue($captured->isSucceeded());
-        $this->assertEquals(10000, $captured->getAmountReceived());
+        $this->assertEquals('succeeded', $captured['status']);
+        $this->assertEquals(10000, $captured['amount_received']);
 
         return $data;
     }
@@ -696,16 +711,16 @@ class StripeTest extends TestCase
 
         // Authorize payment
         $authorization = $this->stripe->authorize(8000, $customerId, $paymentMethodId);
-        $authorizationId = $authorization->getId();
+        $authorizationId = $authorization['id'];
 
-        $this->assertEquals('requires_capture', $authorization->getStatus());
+        $this->assertEquals('requires_capture', $authorization['status']);
 
         // Cancel the authorization - release the hold
         $cancelled = $this->stripe->cancelAuthorization($authorizationId);
 
-        $this->assertNotEmpty($cancelled->getId());
-        $this->assertEquals($authorizationId, $cancelled->getId());
-        $this->assertTrue($cancelled->isCancelled());
+        $this->assertNotEmpty($cancelled['id']);
+        $this->assertEquals($authorizationId, $cancelled['id']);
+        $this->assertEquals('canceled', $cancelled['status']);
 
         return $data;
     }
@@ -737,16 +752,15 @@ class StripeTest extends TestCase
             ]
         );
 
-        $this->assertNotEmpty($authorization->getId());
-        $this->assertEquals('requires_capture', $authorization->getStatus());
-        $metadata = $authorization->getMetadata();
-        $this->assertEquals('example.com', $metadata['domain']);
-        $this->assertEquals('ORD-12345', $metadata['order_id']);
-        $this->assertEquals('domain_registration', $metadata['resource_type']);
-        $this->assertEquals('Domain registration hold for example.com', $authorization->getDescription());
+        $this->assertNotEmpty($authorization['id']);
+        $this->assertEquals('requires_capture', $authorization['status']);
+        $this->assertEquals('example.com', $authorization['metadata']['domain']);
+        $this->assertEquals('ORD-12345', $authorization['metadata']['order_id']);
+        $this->assertEquals('domain_registration', $authorization['metadata']['resource_type']);
+        $this->assertEquals('Domain registration hold for example.com', $authorization['description']);
 
         // Clean up
-        $this->stripe->cancelAuthorization($authorization->getId());
+        $this->stripe->cancelAuthorization($authorization['id']);
         $this->stripe->deleteCustomer($customerId);
     }
 }

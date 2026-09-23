@@ -62,9 +62,9 @@ class Address
      *
      * @return string|null
      */
-    public function getCity(): string
+    public function getCity(): ?string
     {
-        return $this->city;
+        return $this->city ?? null;
     }
 
     /**
@@ -110,7 +110,7 @@ class Address
      */
     public function getLine1(): ?string
     {
-        return $this->line1;
+        return $this->line1 ?? null;
     }
 
     /**
@@ -133,7 +133,7 @@ class Address
      */
     public function getLine2(): ?string
     {
-        return $this->line2;
+        return $this->line2 ?? null;
     }
 
     /**
@@ -156,7 +156,7 @@ class Address
      */
     public function getPostalCode(): ?string
     {
-        return $this->postalCode;
+        return $this->postalCode ?? null;
     }
 
     /**
@@ -179,7 +179,7 @@ class Address
      */
     public function getState(): ?string
     {
-        return $this->state;
+        return $this->state ?? null;
     }
 
     /**
@@ -196,81 +196,37 @@ class Address
     }
 
     /**
-     * Get Object as an array (snake_case keys for API compatibility).
+     * Get Object as an array
      *
-     * @return array<string, string|null>
-     *
-     * @deprecated Use toArray() instead
+     * @return array<mixed>
      */
     public function asArray(): array
     {
         return [
-            'city' => $this->city,
-            'country' => $this->country,
-            'line1' => $this->line1,
-            'line2' => $this->line2,
-            'postal_code' => $this->postalCode,
-            'state' => $this->state,
+            'city' => $this->city ?? null,
+            'country' => $this->country ?? null,
+            'line1' => $this->line1 ?? null,
+            'line2' => $this->line2 ?? null,
+            'postal_code' => $this->postalCode ?? null,
+            'state' => $this->state ?? null,
         ];
     }
 
     /**
-     * Convert the address to an array representation.
+     * Create from the snake_case shape produced by asArray()
      *
-     * @return array<string, string|null> The address data as an array
-     */
-    public function toArray(): array
-    {
-        return [
-            'city' => $this->city,
-            'country' => $this->country,
-            'line1' => $this->line1,
-            'line2' => $this->line2,
-            'postal_code' => $this->postalCode,
-            'state' => $this->state,
-        ];
-    }
-
-    /**
-     * Create an Address instance from an array.
-     *
-     * @param  array<string, string|null>  $data  The address data array
-     * @return self The created Address instance
+     * @param  array<string, mixed>  $data
+     * @return self
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            city: $data['city'] ?? '',
-            country: $data['country'] ?? '',
+            city: (string) ($data['city'] ?? ''),
+            country: (string) ($data['country'] ?? ''),
             line1: $data['line1'] ?? null,
             line2: $data['line2'] ?? null,
-            postalCode: $data['postalCode'] ?? $data['postal_code'] ?? null,
-            state: $data['state'] ?? null
+            postalCode: $data['postal_code'] ?? null,
+            state: $data['state'] ?? null,
         );
-    }
-
-    /**
-     * Check if the address is complete (has all required fields).
-     *
-     * @return bool True if city and country are set
-     */
-    public function isComplete(): bool
-    {
-        return ! empty($this->city) && ! empty($this->country);
-    }
-
-    /**
-     * Check if the address is empty.
-     *
-     * @return bool True if all fields are empty
-     */
-    public function isEmpty(): bool
-    {
-        return empty($this->city)
-            && empty($this->country)
-            && empty($this->line1)
-            && empty($this->line2)
-            && empty($this->postalCode)
-            && empty($this->state);
     }
 }
