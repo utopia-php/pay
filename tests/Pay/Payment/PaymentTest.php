@@ -57,6 +57,19 @@ class PaymentTest extends TestCase
         $this->assertNull($payment->getCreatedAt());
     }
 
+    public function testFromArrayAmountRefunded(): void
+    {
+        $base = ['id' => 'pi_123', 'amount' => 3000, 'currency' => 'usd', 'status' => 'succeeded'];
+
+        $this->assertNull(Payment::fromArray($base + ['latest_charge' => 'ch_123'])->getAmountRefunded());
+
+        $legacy = Payment::fromArray($base + ['charges' => ['data' => [['amount_refunded' => 1000], ['amount_refunded' => 500]]]]);
+        $this->assertEquals(1500, $legacy->getAmountRefunded());
+
+        $expanded = Payment::fromArray($base + ['latest_charge' => ['id' => 'ch_123', 'amount_refunded' => 3000]]);
+        $this->assertEquals(3000, $expanded->getAmountRefunded());
+    }
+
     public function testFromArrayLastPaymentError(): void
     {
         $payment = Payment::fromArray([

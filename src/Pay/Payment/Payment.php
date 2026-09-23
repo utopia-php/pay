@@ -2,11 +2,15 @@
 
 namespace Utopia\Pay\Payment;
 
+use Utopia\Pay\Expandable;
+
 /**
  * Typed view of a payment intent as returned by the adapter, e.g. Payment::fromArray($pay->getPayment($id)).
  */
 class Payment
 {
+    use Expandable;
+
     public const STATUS_REQUIRES_PAYMENT_METHOD = 'requires_payment_method';
 
     public const STATUS_REQUIRES_CONFIRMATION = 'requires_confirmation';
@@ -32,6 +36,7 @@ class Payment
         private ?string $customerId = null,
         private ?string $paymentMethodId = null,
         private int $amountReceived = 0,
+        private ?int $amountRefunded = null,
         private ?string $clientSecret = null,
         private ?string $chargeId = null,
         private ?string $errorCode = null,
@@ -77,6 +82,14 @@ class Payment
     public function getAmountReceived(): int
     {
         return $this->amountReceived;
+    }
+
+    /**
+     * Null when the payload carries no charge data to sum refunds from
+     */
+    public function getAmountRefunded(): ?int
+    {
+        return $this->amountRefunded;
     }
 
     public function getClientSecret(): ?string
@@ -152,6 +165,15 @@ class Payment
     {
         $error = $data['last_payment_error'] ?? [];
 
+        // Refunds live on charges: the legacy `charges` list, or an expanded `latest_charge`
+        $amountRefunded = null;
+        $charges = $data['charges']['data'] ?? null;
+        if (is_array($charges)) {
+            $amountRefunded = array_sum(array_map(fn ($charge) => (int) ($charge['amount_refunded'] ?? 0), $charges));
+        } elseif (is_array($data['latest_charge'] ?? null)) {
+            $amountRefunded = (int) ($data['latest_charge']['amount_refunded'] ?? 0);
+        }
+
         return new self(
             id: (string) ($data['id'] ?? ''),
             amount: (int) ($data['amount'] ?? 0),
@@ -160,6 +182,7 @@ class Payment
             customerId: self::expandableId($data['customer'] ?? null),
             paymentMethodId: self::expandableId($data['payment_method'] ?? null),
             amountReceived: (int) ($data['amount_received'] ?? 0),
+            amountRefunded: $amountRefunded,
             clientSecret: $data['client_secret'] ?? null,
             chargeId: self::expandableId($data['latest_charge'] ?? null),
             // Same precedence as Stripe::handleError() so both sides compare against Exception constants
@@ -168,17 +191,5 @@ class Payment
             metadata: $data['metadata'] ?? [],
             createdAt: isset($data['created']) ? (int) $data['created'] : null,
         );
-    }
-
-    /**
-     * Related objects come back as an ID, or as the full object when expanded.
-     */
-    private static function expandableId(mixed $value): ?string
-    {
-        if (is_array($value)) {
-            $value = $value['id'] ?? null;
-        }
-
-        return is_string($value) ? $value : null;
     }
 }

@@ -400,4 +400,20 @@ class Pay
     {
         return $this->adapter->listDisputes($limit, $paymentIntentId, $chargeId, $createdAfter);
     }
+
+    /**
+     * Verify a webhook signature and decode the event
+     *
+     * @param  string  $payload  Raw request body, exactly as received
+     * @param  string  $signatureHeader
+     * @param  string  $secret
+     * @param  int|null  $tolerance  Maximum age of the signature in seconds, null to skip the check
+     * @return array<string, mixed>
+     *
+     * @throws Exception
+     */
+    public function constructWebhookEvent(string $payload, string $signatureHeader, string $secret, ?int $tolerance = 300): array
+    {
+        return $this->adapter->constructWebhookEvent($payload, $signatureHeader, $secret, $tolerance);
+    }
 }

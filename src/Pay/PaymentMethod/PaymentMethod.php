@@ -3,12 +3,15 @@
 namespace Utopia\Pay\PaymentMethod;
 
 use Utopia\Pay\Address;
+use Utopia\Pay\Expandable;
 
 /**
  * Typed view of a payment method as returned by the adapter, e.g. PaymentMethod::fromArray($pay->getPaymentMethod(...)).
  */
 class PaymentMethod
 {
+    use Expandable;
+
     public const TYPE_CARD = 'card';
 
     /**
@@ -135,12 +138,11 @@ class PaymentMethod
         $details = $data[$type] ?? [];
         $billing = $data['billing_details'] ?? [];
         $address = $billing['address'] ?? [];
-        $customer = $data['customer'] ?? null;
 
         return new self(
             id: (string) ($data['id'] ?? ''),
             type: $type,
-            customerId: is_array($customer) ? ($customer['id'] ?? null) : $customer,
+            customerId: self::expandableId($data['customer'] ?? null),
             brand: $details['brand'] ?? null,
             last4: $details['last4'] ?? null,
             expMonth: isset($details['exp_month']) ? (int) $details['exp_month'] : null,

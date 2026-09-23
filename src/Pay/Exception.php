@@ -38,6 +38,8 @@ class Exception extends \Exception
 
     public const RATE_LIMIT = 'rate_limit';
 
+    public const SIGNATURE_VERIFICATION_FAILED = 'signature_verification_failed';
+
     protected string $type = '';
 
     /**

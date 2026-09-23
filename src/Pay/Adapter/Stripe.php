@@ -9,6 +9,7 @@ use Utopia\Client\Adapter\Curl\Client as Curl;
 use Utopia\Pay\Adapter;
 use Utopia\Pay\Address;
 use Utopia\Pay\Exception;
+use Utopia\Pay\Validator\Stripe\Webhook;
 use Utopia\Psr7\ContentType;
 use Utopia\Psr7\Header;
 use Utopia\Psr7\Method;
@@ -496,6 +497,27 @@ class Stripe extends Adapter
         $result = $this->execute(Method::GET, $path, $requestBody);
 
         return $result['data'];
+    }
+
+    /**
+     * Verify a `Stripe-Signature` header and decode the event
+     *
+     * @return array<string, mixed>
+     *
+     * @throws Exception
+     */
+    public function constructWebhookEvent(string $payload, string $signatureHeader, string $secret, ?int $tolerance = Webhook::DEFAULT_TOLERANCE): array
+    {
+        if (! (new Webhook())->isValid($payload, $signatureHeader, $secret, $tolerance)) {
+            throw new Exception(Exception::SIGNATURE_VERIFICATION_FAILED, 'Invalid webhook signature', 400);
+        }
+
+        $event = json_decode($payload, true);
+        if (! is_array($event)) {
+            throw new Exception(Exception::GENERAL_UNKNOWN, 'Invalid webhook payload', 400);
+        }
+
+        return $event;
     }
 
     /**
