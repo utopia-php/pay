@@ -2,9 +2,17 @@
 
 namespace Utopia\Pay\Adapter;
 
+use Psr\Http\Client\ClientExceptionInterface;
+use Psr\Http\Client\ClientInterface;
+use Utopia\Client;
+use Utopia\Client\Adapter\Curl\Client as Curl;
 use Utopia\Pay\Adapter;
 use Utopia\Pay\Address;
 use Utopia\Pay\Exception;
+use Utopia\Psr7\ContentType;
+use Utopia\Psr7\Header;
+use Utopia\Psr7\Method;
+use Utopia\Psr7\Request\Factory as RequestFactory;
 
 class Stripe extends Adapter
 {
@@ -12,10 +20,27 @@ class Stripe extends Adapter
 
     private string $secretKey;
 
-    public function __construct(string $secretKey, string $currency = 'USD')
+    private readonly ClientInterface $client;
+
+    private readonly RequestFactory $requests;
+
+    /**
+     * The default client keeps one cURL handle for the lifetime of the adapter
+     * and reuses its connection across calls. Pass your own to control the
+     * transport — a pool, a retry decorator, timeouts, a test double.
+     */
+    public function __construct(string $secretKey, string $currency = 'USD', ?ClientInterface $client = null)
     {
         $this->secretKey = $secretKey;
         $this->currency = $currency;
+
+        $this->client = $client ?? new Client(new Curl)
+            ->withConnectionReuse()
+            ->withHeaders([
+                Header::USER_AGENT => php_uname('s').'-'.php_uname('r').':php-'.phpversion(),
+            ]);
+
+        $this->requests = new RequestFactory;
     }
 
     /**
@@ -42,7 +67,7 @@ class Stripe extends Adapter
         ];
 
         $requestBody = array_merge($requestBody, $additionalParams);
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
     }
@@ -65,7 +90,7 @@ class Stripe extends Adapter
         ];
 
         $requestBody = array_merge($requestBody, $additionalParams);
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
     }
@@ -83,7 +108,7 @@ class Stripe extends Adapter
         }
 
         $requestBody = array_merge($requestBody, $additionalParams);
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
     }
@@ -94,7 +119,7 @@ class Stripe extends Adapter
     public function cancelAuthorization(string $paymentId, array $additionalParams = []): array
     {
         $path = '/payment_intents/'.$paymentId.'/cancel';
-        $result = $this->execute(self::METHOD_POST, $path, $additionalParams);
+        $result = $this->execute(Method::POST, $path, $additionalParams);
 
         return $result;
     }
@@ -118,7 +143,7 @@ class Stripe extends Adapter
         }
 
         $requestBody = array_merge($requestBody, $additionalParams);
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
     }
@@ -138,7 +163,7 @@ class Stripe extends Adapter
             $requestBody['reason'] = $reason;
         }
 
-        return $this->execute(self::METHOD_POST, $path, $requestBody);
+        return $this->execute(Method::POST, $path, $requestBody);
     }
 
     /**
@@ -151,7 +176,7 @@ class Stripe extends Adapter
     {
         $path = '/payment_intents/'.$paymentId;
 
-        return $this->execute(self::METHOD_GET, $path);
+        return $this->execute(Method::GET, $path);
     }
 
     /**
@@ -181,7 +206,7 @@ class Stripe extends Adapter
 
         $requestBody = array_merge($requestBody, $additionalParams);
 
-        return $this->execute(self::METHOD_POST, $path, $requestBody);
+        return $this->execute(Method::POST, $path, $requestBody);
     }
 
     /**
@@ -197,13 +222,13 @@ class Stripe extends Adapter
         ];
 
         // Create payment method
-        $paymentMethod = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $paymentMethod = $this->execute(Method::POST, $path, $requestBody);
         $paymentMethodId = $paymentMethod['id'];
 
         // attach payment method to the customer
         $path .= '/'.$paymentMethodId.'/attach';
 
-        return $this->execute(self::METHOD_POST, $path, ['customer' => $customerId]);
+        return $this->execute(Method::POST, $path, ['customer' => $customerId]);
     }
 
     /**
@@ -213,7 +238,7 @@ class Stripe extends Adapter
     {
         $path = '/customers/'.$customerId.'/payment_methods';
 
-        return $this->execute(self::METHOD_GET, $path);
+        return $this->execute(Method::GET, $path);
     }
 
     /**
@@ -223,7 +248,7 @@ class Stripe extends Adapter
     {
         $path = '/customers/'.$customerId.'/payment_methods/'.$paymentMethodId;
 
-        return $this->execute(self::METHOD_GET, $path);
+        return $this->execute(Method::GET, $path);
     }
 
     /**
@@ -254,7 +279,7 @@ class Stripe extends Adapter
             $requestBody['billing_details']['address'] = $address;
         }
 
-        return $this->execute(self::METHOD_POST, $path, $requestBody);
+        return $this->execute(Method::POST, $path, $requestBody);
     }
 
     public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
@@ -265,7 +290,7 @@ class Stripe extends Adapter
             $type => $details,
         ];
 
-        return $this->execute(self::METHOD_POST, $path, $requestBody);
+        return $this->execute(Method::POST, $path, $requestBody);
     }
 
     /**
@@ -274,7 +299,7 @@ class Stripe extends Adapter
     public function deletePaymentMethod(string $paymentMethodId): bool
     {
         $path = '/payment_methods/'.$paymentMethodId.'/detach';
-        $this->execute(self::METHOD_POST, $path);
+        $this->execute(Method::POST, $path);
 
         return true;
     }
@@ -298,7 +323,7 @@ class Stripe extends Adapter
         if (! empty($address)) {
             $requestBody['address'] = $address;
         }
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
     }
@@ -308,7 +333,7 @@ class Stripe extends Adapter
      */
     public function listCustomers(): array
     {
-        return $this->execute(self::METHOD_GET, '/customers');
+        return $this->execute(Method::GET, '/customers');
     }
 
     /**
@@ -317,7 +342,7 @@ class Stripe extends Adapter
     public function getCustomer(string $customerId): array
     {
         $path = '/customers/'.$customerId;
-        $result = $this->execute(self::METHOD_GET, $path);
+        $result = $this->execute(Method::GET, $path);
 
         return $result;
     }
@@ -339,7 +364,7 @@ class Stripe extends Adapter
             $requestBody['address'] = $address->asArray();
         }
 
-        return $this->execute(self::METHOD_POST, $path, $requestBody);
+        return $this->execute(Method::POST, $path, $requestBody);
     }
 
     /**
@@ -348,7 +373,7 @@ class Stripe extends Adapter
     public function deleteCustomer(string $customerId): bool
     {
         $path = '/customers/'.$customerId;
-        $result = $this->execute(self::METHOD_DELETE, $path);
+        $result = $this->execute(Method::DELETE, $path);
 
         return $result['deleted'] ?? false;
     }
@@ -377,7 +402,7 @@ class Stripe extends Adapter
             $requestBody['payment_method_options'] = $paymentMethodOptions;
         }
 
-        $result = $this->execute(self::METHOD_POST, $path, $requestBody);
+        $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
     }
@@ -386,7 +411,7 @@ class Stripe extends Adapter
     {
         $path = '/setup_intents/'.$id;
 
-        return $this->execute(self::METHOD_GET, $path);
+        return $this->execute(Method::GET, $path);
     }
 
     public function listFuturePayments(?string $customerId = null, ?string $pyamentMethodId = null): array
@@ -400,7 +425,7 @@ class Stripe extends Adapter
         if ($pyamentMethodId != null) {
             $requestBody['payment_method'] = $pyamentMethodId;
         }
-        $result = $this->execute(self::METHOD_GET, $path, $requestBody);
+        $result = $this->execute(Method::GET, $path, $requestBody);
 
         return $result['data'];
     }
@@ -422,7 +447,7 @@ class Stripe extends Adapter
             $requestBody['payment_method_options'] = $paymentMethodOptions;
         }
 
-        return $this->execute(self::METHOD_POST, $path, $requestBody);
+        return $this->execute(Method::POST, $path, $requestBody);
     }
 
     /**
@@ -435,7 +460,7 @@ class Stripe extends Adapter
     {
         $path = '/mandates/'.$id;
 
-        return $this->execute(self::METHOD_GET, $path);
+        return $this->execute(Method::GET, $path);
     }
 
     /**
@@ -468,13 +493,16 @@ class Stripe extends Adapter
             ];
         }
 
-        $result = $this->execute(self::METHOD_GET, $path, $requestBody);
+        $result = $this->execute(Method::GET, $path, $requestBody);
 
         return $result['data'];
     }
 
     /**
      * Execute
+     *
+     * Stripe reads GET filters from the query string and every other body as
+     * form-urlencoded, with nested params in PHP's bracket notation.
      *
      * @param  string  $method
      * @param  string  $path
@@ -484,14 +512,37 @@ class Stripe extends Adapter
      */
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
-        $defaultHeaders = ['Authorization' => 'Bearer '.$this->secretKey];
+        $url = $this->baseUrl.$path;
 
-        if ($method !== self::METHOD_GET) {
-            $defaultHeaders['content-type'] = 'application/x-www-form-urlencoded';
+        $request = $method === Method::GET
+            ? $this->requests->query($method, $url, $requestBody)
+            : $this->requests->form($method, $url, $requestBody);
+
+        $request = $request->withHeader(Header::AUTHORIZATION, 'Bearer '.$this->secretKey);
+
+        foreach ($headers as $key => $value) {
+            $request = $request->withHeader($key, $value);
         }
-        $headers = array_merge($defaultHeaders, $headers);
 
-        return $this->call($method, $this->baseUrl.$path, $requestBody, $headers);
+        try {
+            $response = $this->client->sendRequest($request);
+        } catch (ClientExceptionInterface $e) {
+            $this->handleError(0, $e->getMessage());
+
+            throw $e;
+        }
+
+        $body = (string) $response->getBody();
+
+        if (str_contains($response->getHeaderLine(Header::CONTENT_TYPE), ContentType::JSON)) {
+            $body = json_decode($body, true);
+        }
+
+        if ($response->getStatusCode() >= 400) {
+            $this->handleError($response->getStatusCode(), $body);
+        }
+
+        return $body;
     }
 
     protected function handleError(int $code, mixed $response)
