@@ -559,6 +559,8 @@ class Stripe extends Adapter
             throw new Exception($type, $message, $code, $error);
         }
 
-        throw new Exception($response, $code);
+        // Transport failures and non-JSON bodies (e.g. a proxy error page) arrive as strings
+        $message = is_string($response) && $response !== '' ? $response : 'Unknown error';
+        throw new Exception(Exception::GENERAL_UNKNOWN, $message, $code);
     }
 }

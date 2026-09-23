@@ -23,6 +23,20 @@ class StripeTest extends TestCase
         $this->assertEquals($this->stripe->getName(), 'Stripe');
     }
 
+    public function testHandleErrorWithStringResponse(): void
+    {
+        $handleError = new \ReflectionMethod($this->stripe, 'handleError');
+
+        try {
+            $handleError->invoke($this->stripe, 502, 'Bad Gateway');
+            $this->fail('Expected exception');
+        } catch (Exception $e) {
+            $this->assertEquals(Exception::GENERAL_UNKNOWN, $e->getType());
+            $this->assertEquals('Bad Gateway', $e->getMessage());
+            $this->assertEquals(502, $e->getCode());
+        }
+    }
+
     /**
      * Test create customer
      *
