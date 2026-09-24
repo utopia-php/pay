@@ -2,74 +2,57 @@
 
 namespace Utopia\Pay\SetupIntent;
 
-use Utopia\Pay\Expandable;
+use Utopia\Pay\Model;
 
 /**
- * Typed view of a setup intent as returned by the adapter, e.g. SetupIntent::fromArray($pay->getFuturePayment($id)).
+ * Setup intent returned by createFuturePayment(), getFuturePayment(), updateFuturePayment() and listFuturePayments()
  */
-class SetupIntent
+class SetupIntent extends Model
 {
-    use Expandable;
-
     public const STATUS_SUCCEEDED = 'succeeded';
 
-    public function __construct(
-        private string $id,
-        private string $status,
-        private ?string $customerId = null,
-        private ?string $paymentMethodId = null,
-        private ?string $clientSecret = null,
-        private ?string $mandateId = null,
-    ) {
+    public function getId(): ?string
+    {
+        return $this->string('id');
     }
 
-    public function getId(): string
+    public function getStatus(): ?string
     {
-        return $this->id;
-    }
-
-    public function getStatus(): string
-    {
-        return $this->status;
+        return $this->string('status');
     }
 
     public function getCustomerId(): ?string
     {
-        return $this->customerId;
+        return $this->expandableId('customer');
     }
 
     public function getPaymentMethodId(): ?string
     {
-        return $this->paymentMethodId;
+        return $this->expandableId('payment_method');
     }
 
     public function getClientSecret(): ?string
     {
-        return $this->clientSecret;
+        return $this->string('client_secret');
     }
 
     public function getMandateId(): ?string
     {
-        return $this->mandateId;
+        return $this->expandableId('mandate');
+    }
+
+    /**
+     * Free-form per-type options, e.g. `card.mandate_options`
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getPaymentMethodOptions(): ?array
+    {
+        return $this->array('payment_method_options');
     }
 
     public function isSucceeded(): bool
     {
-        return $this->status === self::STATUS_SUCCEEDED;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data  Setup intent payload
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            id: (string) ($data['id'] ?? ''),
-            status: (string) ($data['status'] ?? ''),
-            customerId: self::expandableId($data['customer'] ?? null),
-            paymentMethodId: self::expandableId($data['payment_method'] ?? null),
-            clientSecret: $data['client_secret'] ?? null,
-            mandateId: self::expandableId($data['mandate'] ?? null),
-        );
+        return $this->getStatus() === self::STATUS_SUCCEEDED;
     }
 }

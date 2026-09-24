@@ -2,67 +2,63 @@
 
 namespace Utopia\Pay\Dispute;
 
-use Utopia\Pay\Expandable;
+use Utopia\Pay\Model;
 
 /**
- * Typed view of a dispute, from listDisputes() or a charge.dispute.* webhook event.
+ * Dispute returned by listDisputes() or carried by a charge.dispute.* webhook event
  */
-class Dispute
+class Dispute extends Model
 {
-    use Expandable;
-
-    /**
-     * @param  array<string, mixed>  $metadata
-     */
-    public function __construct(
-        private string $id,
-        private int $amount,
-        private string $currency,
-        private string $reason,
-        private string $status,
-        private ?string $chargeId = null,
-        private ?string $paymentIntentId = null,
-        private array $metadata = [],
-        private ?int $evidenceDueBy = null,
-    ) {
-    }
-
-    public function getId(): string
+    public function getId(): ?string
     {
-        return $this->id;
+        return $this->string('id');
     }
 
     /**
      * Amount in the smallest currency unit
      */
-    public function getAmount(): int
+    public function getAmount(): ?int
     {
-        return $this->amount;
+        return $this->int('amount');
     }
 
-    public function getCurrency(): string
+    public function getCurrency(): ?string
     {
-        return $this->currency;
+        return $this->string('currency');
     }
 
-    public function getReason(): string
+    public function getReason(): ?string
     {
-        return $this->reason;
+        return $this->string('reason');
     }
 
-    public function getStatus(): string
+    public function getStatus(): ?string
     {
-        return $this->status;
+        return $this->string('status');
     }
 
     public function getChargeId(): ?string
     {
-        return $this->chargeId;
+        return $this->expandableId('charge');
     }
 
     public function getPaymentIntentId(): ?string
     {
-        return $this->paymentIntentId;
+        return $this->expandableId('payment_intent');
+    }
+
+    /**
+     * Metadata of the payment intent, only available when `payment_intent` is expanded
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getPaymentIntentMetadata(): ?array
+    {
+        if ($this->array('payment_intent') === null) {
+            return null;
+        }
+
+        return $this->array('payment_intent', 'metadata') ?? [];
     }
 
     /**
@@ -70,7 +66,7 @@ class Dispute
      */
     public function getMetadata(): array
     {
-        return $this->metadata;
+        return $this->array('metadata') ?? [];
     }
 
     /**
@@ -78,26 +74,11 @@ class Dispute
      */
     public function getEvidenceDueBy(): ?int
     {
-        return $this->evidenceDueBy;
+        return $this->int('evidence_details', 'due_by');
     }
 
-    /**
-     * @param  array<string, mixed>  $data  Dispute payload
-     */
-    public static function fromArray(array $data): self
+    public function getCreatedAt(): ?int
     {
-        $dueBy = $data['evidence_details']['due_by'] ?? null;
-
-        return new self(
-            id: (string) ($data['id'] ?? ''),
-            amount: (int) ($data['amount'] ?? 0),
-            currency: (string) ($data['currency'] ?? ''),
-            reason: (string) ($data['reason'] ?? ''),
-            status: (string) ($data['status'] ?? ''),
-            chargeId: self::expandableId($data['charge'] ?? null),
-            paymentIntentId: self::expandableId($data['payment_intent'] ?? null),
-            metadata: $data['metadata'] ?? [],
-            evidenceDueBy: is_int($dueBy) && $dueBy > 0 ? $dueBy : null,
-        );
+        return $this->int('created');
     }
 }

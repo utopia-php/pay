@@ -10,41 +10,47 @@ class PaymentTest extends TestCase
     public function testFromArray(): void
     {
         $payment = Payment::fromArray([
-            'id' => 'pi_123',
+            'id' => 'pi_3Q0abc',
             'object' => 'payment_intent',
             'amount' => 2500,
             'amount_received' => 2500,
+            'capture_method' => 'automatic',
+            'client_secret' => 'pi_3Q0abc_secret_xyz',
+            'created' => 1726000000,
             'currency' => 'usd',
+            'customer' => 'cus_Qabc',
+            'last_payment_error' => null,
+            'latest_charge' => 'ch_3Q0abc',
+            'metadata' => ['invoiceId' => 'inv_1', 'teamId' => 'team_1'],
+            'next_action' => null,
+            'payment_method' => 'pm_1Q0abc',
             'status' => 'succeeded',
-            'customer' => 'cus_123',
-            'payment_method' => 'pm_123',
-            'latest_charge' => 'ch_123',
-            'client_secret' => 'pi_123_secret_abc',
-            'metadata' => ['invoiceId' => 'inv_1'],
-            'created' => 1700000000,
         ]);
 
-        $this->assertEquals('pi_123', $payment->getId());
+        $this->assertEquals('pi_3Q0abc', $payment->getId());
         $this->assertEquals(2500, $payment->getAmount());
         $this->assertEquals(2500, $payment->getAmountReceived());
         $this->assertEquals('usd', $payment->getCurrency());
-        $this->assertEquals('cus_123', $payment->getCustomerId());
-        $this->assertEquals('pm_123', $payment->getPaymentMethodId());
-        $this->assertEquals('ch_123', $payment->getChargeId());
-        $this->assertEquals('pi_123_secret_abc', $payment->getClientSecret());
-        $this->assertEquals(['invoiceId' => 'inv_1'], $payment->getMetadata());
-        $this->assertEquals(1700000000, $payment->getCreatedAt());
-        $this->assertTrue($payment->isSucceeded());
+        $this->assertEquals('succeeded', $payment->getStatus());
+        $this->assertEquals('cus_Qabc', $payment->getCustomerId());
+        $this->assertEquals('pm_1Q0abc', $payment->getPaymentMethodId());
+        $this->assertEquals('ch_3Q0abc', $payment->getLatestChargeId());
+        $this->assertEquals('pi_3Q0abc_secret_xyz', $payment->getClientSecret());
+        $this->assertEquals(['invoiceId' => 'inv_1', 'teamId' => 'team_1'], $payment->getMetadata());
+        $this->assertEquals(1726000000, $payment->getCreatedAt());
         $this->assertNull($payment->getErrorCode());
+        $this->assertNull($payment->getNextAction());
+        $this->assertEquals([], $payment->getCharges());
+        $this->assertEquals('automatic', $payment->getRaw()['capture_method']);
+        $this->assertTrue($payment->isSucceeded());
+        $this->assertFalse($payment->requiresAction());
     }
 
     public function testFromArrayWithExpandedObjects(): void
     {
         $payment = Payment::fromArray([
             'id' => 'pi_123',
-            'amount' => 1000,
-            'currency' => 'usd',
-            'status' => 'requires_payment_method',
+            'status' => 'requires_capture',
             'customer' => ['id' => 'cus_123', 'object' => 'customer'],
             'payment_method' => ['id' => 'pm_123', 'object' => 'payment_method'],
             'latest_charge' => ['id' => 'ch_123', 'object' => 'charge'],
@@ -52,60 +58,84 @@ class PaymentTest extends TestCase
 
         $this->assertEquals('cus_123', $payment->getCustomerId());
         $this->assertEquals('pm_123', $payment->getPaymentMethodId());
-        $this->assertEquals('ch_123', $payment->getChargeId());
-        $this->assertEquals([], $payment->getMetadata());
-        $this->assertNull($payment->getCreatedAt());
+        $this->assertEquals('ch_123', $payment->getLatestChargeId());
+        $this->assertTrue($payment->requiresCapture());
     }
 
-    public function testFromArrayAmountRefunded(): void
-    {
-        $base = ['id' => 'pi_123', 'amount' => 3000, 'currency' => 'usd', 'status' => 'succeeded'];
-
-        $this->assertNull(Payment::fromArray($base + ['latest_charge' => 'ch_123'])->getAmountRefunded());
-
-        $legacy = Payment::fromArray($base + ['charges' => ['data' => [['amount_refunded' => 1000], ['amount_refunded' => 500]]]]);
-        $this->assertEquals(1500, $legacy->getAmountRefunded());
-
-        $expanded = Payment::fromArray($base + ['latest_charge' => ['id' => 'ch_123', 'amount_refunded' => 3000]]);
-        $this->assertEquals(3000, $expanded->getAmountRefunded());
-    }
-
-    public function testFromArrayLastPaymentError(): void
+    public function testFromArrayWithFailedAttempt(): void
     {
         $payment = Payment::fromArray([
             'id' => 'pi_123',
-            'amount' => 1000,
-            'currency' => 'usd',
+            'object' => 'payment_intent',
+            'amount' => 5000,
             'status' => 'requires_payment_method',
             'last_payment_error' => [
-                'type' => 'card_error',
                 'code' => 'card_declined',
                 'decline_code' => 'insufficient_funds',
                 'message' => 'Your card has insufficient funds.',
+                'type' => 'card_error',
             ],
         ]);
 
-        $this->assertTrue($payment->requiresPaymentMethod());
-        $this->assertEquals('insufficient_funds', $payment->getErrorCode());
+        $this->assertEquals('card_declined', $payment->getErrorCode());
+        $this->assertEquals('insufficient_funds', $payment->getDeclineCode());
         $this->assertEquals('Your card has insufficient funds.', $payment->getErrorMessage());
+        $this->assertTrue($payment->requiresPaymentMethod());
     }
 
-    public function testStatusChecks(): void
+    public function testFromArrayRequiringAction(): void
     {
-        $checks = [
-            Payment::STATUS_SUCCEEDED => 'isSucceeded',
-            Payment::STATUS_PROCESSING => 'isProcessing',
-            Payment::STATUS_CANCELED => 'isCanceled',
-            Payment::STATUS_REQUIRES_ACTION => 'requiresAction',
-            Payment::STATUS_REQUIRES_CAPTURE => 'requiresCapture',
-            Payment::STATUS_REQUIRES_PAYMENT_METHOD => 'requiresPaymentMethod',
-        ];
+        $payment = Payment::fromArray([
+            'id' => 'pi_123',
+            'status' => 'requires_action',
+            'next_action' => [
+                'type' => 'use_stripe_sdk',
+                'use_stripe_sdk' => ['type' => 'three_d_secure_redirect', 'stripe_js' => 'https://hooks.stripe.com/3d_secure_2/hosted'],
+            ],
+        ]);
 
-        foreach ($checks as $status => $method) {
-            $payment = new Payment('pi_123', 1000, 'usd', $status);
-            foreach ($checks as $other) {
-                $this->assertSame($other === $method, $payment->$other(), $status.' '.$other);
-            }
-        }
+        $this->assertTrue($payment->requiresAction());
+        $this->assertEquals('https://hooks.stripe.com/3d_secure_2/hosted', $payment->getNextAction()['use_stripe_sdk']['stripe_js'] ?? null);
+    }
+
+    public function testFromArrayWithLegacyCharges(): void
+    {
+        $payment = Payment::fromArray([
+            'id' => 'pi_123',
+            'status' => 'succeeded',
+            'charges' => [
+                'object' => 'list',
+                'data' => [
+                    ['id' => 'ch_1', 'object' => 'charge', 'amount' => 2000, 'amount_refunded' => 500, 'refunded' => false, 'status' => 'succeeded'],
+                    ['id' => 'ch_2', 'object' => 'charge', 'amount' => 1000, 'amount_refunded' => 1000, 'refunded' => true, 'status' => 'succeeded'],
+                ],
+                'has_more' => false,
+            ],
+        ]);
+
+        $charges = $payment->getCharges();
+        $this->assertCount(2, $charges);
+        $this->assertEquals('ch_1', $charges[0]->getId());
+        $this->assertEquals(500, $charges[0]->getAmountRefunded());
+        $this->assertFalse($charges[0]->isRefunded());
+        $this->assertTrue($charges[1]->isRefunded());
+    }
+
+    /**
+     * Missing fields stay null so callers keep their own fallbacks
+     */
+    public function testFromArrayEmpty(): void
+    {
+        $payment = Payment::fromArray([]);
+
+        $this->assertNull($payment->getId());
+        $this->assertNull($payment->getStatus());
+        $this->assertNull($payment->getAmount());
+        $this->assertNull($payment->getCurrency());
+        $this->assertNull($payment->getClientSecret());
+        $this->assertNull($payment->getErrorMessage());
+        $this->assertEquals([], $payment->getMetadata());
+        $this->assertEquals([], $payment->getRaw());
+        $this->assertFalse($payment->isSucceeded());
     }
 }

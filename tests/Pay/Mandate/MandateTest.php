@@ -10,15 +10,17 @@ class MandateTest extends TestCase
     public function testFromArray(): void
     {
         $mandate = Mandate::fromArray([
-            'id' => 'mandate_123',
+            'id' => 'mandate_1Q0abc',
             'object' => 'mandate',
+            'customer_acceptance' => ['type' => 'online', 'accepted_at' => 1726000000],
+            'payment_method' => 'pm_1Q0abc',
             'status' => 'active',
-            'payment_method' => 'pm_123',
             'type' => 'multi_use',
         ]);
 
-        $this->assertEquals('mandate_123', $mandate->getId());
-        $this->assertEquals('pm_123', $mandate->getPaymentMethodId());
+        $this->assertEquals('mandate_1Q0abc', $mandate->getId());
+        $this->assertEquals('active', $mandate->getStatus());
+        $this->assertEquals('pm_1Q0abc', $mandate->getPaymentMethodId());
         $this->assertTrue($mandate->isActive());
     }
 
@@ -31,7 +33,14 @@ class MandateTest extends TestCase
         ]);
 
         $this->assertEquals('pm_123', $mandate->getPaymentMethodId());
-        $this->assertEquals('inactive', $mandate->getStatus());
+        $this->assertFalse($mandate->isActive());
+    }
+
+    public function testFromArrayWithoutStatus(): void
+    {
+        $mandate = Mandate::fromArray(['id' => 'mandate_123']);
+
+        $this->assertNull($mandate->getStatus());
         $this->assertFalse($mandate->isActive());
     }
 }

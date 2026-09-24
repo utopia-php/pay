@@ -2,97 +2,106 @@
 
 namespace Utopia\Pay\PaymentMethod;
 
-use Utopia\Pay\Address;
-use Utopia\Pay\Expandable;
+use Utopia\Pay\Model;
 
 /**
- * Typed view of a payment method as returned by the adapter, e.g. PaymentMethod::fromArray($pay->getPaymentMethod(...)).
+ * Payment method returned by createPaymentMethod(), getPaymentMethod(), listPaymentMethods() and the update calls
  */
-class PaymentMethod
+class PaymentMethod extends Model
 {
-    use Expandable;
-
     public const TYPE_CARD = 'card';
 
-    /**
-     * @param  array<string, mixed>  $metadata
-     */
-    public function __construct(
-        private string $id,
-        private string $type,
-        private ?string $customerId = null,
-        private ?string $brand = null,
-        private ?string $last4 = null,
-        private ?int $expMonth = null,
-        private ?int $expYear = null,
-        private ?string $funding = null,
-        private ?string $country = null,
-        private ?Address $billingAddress = null,
-        private ?string $name = null,
-        private ?string $email = null,
-        private array $metadata = [],
-        private ?int $createdAt = null,
-    ) {
+    public function getId(): ?string
+    {
+        return $this->string('id');
     }
 
-    public function getId(): string
+    public function getType(): ?string
     {
-        return $this->id;
-    }
-
-    public function getType(): string
-    {
-        return $this->type;
+        return $this->string('type');
     }
 
     public function getCustomerId(): ?string
     {
-        return $this->customerId;
+        return $this->expandableId('customer');
     }
 
     public function getBrand(): ?string
     {
-        return $this->brand;
+        return $this->string('card', 'brand');
     }
 
     public function getLast4(): ?string
     {
-        return $this->last4;
+        return $this->string('card', 'last4');
     }
 
     public function getExpMonth(): ?int
     {
-        return $this->expMonth;
+        return $this->int('card', 'exp_month');
     }
 
     public function getExpYear(): ?int
     {
-        return $this->expYear;
+        return $this->int('card', 'exp_year');
     }
 
     public function getFunding(): ?string
     {
-        return $this->funding;
+        return $this->string('card', 'funding');
     }
 
+    /**
+     * Country that issued the card
+     */
     public function getCountry(): ?string
     {
-        return $this->country;
+        return $this->string('card', 'country');
     }
 
-    public function getBillingAddress(): ?Address
+    public function getBillingName(): ?string
     {
-        return $this->billingAddress;
+        return $this->string('billing_details', 'name');
     }
 
-    public function getName(): ?string
+    public function getBillingEmail(): ?string
     {
-        return $this->name;
+        return $this->string('billing_details', 'email');
     }
 
-    public function getEmail(): ?string
+    public function getBillingPhone(): ?string
     {
-        return $this->email;
+        return $this->string('billing_details', 'phone');
+    }
+
+    public function getBillingCity(): ?string
+    {
+        return $this->string('billing_details', 'address', 'city');
+    }
+
+    public function getBillingCountry(): ?string
+    {
+        return $this->string('billing_details', 'address', 'country');
+    }
+
+    public function getBillingLine1(): ?string
+    {
+        return $this->string('billing_details', 'address', 'line1');
+    }
+
+    public function getBillingLine2(): ?string
+    {
+        return $this->string('billing_details', 'address', 'line2');
+    }
+
+    public function getBillingPostalCode(): ?string
+    {
+        return $this->string('billing_details', 'address', 'postal_code');
+    }
+
+    public function getBillingState(): ?string
+    {
+        return $this->string('billing_details', 'address', 'state');
     }
 
     /**
@@ -100,17 +109,17 @@ class PaymentMethod
      */
     public function getMetadata(): array
     {
-        return $this->metadata;
+        return $this->array('metadata') ?? [];
     }
 
     public function getCreatedAt(): ?int
     {
-        return $this->createdAt;
+        return $this->int('created');
     }
 
     public function isCard(): bool
     {
-        return $this->type === self::TYPE_CARD;
+        return $this->getType() === self::TYPE_CARD;
     }
 
     /**
@@ -118,42 +127,15 @@ class PaymentMethod
      */
     public function isExpired(?\DateTimeInterface $now = null): bool
     {
-        if ($this->expMonth === null || $this->expYear === null) {
+        $month = $this->getExpMonth();
+        $year = $this->getExpYear();
+        if ($month === null || $year === null) {
             return false;
         }
 
         $now ??= new \DateTimeImmutable();
         $current = (int) $now->format('Y') * 12 + (int) $now->format('n');
 
-        return $current > $this->expYear * 12 + $this->expMonth;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data  Payment method payload
-     */
-    public static function fromArray(array $data): self
-    {
-        $type = (string) ($data['type'] ?? '');
-        // Type-specific details live under a key named after the type, e.g. `card` or `sepa_debit`
-        $details = $data[$type] ?? [];
-        $billing = $data['billing_details'] ?? [];
-        $address = $billing['address'] ?? [];
-
-        return new self(
-            id: (string) ($data['id'] ?? ''),
-            type: $type,
-            customerId: self::expandableId($data['customer'] ?? null),
-            brand: $details['brand'] ?? null,
-            last4: $details['last4'] ?? null,
-            expMonth: isset($details['exp_month']) ? (int) $details['exp_month'] : null,
-            expYear: isset($details['exp_year']) ? (int) $details['exp_year'] : null,
-            funding: $details['funding'] ?? null,
-            country: $details['country'] ?? null,
-            billingAddress: is_array($address) && array_filter($address) ? Address::fromArray($address) : null,
-            name: $billing['name'] ?? null,
-            email: $billing['email'] ?? null,
-            metadata: $data['metadata'] ?? [],
-            createdAt: isset($data['created']) ? (int) $data['created'] : null,
-        );
+        return $current > $year * 12 + $month;
     }
 }

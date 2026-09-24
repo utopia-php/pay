@@ -2,15 +2,14 @@
 
 namespace Utopia\Pay\Payment;
 
-use Utopia\Pay\Expandable;
+use Utopia\Pay\Charge\Charge;
+use Utopia\Pay\Model;
 
 /**
- * Typed view of a payment intent as returned by the adapter, e.g. Payment::fromArray($pay->getPayment($id)).
+ * Payment intent returned by purchase(), authorize(), capture(), getPayment() and the other payment calls
  */
-class Payment
+class Payment extends Model
 {
-    use Expandable;
-
     public const STATUS_REQUIRES_PAYMENT_METHOD = 'requires_payment_method';
 
     public const STATUS_REQUIRES_CONFIRMATION = 'requires_confirmation';
@@ -25,94 +24,90 @@ class Payment
 
     public const STATUS_SUCCEEDED = 'succeeded';
 
-    /**
-     * @param  array<string, mixed>  $metadata
-     */
-    public function __construct(
-        private string $id,
-        private int $amount,
-        private string $currency,
-        private string $status,
-        private ?string $customerId = null,
-        private ?string $paymentMethodId = null,
-        private int $amountReceived = 0,
-        private ?int $amountRefunded = null,
-        private ?string $clientSecret = null,
-        private ?string $chargeId = null,
-        private ?string $errorCode = null,
-        private ?string $errorMessage = null,
-        private array $metadata = [],
-        private ?int $createdAt = null,
-    ) {
-    }
-
-    public function getId(): string
+    public function getId(): ?string
     {
-        return $this->id;
+        return $this->string('id');
     }
 
     /**
      * Amount in the smallest currency unit
      */
-    public function getAmount(): int
+    public function getAmount(): ?int
     {
-        return $this->amount;
+        return $this->int('amount');
     }
 
-    public function getCurrency(): string
+    public function getAmountReceived(): ?int
     {
-        return $this->currency;
+        return $this->int('amount_received');
     }
 
-    public function getStatus(): string
+    public function getCurrency(): ?string
     {
-        return $this->status;
+        return $this->string('currency');
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->string('status');
     }
 
     public function getCustomerId(): ?string
     {
-        return $this->customerId;
+        return $this->expandableId('customer');
     }
 
     public function getPaymentMethodId(): ?string
     {
-        return $this->paymentMethodId;
-    }
-
-    public function getAmountReceived(): int
-    {
-        return $this->amountReceived;
-    }
-
-    /**
-     * Null when the payload carries no charge data to sum refunds from
-     */
-    public function getAmountRefunded(): ?int
-    {
-        return $this->amountRefunded;
+        return $this->expandableId('payment_method');
     }
 
     public function getClientSecret(): ?string
     {
-        return $this->clientSecret;
+        return $this->string('client_secret');
     }
 
-    public function getChargeId(): ?string
+    public function getLatestChargeId(): ?string
     {
-        return $this->chargeId;
+        return $this->expandableId('latest_charge');
     }
 
     /**
-     * Decline or error code of the last failed attempt, matching Exception::getType()
+     * Charges from the legacy `charges` list, empty on API versions that only send `latest_charge`
+     *
+     * @return array<Charge>
+     */
+    public function getCharges(): array
+    {
+        return $this->list(Charge::class, 'charges');
+    }
+
+    /**
+     * `last_payment_error.code` of the last failed attempt
      */
     public function getErrorCode(): ?string
     {
-        return $this->errorCode;
+        return $this->string('last_payment_error', 'code');
+    }
+
+    public function getDeclineCode(): ?string
+    {
+        return $this->string('last_payment_error', 'decline_code');
     }
 
     public function getErrorMessage(): ?string
     {
-        return $this->errorMessage;
+        return $this->string('last_payment_error', 'message');
+    }
+
+    /**
+     * Free-form instructions for completing authentication, e.g. `use_stripe_sdk`
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getNextAction(): ?array
+    {
+        return $this->array('next_action');
     }
 
     /**
@@ -120,76 +115,41 @@ class Payment
      */
     public function getMetadata(): array
     {
-        return $this->metadata;
+        return $this->array('metadata') ?? [];
     }
 
     public function getCreatedAt(): ?int
     {
-        return $this->createdAt;
+        return $this->int('created');
     }
 
     public function isSucceeded(): bool
     {
-        return $this->status === self::STATUS_SUCCEEDED;
+        return $this->getStatus() === self::STATUS_SUCCEEDED;
     }
 
     public function isProcessing(): bool
     {
-        return $this->status === self::STATUS_PROCESSING;
+        return $this->getStatus() === self::STATUS_PROCESSING;
     }
 
     public function isCanceled(): bool
     {
-        return $this->status === self::STATUS_CANCELED;
+        return $this->getStatus() === self::STATUS_CANCELED;
     }
 
     public function requiresAction(): bool
     {
-        return $this->status === self::STATUS_REQUIRES_ACTION;
+        return $this->getStatus() === self::STATUS_REQUIRES_ACTION;
     }
 
     public function requiresCapture(): bool
     {
-        return $this->status === self::STATUS_REQUIRES_CAPTURE;
+        return $this->getStatus() === self::STATUS_REQUIRES_CAPTURE;
     }
 
     public function requiresPaymentMethod(): bool
     {
-        return $this->status === self::STATUS_REQUIRES_PAYMENT_METHOD;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data  Payment intent payload
-     */
-    public static function fromArray(array $data): self
-    {
-        $error = $data['last_payment_error'] ?? [];
-
-        // Refunds live on charges: the legacy `charges` list, or an expanded `latest_charge`
-        $amountRefunded = null;
-        $charges = $data['charges']['data'] ?? null;
-        if (is_array($charges)) {
-            $amountRefunded = array_sum(array_map(fn ($charge) => (int) ($charge['amount_refunded'] ?? 0), $charges));
-        } elseif (is_array($data['latest_charge'] ?? null)) {
-            $amountRefunded = (int) ($data['latest_charge']['amount_refunded'] ?? 0);
-        }
-
-        return new self(
-            id: (string) ($data['id'] ?? ''),
-            amount: (int) ($data['amount'] ?? 0),
-            currency: (string) ($data['currency'] ?? ''),
-            status: (string) ($data['status'] ?? ''),
-            customerId: self::expandableId($data['customer'] ?? null),
-            paymentMethodId: self::expandableId($data['payment_method'] ?? null),
-            amountReceived: (int) ($data['amount_received'] ?? 0),
-            amountRefunded: $amountRefunded,
-            clientSecret: $data['client_secret'] ?? null,
-            chargeId: self::expandableId($data['latest_charge'] ?? null),
-            // Same precedence as Stripe::handleError() so both sides compare against Exception constants
-            errorCode: $error['decline_code'] ?? $error['code'] ?? null,
-            errorMessage: $error['message'] ?? null,
-            metadata: $data['metadata'] ?? [],
-            createdAt: isset($data['created']) ? (int) $data['created'] : null,
-        );
+        return $this->getStatus() === self::STATUS_REQUIRES_PAYMENT_METHOD;
     }
 }

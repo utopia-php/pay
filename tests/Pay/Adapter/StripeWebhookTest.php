@@ -34,8 +34,8 @@ class StripeWebhookTest extends TestCase
 
         $event = $this->pay->constructWebhookEvent($payload, $this->sign($payload, time()), self::SECRET);
 
-        $this->assertEquals('evt_123', $event['id']);
-        $this->assertEquals('dp_123', WebhookEvent::fromArray($event)->getObject()['id']);
+        $this->assertEquals('evt_123', $event->getId());
+        $this->assertEquals('dp_123', $event->getObject()['id']);
     }
 
     public function testStaleTimestamp(): void
@@ -43,7 +43,7 @@ class StripeWebhookTest extends TestCase
         $payload = '{"id":"evt_123"}';
         $header = $this->sign($payload, time() - 301);
 
-        $this->assertEquals('evt_123', $this->pay->constructWebhookEvent($payload, $header, self::SECRET, null)['id']);
+        $this->assertEquals('evt_123', $this->pay->constructWebhookEvent($payload, $header, self::SECRET, null)->getId());
 
         $this->expectException(Exception::class);
         $this->pay->constructWebhookEvent($payload, $header, self::SECRET);

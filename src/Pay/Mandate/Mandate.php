@@ -2,53 +2,32 @@
 
 namespace Utopia\Pay\Mandate;
 
-use Utopia\Pay\Expandable;
+use Utopia\Pay\Model;
 
 /**
- * Typed view of a mandate, from getMandate() or a mandate.updated webhook event.
+ * Mandate returned by getMandate() or carried by a mandate.updated webhook event
  */
-class Mandate
+class Mandate extends Model
 {
-    use Expandable;
-
     public const STATUS_ACTIVE = 'active';
 
-    public function __construct(
-        private string $id,
-        private string $status,
-        private ?string $paymentMethodId = null,
-    ) {
+    public function getId(): ?string
+    {
+        return $this->string('id');
     }
 
-    public function getId(): string
+    public function getStatus(): ?string
     {
-        return $this->id;
-    }
-
-    public function getStatus(): string
-    {
-        return $this->status;
+        return $this->string('status');
     }
 
     public function getPaymentMethodId(): ?string
     {
-        return $this->paymentMethodId;
+        return $this->expandableId('payment_method');
     }
 
     public function isActive(): bool
     {
-        return $this->status === self::STATUS_ACTIVE;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data  Mandate payload
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            id: (string) ($data['id'] ?? ''),
-            status: (string) ($data['status'] ?? ''),
-            paymentMethodId: self::expandableId($data['payment_method'] ?? null),
-        );
+        return $this->getStatus() === self::STATUS_ACTIVE;
     }
 }

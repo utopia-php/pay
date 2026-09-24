@@ -2,6 +2,15 @@
 
 namespace Utopia\Pay;
 
+use Utopia\Pay\Customer\Customer;
+use Utopia\Pay\Dispute\Dispute;
+use Utopia\Pay\Mandate\Mandate;
+use Utopia\Pay\Payment\Payment;
+use Utopia\Pay\PaymentMethod\PaymentMethod;
+use Utopia\Pay\Refund\Refund;
+use Utopia\Pay\SetupIntent\SetupIntent;
+use Utopia\Pay\Webhook\WebhookEvent;
+
 abstract class Adapter
 {
     /**
@@ -58,9 +67,9 @@ abstract class Adapter
      * @param  string  $customerId Customer ID
      * @param  string|null  $paymentMethodId Payment method ID (optional)
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the purchase
+     * @return Payment Result of the purchase
      */
-    abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
+    abstract public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment;
 
     /**
      * Authorize a payment (hold funds without capturing)
@@ -70,9 +79,9 @@ abstract class Adapter
      * @param  string  $customerId Customer ID
      * @param  string|null  $paymentMethodId Payment method ID (optional)
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the authorization including authorization ID
+     * @return Payment Result of the authorization including authorization ID
      */
-    abstract public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array;
+    abstract public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment;
 
     /**
      * Capture a previously authorized payment
@@ -81,9 +90,9 @@ abstract class Adapter
      * @param  string  $paymentId The payment/authorization ID to capture
      * @param  int|null  $amount Amount to capture (optional, defaults to full authorized amount)
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the capture
+     * @return Payment Result of the capture
      */
-    abstract public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array;
+    abstract public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): Payment;
 
     /**
      * Cancel/void a payment authorization
@@ -91,9 +100,9 @@ abstract class Adapter
      *
      * @param  string  $paymentId The payment/authorization ID to cancel
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the cancellation
+     * @return Payment Result of the cancellation
      */
-    abstract public function cancelAuthorization(string $paymentId, array $additionalParams = []): array;
+    abstract public function cancelAuthorization(string $paymentId, array $additionalParams = []): Payment;
 
     /**
      * Update a payment intent
@@ -103,9 +112,9 @@ abstract class Adapter
      * @param  int|null  $amount Amount to update (optional)
      * @param  string|null  $currency Currency to update (optional)
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the update
+     * @return Payment Result of the update
      */
-    abstract public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): array;
+    abstract public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): Payment;
 
     /**
      * Retry a purchase for a payment intent
@@ -113,9 +122,9 @@ abstract class Adapter
      * @param  string  $paymentId The payment intent ID to retry
      * @param  string|null  $paymentMethodId The payment method to use (optional)
      * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
-     * @return array<mixed> The result of the retry attempt
+     * @return Payment The result of the retry attempt
      */
-    abstract public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array;
+    abstract public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): Payment;
 
     /**
      * Refund payment
@@ -123,17 +132,17 @@ abstract class Adapter
      * @param  string  $paymentId
      * @param  int  $amount
      * @param  string  $reason
-     * @return array<mixed>
+     * @return Refund
      */
-    abstract public function refund(string $paymentId, ?int $amount = null, ?string $reason = null): array;
+    abstract public function refund(string $paymentId, ?int $amount = null, ?string $reason = null): Refund;
 
     /**
      * Get a payment details
      *
      * @param  string  $paymentId
-     * @return array<mixed>
+     * @return Payment
      */
-    abstract public function getPayment(string $paymentId): array;
+    abstract public function getPayment(string $paymentId): Payment;
 
     /**
      * Add a payment method
@@ -141,9 +150,9 @@ abstract class Adapter
      * @param  string  $customerId
      * @param  string  $type
      * @param  array<mixed>  $details
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    abstract public function createPaymentMethod(string $customerId, string $type, array $details): array;
+    abstract public function createPaymentMethod(string $customerId, string $type, array $details): PaymentMethod;
 
     /**
      * Update payment method billing details
@@ -153,9 +162,9 @@ abstract class Adapter
      * @param  string|null  $email
      * @param  string|null  $phone
      * @param  array<mixed>|null  $address
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): array;
+    abstract public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): PaymentMethod;
 
     /**
      * Update payment method
@@ -163,15 +172,15 @@ abstract class Adapter
      * @param  string  $paymentMethodId
      * @param  string  $type
      * @param  array<mixed>  $details
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    abstract public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array;
+    abstract public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): PaymentMethod;
 
     /**
      * List payment methods
      *
      * @param  string  $customerId
-     * @return array<mixed>
+     * @return array<PaymentMethod>
      */
     abstract public function listPaymentMethods(string $customerId): array;
 
@@ -190,14 +199,14 @@ abstract class Adapter
      * @param  string  $email
      * @param  array<mixed>  $address
      * @param  string|null  $paymentMethod
-     * @return array<mixed>
+     * @return Customer
      */
-    abstract public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array;
+    abstract public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): Customer;
 
     /**
      * List customers
      *
-     * @return array<mixed>
+     * @return array<Customer>
      */
     abstract public function listCustomers(): array;
 
@@ -205,9 +214,9 @@ abstract class Adapter
      * Get customer details by ID
      *
      * @param  string  $customerId
-     * @return array<mixed>
+     * @return Customer
      */
-    abstract public function getCustomer(string $customerId): array;
+    abstract public function getCustomer(string $customerId): Customer;
 
     /**
      * Update customer details
@@ -217,9 +226,9 @@ abstract class Adapter
      * @param  string  $email
      * @param  Address|null  $address
      * @param  string|null  $paymentMethod
-     * @return array<mixed>
+     * @return Customer
      */
-    abstract public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): array;
+    abstract public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer;
 
     /**
      * Delete Customer
@@ -234,9 +243,9 @@ abstract class Adapter
      *
      * @param  string  $customerId
      * @param  string  $paymentMethodId
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    abstract public function getPaymentMethod(string $customerId, string $paymentMethodId): array;
+    abstract public function getPaymentMethod(string $customerId, string $paymentMethodId): PaymentMethod;
 
     /**
      * Create setup for accepting future payments
@@ -246,16 +255,16 @@ abstract class Adapter
      * @param  array<mixed>  $paymentMethodTypes
      * @param  array<mixed>  $paymentMethodOptions
      * @param  ?string  $paymentMethodConfiguration
-     * @return array<mixed>
+     * @return SetupIntent
      */
-    abstract public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = [], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
+    abstract public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = [], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent;
 
     /**
      * List future payments associated with the provided customer or payment method
      *
      * @param  string|null  $customerId
      * @param  string|null  $paymentMethodId
-     * @return array<mixed>
+     * @return array<SetupIntent>
      */
     abstract public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array;
 
@@ -263,9 +272,9 @@ abstract class Adapter
      * Get Future payment
      *
      * @param  string  $id
-     * @return array<mixed>
+     * @return SetupIntent
      */
-    abstract public function getFuturePayment(string $id): array;
+    abstract public function getFuturePayment(string $id): SetupIntent;
 
     /**
      * Update future payment setup
@@ -275,17 +284,17 @@ abstract class Adapter
      * @param  string|null  $paymentMethod
      * @param  array<mixed>  $paymentMethodOptions
      * @param  string|null  $paymentMethodConfiguration
-     * @return array<mixed>
+     * @return SetupIntent
      */
-    abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array;
+    abstract public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent;
 
     /**
      * Get mandate
      *
      * @param  string  $id
-     * @return array<mixed>
+     * @return Mandate
      */
-    abstract public function getMandate(string $id): array;
+    abstract public function getMandate(string $id): Mandate;
 
     /**
      * List disputes
@@ -294,7 +303,7 @@ abstract class Adapter
      * @param  string|null  $paymentIntentId
      * @param  string|null  $chargeId
      * @param  int|null  $createdAfter
-     * @return array
+     * @return array<Dispute>
      */
     abstract public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array;
 
@@ -305,11 +314,11 @@ abstract class Adapter
      * @param  string  $signatureHeader
      * @param  string  $secret
      * @param  int|null  $tolerance  Maximum age of the signature in seconds, null to skip the check
-     * @return array<string, mixed>
+     * @return WebhookEvent
      *
      * @throws Exception
      */
-    public function constructWebhookEvent(string $payload, string $signatureHeader, string $secret, ?int $tolerance = 300): array
+    public function constructWebhookEvent(string $payload, string $signatureHeader, string $secret, ?int $tolerance = 300): WebhookEvent
     {
         // Not abstract so adding it does not break third-party adapters
         throw new Exception(Exception::GENERAL_UNKNOWN, $this->getName().' does not support webhooks');

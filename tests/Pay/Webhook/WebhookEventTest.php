@@ -46,6 +46,6 @@ class WebhookEventTest extends TestCase
         $event = WebhookEvent::fromArray(['id' => 'evt_123', 'type' => 'ping']);
 
         $this->assertEquals([], $event->getObject());
-        $this->assertEquals('', $event->getObjectType());
+        $this->assertNull($event->getObjectType());
     }
 }

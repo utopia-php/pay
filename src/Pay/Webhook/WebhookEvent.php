@@ -2,10 +2,12 @@
 
 namespace Utopia\Pay\Webhook;
 
+use Utopia\Pay\Model;
+
 /**
- * Typed view of a verified webhook event, e.g. WebhookEvent::fromArray($pay->constructWebhookEvent(...)).
+ * Verified webhook event returned by constructWebhookEvent()
  */
-class WebhookEvent
+class WebhookEvent extends Model
 {
     public const TYPE_PAYMENT_INTENT_SUCCEEDED = 'payment_intent.succeeded';
 
@@ -33,24 +35,14 @@ class WebhookEvent
 
     public const TYPE_CHARGE_DISPUTE_FUNDS_REINSTATED = 'charge.dispute.funds_reinstated';
 
-    /**
-     * @param  array<string, mixed>  $object
-     */
-    public function __construct(
-        private string $id,
-        private string $type,
-        private array $object = [],
-    ) {
+    public function getId(): ?string
+    {
+        return $this->string('id');
     }
 
-    public function getId(): string
+    public function getType(): ?string
     {
-        return $this->id;
-    }
-
-    public function getType(): string
-    {
-        return $this->type;
+        return $this->string('type');
     }
 
     /**
@@ -60,28 +52,14 @@ class WebhookEvent
      */
     public function getObject(): array
     {
-        return $this->object;
+        return $this->array('data', 'object') ?? [];
     }
 
     /**
      * Kind of resource in getObject(), e.g. `payment_intent`, `mandate` or `dispute`
      */
-    public function getObjectType(): string
+    public function getObjectType(): ?string
     {
-        return (string) ($this->object['object'] ?? '');
-    }
-
-    /**
-     * @param  array<string, mixed>  $data  Event payload
-     */
-    public static function fromArray(array $data): self
-    {
-        $object = $data['data']['object'] ?? [];
-
-        return new self(
-            id: (string) ($data['id'] ?? ''),
-            type: (string) ($data['type'] ?? ''),
-            object: is_array($object) ? $object : [],
-        );
+        return $this->string('data', 'object', 'object');
     }
 }
