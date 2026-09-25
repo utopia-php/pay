@@ -23,6 +23,14 @@ class StripeTest extends TestCase
         $this->assertEquals($this->stripe->getName(), 'Stripe');
     }
 
+    public function testConstructsWithoutAClient(): void
+    {
+        $stripe = new Stripe('sk_test_probe');
+
+        $this->assertSame('Stripe', $stripe->getName());
+        $this->assertSame('USD', $stripe->getCurrency());
+    }
+
     /**
      * Test create customer
      *

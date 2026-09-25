@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dd6b6d68534faf4fd36a21db56a4dceb",
+    "content-hash": "8350530fff342c96993f6ecb51b51848",
     "packages": [
         {
             "name": "brick/math",
@@ -1879,16 +1879,16 @@
         },
         {
             "name": "utopia-php/client",
-            "version": "0.4.3",
+            "version": "0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/utopia-php/client.git",
-                "reference": "d68a5890afa6002b44691cb3f265123a6331e03e"
+                "reference": "7cea773be6c2c7ba2d25625a61f17278b00ee01c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/utopia-php/client/zipball/d68a5890afa6002b44691cb3f265123a6331e03e",
-                "reference": "d68a5890afa6002b44691cb3f265123a6331e03e",
+                "url": "https://api.github.com/repos/utopia-php/client/zipball/7cea773be6c2c7ba2d25625a61f17278b00ee01c",
+                "reference": "7cea773be6c2c7ba2d25625a61f17278b00ee01c",
                 "shasum": ""
             },
             "require": {
@@ -1910,8 +1910,11 @@
             },
             "type": "library",
             "autoload": {
+                "files": [
+                    "src/compat.php"
+                ],
                 "psr-4": {
-                    "Utopia\\": "src/"
+                    "Utopia\\Client\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1930,9 +1933,9 @@
             ],
             "support": {
                 "issues": "https://github.com/utopia-php/client/issues",
-                "source": "https://github.com/utopia-php/client/tree/0.4.3"
+                "source": "https://github.com/utopia-php/client/tree/0.5.1"
             },
-            "time": "2026-09-05T15:25:56+00:00"
+            "time": "2026-09-23T14:09:54+00:00"
         },
         {
             "name": "utopia-php/pools",
