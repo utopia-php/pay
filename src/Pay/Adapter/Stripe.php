@@ -4,8 +4,8 @@ namespace Utopia\Pay\Adapter;
 
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
-use Utopia\Client;
 use Utopia\Client\Adapter\Curl\Client as Curl;
+use Utopia\Client\Client;
 use Utopia\Pay\Adapter;
 use Utopia\Pay\Address;
 use Utopia\Pay\Exception;

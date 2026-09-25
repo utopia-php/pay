@@ -12,7 +12,7 @@ class StripeTest extends TestCase
 
     protected function setUp(): void
     {
-        $secretKey = getenv('STRIPE_SECRET') ? getenv('STRIPE_SECRET') : '';
+        $secretKey = getenv('STRIPE_SECRET') ?: '';
         $this->stripe = new Stripe(
             $secretKey
         );
@@ -20,7 +20,14 @@ class StripeTest extends TestCase
 
     public function testName(): void
     {
-        $this->assertEquals($this->stripe->getName(), 'Stripe');
+        $this->assertEquals('Stripe', $this->stripe->getName());
+    }
+
+    public function testConstructsWithoutAClient(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        new Stripe('sk_test_probe');
     }
 
     /**
