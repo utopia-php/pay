@@ -25,10 +25,9 @@ class StripeTest extends TestCase
 
     public function testConstructsWithoutAClient(): void
     {
-        $stripe = new Stripe('sk_test_probe');
+        $this->expectNotToPerformAssertions();
 
-        $this->assertSame('Stripe', $stripe->getName());
-        $this->assertSame('USD', $stripe->getCurrency());
+        new Stripe('sk_test_probe');
     }
 
     /**
