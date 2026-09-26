@@ -96,7 +96,7 @@ class Webhook
         $items = \explode(',', $header);
 
         foreach ($items as $item) {
-            $itemParts = \explode('=', $item, 2);
+            $itemParts = \explode('=', $item, 2) + [1 => ''];
             if ('t' === $itemParts[0]) {
                 if (! \is_numeric($itemParts[1])) {
                     return -1;
@@ -122,7 +122,7 @@ class Webhook
         $items = \explode(',', $header);
 
         foreach ($items as $item) {
-            $itemParts = \explode('=', $item, 2);
+            $itemParts = \explode('=', $item, 2) + [1 => ''];
             if (\trim($itemParts[0]) === $scheme) {
                 $signatures[] = $itemParts[1];
             }

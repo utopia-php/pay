@@ -14,6 +14,32 @@ class Exception extends \Exception
 
     public const GENERIC_DECLINE = 'generic_decline';
 
+    public const CARD_DECLINED = 'card_declined';
+
+    public const EXPIRED_CARD = 'expired_card';
+
+    public const INCORRECT_CVC = 'incorrect_cvc';
+
+    public const LOST_CARD = 'lost_card';
+
+    public const STOLEN_CARD = 'stolen_card';
+
+    public const FRAUDULENT = 'fraudulent';
+
+    public const DO_NOT_HONOR = 'do_not_honor';
+
+    public const PROCESSING_ERROR = 'processing_error';
+
+    public const AMOUNT_TOO_SMALL = 'amount_too_small';
+
+    public const PAYMENT_INTENT_UNEXPECTED_STATE = 'payment_intent_unexpected_state';
+
+    public const RESOURCE_MISSING = 'resource_missing';
+
+    public const RATE_LIMIT = 'rate_limit';
+
+    public const SIGNATURE_VERIFICATION_FAILED = 'signature_verification_failed';
+
     protected string $type = '';
 
     /**

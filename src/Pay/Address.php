@@ -211,4 +211,22 @@ class Address
             'state' => $this->state ?? null,
         ];
     }
+
+    /**
+     * Create from the snake_case shape produced by asArray()
+     *
+     * @param  array<string, mixed>  $data
+     * @return self
+     */
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            city: (string) ($data['city'] ?? ''),
+            country: (string) ($data['country'] ?? ''),
+            line1: $data['line1'] ?? null,
+            line2: $data['line2'] ?? null,
+            postalCode: $data['postal_code'] ?? null,
+            state: $data['state'] ?? null,
+        );
+    }
 }

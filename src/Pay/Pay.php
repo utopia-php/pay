@@ -2,6 +2,15 @@
 
 namespace Utopia\Pay;
 
+use Utopia\Pay\Customer\Customer;
+use Utopia\Pay\Dispute\Dispute;
+use Utopia\Pay\Mandate\Mandate;
+use Utopia\Pay\Payment\Payment;
+use Utopia\Pay\PaymentMethod\PaymentMethod;
+use Utopia\Pay\Refund\Refund;
+use Utopia\Pay\SetupIntent\SetupIntent;
+use Utopia\Pay\Webhook\WebhookEvent;
+
 class Pay
 {
     /**
@@ -79,9 +88,9 @@ class Pay
      * @param  string  $customerId
      * @param  string|null  $paymentMethodId
      * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
+     * @return Payment
      */
-    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
     {
         return $this->adapter->purchase($amount, $customerId, $paymentMethodId, $additionalParams);
     }
@@ -96,9 +105,9 @@ class Pay
      * @param  string  $customerId
      * @param  string|null  $paymentMethodId
      * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
+     * @return Payment
      */
-    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
     {
         return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $additionalParams);
     }
@@ -111,9 +120,9 @@ class Pay
      * @param  string  $paymentId
      * @param  int|null  $amount
      * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
+     * @return Payment
      */
-    public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array
+    public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): Payment
     {
         return $this->adapter->capture($paymentId, $amount, $additionalParams);
     }
@@ -125,9 +134,9 @@ class Pay
      *
      * @param  string  $paymentId
      * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
+     * @return Payment
      */
-    public function cancelAuthorization(string $paymentId, array $additionalParams = []): array
+    public function cancelAuthorization(string $paymentId, array $additionalParams = []): Payment
     {
         return $this->adapter->cancelAuthorization($paymentId, $additionalParams);
     }
@@ -138,9 +147,9 @@ class Pay
      * @param  string  $paymentId The payment intent ID to retry
      * @param  string|null  $paymentMethodId The payment method to use (optional)
      * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
-     * @return array<mixed> The result of the retry attempt
+     * @return Payment The result of the retry attempt
      */
-    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): Payment
     {
         return $this->adapter->retryPurchase($paymentId, $paymentMethodId, $additionalParams);
     }
@@ -150,9 +159,9 @@ class Pay
      *
      * @param  string  $paymentId
      * @param  int  $amount
-     * @return array<mixed>
+     * @return Refund
      */
-    public function refund(string $paymentId, int $amount): array
+    public function refund(string $paymentId, int $amount): Refund
     {
         return $this->adapter->refund($paymentId, $amount);
     }
@@ -161,9 +170,9 @@ class Pay
      * Get a payment details
      *
      * @param  string  $paymentId
-     * @return array<mixed>
+     * @return Payment
      */
-    public function getPayment(string $paymentId): array
+    public function getPayment(string $paymentId): Payment
     {
         return $this->adapter->getPayment($paymentId);
     }
@@ -176,9 +185,9 @@ class Pay
      * @param  int|null  $amount Amount to update (optional)
      * @param  string|null  $currency Currency to update (optional)
      * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the update
+     * @return Payment Result of the update
      */
-    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): array
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): Payment
     {
         return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $additionalParams);
     }
@@ -200,9 +209,9 @@ class Pay
      * @param  string  $customerId
      * @param  string  $type
      * @param  array<mixed>  $details
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    public function createPaymentMethod(string $customerId, string $type, array $details): array
+    public function createPaymentMethod(string $customerId, string $type, array $details): PaymentMethod
     {
         return $this->adapter->createPaymentMethod($customerId, $type, $details);
     }
@@ -216,9 +225,9 @@ class Pay
      * @param  string  $email
      * @param  string  $phone
      * @param  array<mixed>  $address
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): array
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): PaymentMethod
     {
         return $this->adapter->updatePaymentMethodBillingDetails($paymentMethodId, $name, $email, $phone, $address);
     }
@@ -229,9 +238,9 @@ class Pay
      * @param  string  $paymentMethodId
      * @param  string  $type
      * @param  array<mixed>  $details
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
+    public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): PaymentMethod
     {
         return $this->adapter->updatePaymentMethod($paymentMethodId, $type, $details);
     }
@@ -241,9 +250,9 @@ class Pay
      *
      * @param  string  $customerId
      * @param  string  $paymentMethodId
-     * @return array<mixed>
+     * @return PaymentMethod
      */
-    public function getPaymentMethod(string $customerId, string $paymentMethodId): array
+    public function getPaymentMethod(string $customerId, string $paymentMethodId): PaymentMethod
     {
         return $this->adapter->getPaymentMethod($customerId, $paymentMethodId);
     }
@@ -252,7 +261,7 @@ class Pay
      * List Payment Methods
      *
      * @param  string  $customerId
-     * @return array<mixed>
+     * @return array<PaymentMethod>
      */
     public function listPaymentMethods(string $customerId): array
     {
@@ -262,7 +271,7 @@ class Pay
     /**
      * List Customers
      *
-     * @return array<mixed>
+     * @return array<Customer>
      */
     public function listCustomers(): array
     {
@@ -279,9 +288,9 @@ class Pay
      * @param  string  $email
      * @param  array<mixed>  $address
      * @param  string|null  $paymentMethod
-     * @return array<mixed>
+     * @return Customer
      */
-    public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): Customer
     {
         return $this->adapter->createCustomer($name, $email, $address, $paymentMethod);
     }
@@ -290,9 +299,9 @@ class Pay
      * Get Customer
      *
      * @param  string  $customerId
-     * @return array<mixed>
+     * @return Customer
      */
-    public function getCustomer(string $customerId): array
+    public function getCustomer(string $customerId): Customer
     {
         return $this->adapter->getCustomer($customerId);
     }
@@ -305,9 +314,9 @@ class Pay
      * @param  string  $email
      * @param  string  $paymentMethod
      * @param  Address  $address
-     * @return array<mixed>
+     * @return Customer
      */
-    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
@@ -331,9 +340,9 @@ class Pay
      * @param  array<mixed>  $paymentMethodTypes
      * @param  array<mixed>  $paymentMethodOptions
      * @param  string  $paymentMethodConfiguration
-     * @return array<mixed>
+     * @return SetupIntent
      */
-    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent
     {
         return $this->adapter->createFuturePayment($customerId, $paymentMethod, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
     }
@@ -342,9 +351,9 @@ class Pay
      * Get future payment
      *
      * @param  string  $id
-     * @return array<mixed>
+     * @return SetupIntent
      */
-    public function getFuturePayment(string $id): array
+    public function getFuturePayment(string $id): SetupIntent
     {
         return $this->adapter->getFuturePayment($id);
     }
@@ -357,9 +366,9 @@ class Pay
      * @param  string|null  $paymentMethod
      * @param  array<mixed>  $paymentMethodOptions
      * @param  string|null  $paymentMethodConfiguration
-     * @return array<mixed>
+     * @return SetupIntent
      */
-    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): SetupIntent
     {
         return $this->adapter->updateFuturePayment($id, $customerId, $paymentMethod, $paymentMethodOptions, $paymentMethodConfiguration);
     }
@@ -369,7 +378,7 @@ class Pay
      *
      * @param  string|null  $customerId
      * @param  string|null  $paymentMethodId
-     * @return array<mixed>
+     * @return array<SetupIntent>
      */
     public function listFuturePayment(?string $customerId, ?string $paymentMethodId = null): array
     {
@@ -380,9 +389,9 @@ class Pay
      * Get mandate
      *
      * @param  string  $id
-     * @return array<mixed>
+     * @return Mandate
      */
-    public function getMandate(string $id): array
+    public function getMandate(string $id): Mandate
     {
         return $this->adapter->getMandate($id);
     }
@@ -394,10 +403,26 @@ class Pay
      * @param  string|null  $paymentIntentId
      * @param  string|null  $chargeId
      * @param  int|null  $createdAfter
-     * @return array
+     * @return array<Dispute>
      */
     public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
     {
         return $this->adapter->listDisputes($limit, $paymentIntentId, $chargeId, $createdAfter);
+    }
+
+    /**
+     * Verify a webhook signature and decode the event
+     *
+     * @param  string  $payload  Raw request body, exactly as received
+     * @param  string  $signatureHeader
+     * @param  string  $secret
+     * @param  int|null  $tolerance  Maximum age of the signature in seconds, null to skip the check
+     * @return WebhookEvent
+     *
+     * @throws Exception
+     */
+    public function constructWebhookEvent(string $payload, string $signatureHeader, string $secret, ?int $tolerance = 300): WebhookEvent
+    {
+        return $this->adapter->constructWebhookEvent($payload, $signatureHeader, $secret, $tolerance);
     }
 }
