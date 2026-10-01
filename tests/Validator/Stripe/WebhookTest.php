@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Pay\Tests\Validator\Stripe;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Validator\Stripe\Webhook;
@@ -9,8 +9,10 @@ class WebhookTest extends TestCase
 {
     public function testValid()
     {
-        $header = 't=1723597289,v1=ca18f2c5b48c347b26f2d862f29d93dc1c9c6b319ba2cd934db54333acef1492';
-        $secret = getenv('STRIPE_WEBHOOK_SECRET');
+        // Signed here with a throwaway secret, as Stripe signs: HMAC-SHA256 of "{t}.{payload}".
+        $secret = 'whsec_test';
+        $timestamp = 1723597289;
+        $header = "t={$timestamp},v1=" . \hash_hmac('sha256', "{$timestamp}." . '{"id": "pi_abcdefg"}', $secret);
 
         $validator = new Webhook();
 

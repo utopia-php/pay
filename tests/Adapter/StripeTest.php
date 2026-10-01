@@ -1,11 +1,14 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Pay\Tests\Adapter;
 
+use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Adapter\Stripe;
 use Utopia\Pay\Exception;
 
+#[Group('stripe')]
 class StripeTest extends TestCase
 {
     private Stripe $stripe;
@@ -46,11 +49,10 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreateCustomer
-     *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testCreateCustomer')]
     public function testGetCustomer(array $data): array
     {
         $customerId = $data['customerId'];
@@ -63,11 +65,10 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreateCustomer
-     *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testCreateCustomer')]
     public function testUpdateCustomer(array $data): array
     {
         $customerId = $data['customerId'];
@@ -80,10 +81,9 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testUpdateCustomer
-     *
      * @param  array<mixed>  $data
      */
+    #[Depends('testUpdateCustomer')]
     public function testListCustomers(array $data): void
     {
         $response = $this->stripe->listCustomers();
@@ -96,11 +96,10 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testUpdateCustomer
-     *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testUpdateCustomer')]
     public function testCreatePaymentMethod(array $data): array
     {
         $customerId = $data['customerId'];
@@ -126,11 +125,10 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreatePaymentMethod
-     *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testCreatePaymentMethod')]
     public function testListPaymentMethods(array $data): array
     {
         $customerId = $data['customerId'];
@@ -151,10 +149,11 @@ class StripeTest extends TestCase
         return $data;
     }
 
-    /** @depends testCreatePaymentMethod
+    /**
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testCreatePaymentMethod')]
     public function testGetPaymentMethod(array $data): array
     {
         $customerId = $data['customerId'];
@@ -174,11 +173,10 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreatePaymentMethod
-     *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testCreatePaymentMethod')]
     public function testCreateFuturePayment(array $data): array
     {
         $customerId = $data['customerId'];
@@ -205,10 +203,9 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreateFuturePayment
-     *
      * @param  array<mixed>  $data
      * */
+    #[Depends('testCreateFuturePayment')]
     public function testUpdateFuturePayment(array $data): void
     {
         $customerId = $data['customerId'];
@@ -240,10 +237,9 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreateFuturePayment
-     *
      * @param  array<mixed>  $data
      * */
+    #[Depends('testCreateFuturePayment')]
     public function testListFuturePayment(array $data): void
     {
         $customerId = $data['customerId'];
@@ -255,11 +251,10 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreatePaymentMethod
-     *
      * @param  array<mixed>  $data
      * @return array<mixed>
      * */
+    #[Depends('testCreatePaymentMethod')]
     public function testUpdatePaymentMethod(array $data): array
     {
         $paymentMethodId = $data['paymentMethodId'];
@@ -278,11 +273,10 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreatePaymentMethod
-     *
      * @param  array<mixed>  $data
      * @return array<mixed>
      * */
+    #[Depends('testCreatePaymentMethod')]
     public function testPurchase(array $data): array
     {
         $customerId = $data['customerId'];
@@ -302,11 +296,11 @@ class StripeTest extends TestCase
     /**
      * Test retryPurchase: create a payment with a failing payment method, then retry with a succeeding one.
      *
-     * @depends testCreateCustomer
      *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testCreateCustomer')]
     public function testRetryPurchase(array $data): array
     {
         $customerId = $data['customerId'];
@@ -359,8 +353,8 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testPurchase
      */
+    #[Depends('testPurchase')]
     public function testGetPayment(array $data): array
     {
         $paymentId = $data['paymentId'];
@@ -376,11 +370,11 @@ class StripeTest extends TestCase
     /**
      * Test updatePayment: create a payment intent in a non-succeeded state, update its payment method and amount, and assert the update.
      *
-     * @depends testCreateCustomer
      *
      * @param  array<mixed>  $data
      * @return void
      */
+    #[Depends('testCreateCustomer')]
     public function testUpdatePayment(array $data): void
     {
         $customerId = $data['customerId'];
@@ -428,10 +422,9 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testPurchase
-     *
      * @param  array<mixed>  $data
      */
+    #[Depends('testPurchase')]
     public function testRefund(array $data): void
     {
         $purchase = $this->stripe->refund($data['paymentId'], 3000);
@@ -442,10 +435,9 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testCreatePaymentMethod
-     *
      * @param  array<mixed>  $data
      */
+    #[Depends('testCreatePaymentMethod')]
     public function testDeletePaymentMethod(array $data): void
     {
         $customerId = $data['customerId'];
@@ -462,10 +454,9 @@ class StripeTest extends TestCase
     }
 
     /**
-     * @depends testUpdateCustomer
-     *
      * @param  array<mixed>  $data
      */
+    #[Depends('testUpdateCustomer')]
     public function testDeleteCustomer(array $data): void
     {
         $customerId = $data['customerId'];
@@ -628,11 +619,11 @@ class StripeTest extends TestCase
     /**
      * Test authorize payment (hold funds)
      *
-     * @depends testAuthorizeCaptureCancelFlow
      *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testAuthorizeCaptureCancelFlow')]
     public function testAuthorize(array $data): array
     {
         $customerId = $data['customerId'];
@@ -655,11 +646,11 @@ class StripeTest extends TestCase
     /**
      * Test capture authorized payment
      *
-     * @depends testAuthorize
      *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testAuthorize')]
     public function testCapture(array $data): array
     {
         $authorizationId = $data['authorizationId'];
@@ -678,11 +669,11 @@ class StripeTest extends TestCase
     /**
      * Test partial capture of authorized payment
      *
-     * @depends testAuthorizeCaptureCancelFlow
      *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testAuthorizeCaptureCancelFlow')]
     public function testPartialCapture(array $data): array
     {
         $customerId = $data['customerId'];
@@ -706,11 +697,11 @@ class StripeTest extends TestCase
     /**
      * Test cancel authorization (release hold)
      *
-     * @depends testAuthorizeCaptureCancelFlow
      *
      * @param  array<mixed>  $data
      * @return array<mixed>
      */
+    #[Depends('testAuthorizeCaptureCancelFlow')]
     public function testCancelAuthorization(array $data): array
     {
         $customerId = $data['customerId'];
@@ -735,10 +726,10 @@ class StripeTest extends TestCase
     /**
      * Test authorize with additional parameters
      *
-     * @depends testAuthorizeCaptureCancelFlow
      *
      * @param  array<mixed>  $data
      */
+    #[Depends('testAuthorizeCaptureCancelFlow')]
     public function testAuthorizeWithMetadata(array $data): void
     {
         $customerId = $data['customerId'];

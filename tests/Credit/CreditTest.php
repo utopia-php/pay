@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Pay\Tests\Credit;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Credit\Credit;

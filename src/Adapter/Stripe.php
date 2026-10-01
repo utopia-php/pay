@@ -34,13 +34,13 @@ class Stripe extends Adapter
         $this->secretKey = $secretKey;
         $this->currency = $currency;
 
-        $this->client = $client ?? new Client(new Curl)
+        $this->client = $client ?? new Client(new Curl())
             ->withConnectionReuse()
             ->withHeaders([
                 Header::USER_AGENT => php_uname('s').'-'.php_uname('r').':php-'.phpversion(),
             ]);
 
-        $this->requests = new RequestFactory;
+        $this->requests = new RequestFactory();
     }
 
     /**

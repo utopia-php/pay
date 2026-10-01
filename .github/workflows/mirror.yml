@@ -1,0 +1,33 @@
+name: Mirror
+
+on:
+  pull_request_target:
+    types: [opened]
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  redirect:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Close pull request
+        if: github.event_name == 'pull_request_target'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr comment "$PR" --body "Thanks for contributing! This repository is a read-only mirror of \`packages/pay\` in Appwrite's private Cloud repository, so it cannot take pull requests: changes are made there and published here."
+          gh pr close "$PR"
+
+      - name: Close issue
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.html_url }}
+        run: |
+          gh issue comment "$ISSUE" --body "Thanks for opening this! This repository is a read-only mirror of \`packages/pay\` in Appwrite's private Cloud repository, so issues are not tracked here."
+          gh issue close "$ISSUE"
