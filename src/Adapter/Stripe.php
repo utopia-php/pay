@@ -66,7 +66,7 @@ class Stripe extends Adapter
             'confirm' => 'true',
         ];
 
-        $requestBody = array_merge($requestBody, $additionalParams);
+        $requestBody = $this->filterMandate(array_merge($requestBody, $additionalParams));
         $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
@@ -89,7 +89,7 @@ class Stripe extends Adapter
             'confirm' => 'true',
         ];
 
-        $requestBody = array_merge($requestBody, $additionalParams);
+        $requestBody = $this->filterMandate(array_merge($requestBody, $additionalParams));
         $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
@@ -142,7 +142,7 @@ class Stripe extends Adapter
             ];
         }
 
-        $requestBody = array_merge($requestBody, $additionalParams);
+        $requestBody = $this->filterMandate(array_merge($requestBody, $additionalParams), $paymentId);
         $result = $this->execute(Method::POST, $path, $requestBody);
 
         return $result;
@@ -496,6 +496,36 @@ class Stripe extends Adapter
         $result = $this->execute(Method::GET, $path, $requestBody);
 
         return $result['data'];
+    }
+
+    /**
+     * A mandate can only be used with the card it was issued for. Stale or
+     * unavailable mandates are omitted so Stripe can charge without one.
+     *
+     * @param  array<mixed>  $params
+     * @return array<mixed>
+     */
+    private function filterMandate(array $params, ?string $paymentId = null): array
+    {
+        if (!is_string($params['mandate'] ?? null) || $params['mandate'] === '') {
+            unset($params['mandate']);
+
+            return $params;
+        }
+
+        try {
+            $mandate = $this->getMandate($params['mandate']);
+            $methodId = $params['payment_method'] ?? ($paymentId === null ? null : ($this->getPayment($paymentId)['payment_method'] ?? null));
+            if ($mandate['status'] === 'active' && ($mandate['payment_method'] ?? null) === $methodId && $methodId !== null) {
+                return $params;
+            }
+        } catch (\Throwable) {
+            // A failed lookup must not prevent a charge without a mandate.
+        }
+
+        unset($params['mandate']);
+
+        return $params;
     }
 
     /**
