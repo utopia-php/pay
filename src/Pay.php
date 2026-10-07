@@ -4,70 +4,8 @@ namespace Utopia\Pay;
 
 class Pay
 {
-    /**
-     * @var Adapter
-     */
-    protected Adapter $adapter;
-
-    /**
-     * @param  Adapter  $adapter
-     */
-    public function __construct(Adapter $adapter)
+    public function __construct(private readonly Adapter $adapter)
     {
-        $this->adapter = $adapter;
-    }
-
-    /**
-     * Set Test Mode
-     *
-     * @param  bool  $testMode
-     * @return void
-     */
-    public function setTestMode(bool $testMode): void
-    {
-        $this->adapter->setTestMode($testMode);
-    }
-
-    /**
-     * Get Test Mode
-     *
-     * @return bool
-     */
-    public function getTestMode(): bool
-    {
-        return $this->adapter->getTestMode();
-    }
-
-    /**
-     * Get Name
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->adapter->getName();
-    }
-
-    /**
-     * Set Currency
-     *
-     * @param  string  $currency
-     * @return void
-     */
-    public function setCurrency(string $currency): void
-    {
-        $this->adapter->setCurrency($currency);
-    }
-
-    /**
-     * Get Currency
-     * Get currently set currency for payments
-     *
-     * @return string
-     */
-    public function getCurrency(): string
-    {
-        return $this->adapter->getCurrency();
     }
 
     /**

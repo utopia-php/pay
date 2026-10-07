@@ -16,9 +16,7 @@ use Utopia\Psr7\Request\Factory as RequestFactory;
 
 class Stripe extends Adapter
 {
-    private string $baseUrl = 'https://api.stripe.com/v1';
-
-    private string $secretKey;
+    private const BASE_URL = 'https://api.stripe.com/v1';
 
     private readonly ClientInterface $client;
 
@@ -29,11 +27,8 @@ class Stripe extends Adapter
      * and reuses its connection across calls. Pass your own to control the
      * transport — a pool, a retry decorator, timeouts, a test double.
      */
-    public function __construct(string $secretKey, string $currency = 'USD', ?ClientInterface $client = null)
+    public function __construct(private readonly string $secretKey, private readonly string $currency = 'USD', ?ClientInterface $client = null)
     {
-        $this->secretKey = $secretKey;
-        $this->currency = $currency;
-
         $this->client = $client ?? new Client(new Curl())
             ->withConnectionReuse()
             ->withHeaders([
@@ -41,14 +36,6 @@ class Stripe extends Adapter
             ]);
 
         $this->requests = new RequestFactory();
-    }
-
-    /**
-     * Get name of the payment gateway
-     */
-    public function getName(): string
-    {
-        return 'Stripe';
     }
 
     /**
@@ -542,7 +529,7 @@ class Stripe extends Adapter
      */
     private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
     {
-        $url = $this->baseUrl.$path;
+        $url = self::BASE_URL.$path;
 
         $request = $method === Method::GET
             ? $this->requests->query($method, $url, $requestBody)
@@ -579,7 +566,7 @@ class Stripe extends Adapter
     {
         if (is_array($response)) {
             // stripe error is inside `error`
-            $error = $response['error'] ?? [];
+            $error = is_array($response['error'] ?? null) ? $response['error'] : [];
             $type = $error['code'] ?? Exception::GENERAL_UNKNOWN;
             $stripeType = $error['type'] ?? '';
             if ($stripeType == 'card_error') {

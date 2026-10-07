@@ -2,17 +2,11 @@
 
 namespace Utopia\Pay\Validator\Stripe;
 
-// header
-// t=1723597289,v1=f53b5765cc9847786d33f8f96d9e22c0d08967271a734b1a69327e22ecf1bc73,v0=353c23cbcfc17f983e3089a339d2004174ee472df39e61d7e52805008ffad044
-// secret
-// whsec_2FMR5OjJa6Czcj3G07HvMGjLsw8uw3dQ
 class Webhook
 {
     public const DEFAULT_TOLERANCE = 300;
 
     public const EXPECTED_SCHEME = 'v1';
-
-    private static $isHashEqualsAvailable = null;
 
     /**
      * Verifies the signature header sent by Stripe. Throws an
@@ -45,7 +39,7 @@ class Webhook
         $expectedSignature = $this->computeSignature($signedPayload, $secret);
         $signatureFound = false;
         foreach ($signatures as $signature) {
-            if ($this->secureCompare($expectedSignature, $signature)) {
+            if (\hash_equals($expectedSignature, $signature)) {
                 $signatureFound = true;
 
                 break;
@@ -61,27 +55,6 @@ class Webhook
         }
 
         return true;
-    }
-
-    public function secureCompare($a, $b)
-    {
-        if (null === self::$isHashEqualsAvailable) {
-            self::$isHashEqualsAvailable = \function_exists('hash_equals');
-        }
-
-        if (self::$isHashEqualsAvailable) {
-            return \hash_equals($a, $b);
-        }
-        if (\strlen($a) !== \strlen($b)) {
-            return false;
-        }
-
-        $result = 0;
-        for ($i = 0; $i < \strlen($a); $i++) {
-            $result |= \ord($a[$i]) ^ \ord($b[$i]);
-        }
-
-        return 0 === $result;
     }
 
     /**

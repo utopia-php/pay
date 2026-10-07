@@ -5,53 +5,6 @@ namespace Utopia\Pay;
 abstract class Adapter
 {
     /**
-     * @var bool
-     */
-    protected bool $testMode;
-
-    /**
-     * @var string
-     */
-    protected string $currency;
-
-    /**
-     * Set test mode
-     */
-    public function setTestMode(bool $testMode): void
-    {
-        $this->testMode = $testMode;
-    }
-
-    /**
-     * Get whether it's in test mode
-     */
-    public function getTestMode(): bool
-    {
-        return $this->testMode;
-    }
-
-    /**
-     * Get name of the payment gateway
-     */
-    abstract public function getName(): string;
-
-    /**
-     * Set the currency for payments
-     */
-    public function setCurrency(string $currency): void
-    {
-        $this->currency = $currency;
-    }
-
-    /**
-     * Get currently set currency for payments
-     */
-    public function getCurrency(): string
-    {
-        return $this->currency;
-    }
-
-    /**
      * Make a purchase request
      *
      * @param  int  $amount Amount to charge

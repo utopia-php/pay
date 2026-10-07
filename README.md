@@ -15,14 +15,15 @@ composer require utopia-php/pay
 use Utopia\Pay\Adapter\Stripe;
 use Utopia\Pay\Pay;
 
-$pay = new Pay(new Stripe('SECRET_KEY'));
-$pay->setCurrency('USD');
+$pay = new Pay(new Stripe('SECRET_KEY', currency: 'USD'));
 
 $customer = $pay->createCustomer('Customer One', 'customer@example.com');
 $purchase = $pay->purchase(5000, $customer['id'], $paymentMethodId);
 ```
 
 `authorize()` holds funds that `capture()` charges or `cancelAuthorization()` releases; customers, payment methods, refunds, future payments (setup intents) and disputes have their own methods on `Pay`.
+
+Configuration is supplied in constructors. Billing values are readonly: `Invoice::finalize()` returns a new invoice, and `Credit::useCredits()` returns the remaining credit balance. Keep the returned value; the original is unchanged. Exception details are available through readonly `$exception->type` and `$exception->metadata` properties.
 
 ## Tests
 

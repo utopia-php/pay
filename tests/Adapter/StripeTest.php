@@ -21,11 +21,6 @@ class StripeTest extends TestCase
         );
     }
 
-    public function testName(): void
-    {
-        $this->assertEquals('Stripe', $this->stripe->getName());
-    }
-
     public function testConstructsWithoutAClient(): void
     {
         $this->expectNotToPerformAssertions();
@@ -320,9 +315,9 @@ class StripeTest extends TestCase
             $this->stripe->purchase(5000, $customerId, $failingPmId);
             $this->fail('Expected payment to fail');
         } catch (Exception $e) {
-            $this->assertEquals(Exception::GENERIC_DECLINE, $e->getType());
+            $this->assertEquals(Exception::GENERIC_DECLINE, $e->type);
             $this->assertEquals(402, $e->getCode());
-            $paymentIntentMeta = $e->getMetadata()['payment_intent'] ?? null;
+            $paymentIntentMeta = $e->metadata['payment_intent'] ?? null;
             $paymentIntentId = is_array($paymentIntentMeta) && isset($paymentIntentMeta['id']) ? $paymentIntentMeta['id'] : $paymentIntentMeta;
             $this->assertNotEmpty($paymentIntentId);
         }
@@ -394,9 +389,9 @@ class StripeTest extends TestCase
             $this->stripe->purchase(5000, $customerId, $failingPmId);
             $this->fail('Expected payment to fail');
         } catch (Exception $e) {
-            $this->assertEquals(Exception::GENERIC_DECLINE, $e->getType());
+            $this->assertEquals(Exception::GENERIC_DECLINE, $e->type);
             $this->assertEquals(402, $e->getCode());
-            $paymentIntentMeta = $e->getMetadata()['payment_intent'] ?? null;
+            $paymentIntentMeta = $e->metadata['payment_intent'] ?? null;
             $paymentIntentId = is_array($paymentIntentMeta) && isset($paymentIntentMeta['id']) ? $paymentIntentMeta['id'] : $paymentIntentMeta;
             $this->assertNotEmpty($paymentIntentId);
         }
@@ -539,7 +534,7 @@ class StripeTest extends TestCase
             ]);
         } catch (Exception $e) {
             $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::INCORRECT_NUMBER, $e->getType());
+            $this->assertEquals(Exception::INCORRECT_NUMBER, $e->type);
             $this->assertInstanceOf(Exception::class, $e);
         }
 
@@ -553,7 +548,7 @@ class StripeTest extends TestCase
             ]);
         } catch (Exception $e) {
             $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::INSUFFICIENT_FUNDS, $e->getType());
+            $this->assertEquals(Exception::INSUFFICIENT_FUNDS, $e->type);
             $this->assertInstanceOf(Exception::class, $e);
         }
 
@@ -567,9 +562,9 @@ class StripeTest extends TestCase
             ]);
         } catch (Exception $e) {
             $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->getType());
-            $this->assertNotEmpty($e->getMetadata());
-            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->getMetadata()['decline_code']);
+            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->type);
+            $this->assertNotEmpty($e->metadata);
+            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->metadata['decline_code']);
             $this->assertInstanceOf(Exception::class, $e);
         }
 
@@ -583,7 +578,7 @@ class StripeTest extends TestCase
             ]);
         } catch (Exception $e) {
             $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::GENERIC_DECLINE, $e->getType());
+            $this->assertEquals(Exception::GENERIC_DECLINE, $e->type);
             $this->assertInstanceOf(Exception::class, $e);
         }
     }
