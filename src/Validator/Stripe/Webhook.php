@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Validator\Stripe;
 
 class Webhook
@@ -21,7 +23,7 @@ class Webhook
      *  timestamp and the current time
      * @return bool
      */
-    public function isValid($payload, $header, $secret, $tolerance = null)
+    public function isValid(string $payload, string $header, string $secret, ?int $tolerance = null): bool
     {
         // Extract timestamp and signatures from header
         $timestamp = $this->getTimestamp($header);
@@ -64,14 +66,14 @@ class Webhook
      * @return int the timestamp contained in the header, or -1 if no valid
      *  timestamp is found
      */
-    private function getTimestamp($header)
+    private function getTimestamp(string $header): int
     {
         $items = \explode(',', $header);
 
         foreach ($items as $item) {
             $itemParts = \explode('=', $item, 2);
             if ('t' === $itemParts[0]) {
-                if (! \is_numeric($itemParts[1])) {
+                if (!isset($itemParts[1]) || !\ctype_digit($itemParts[1])) {
                     return -1;
                 }
 
@@ -87,16 +89,16 @@ class Webhook
      *
      * @param  string  $header the signature header
      * @param  string  $scheme the signature scheme to look for
-     * @return array the list of signatures matching the provided scheme
+     * @return list<string> the list of signatures matching the provided scheme
      */
-    private function getSignatures($header, $scheme)
+    private function getSignatures(string $header, string $scheme): array
     {
         $signatures = [];
         $items = \explode(',', $header);
 
         foreach ($items as $item) {
             $itemParts = \explode('=', $item, 2);
-            if (\trim($itemParts[0]) === $scheme) {
+            if (\trim($itemParts[0]) === $scheme && isset($itemParts[1])) {
                 $signatures[] = $itemParts[1];
             }
         }
@@ -113,7 +115,7 @@ class Webhook
      * @param  string  $secret the secret used to generate the signature
      * @return string the signature as a string
      */
-    private function computeSignature($payload, $secret)
+    private function computeSignature(string $payload, string $secret): string
     {
         return \hash_hmac('sha256', $payload, $secret);
     }

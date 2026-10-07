@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay;
 
 class Exception extends \Exception
@@ -14,12 +16,11 @@ class Exception extends \Exception
 
     public const GENERIC_DECLINE = 'generic_decline';
 
-    /** @param array<mixed> $metadata */
     public function __construct(
         public readonly string $type = self::GENERAL_UNKNOWN,
         ?string $message = null,
         ?int $code = null,
-        public readonly array $metadata = [],
+        public readonly ?PaymentError $error = null,
         ?\Throwable $previous = null,
     ) {
         parent::__construct($message ?? 'Unknown error', $code ?? 500, $previous);

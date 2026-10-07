@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Tests\Validator\Stripe;
 
 use PHPUnit\Framework\TestCase;
@@ -7,7 +9,7 @@ use Utopia\Pay\Validator\Stripe\Webhook;
 
 class WebhookTest extends TestCase
 {
-    public function testValid()
+    public function testValid(): void
     {
         // Signed here with a throwaway secret, as Stripe signs: HMAC-SHA256 of "{t}.{payload}".
         $secret = 'whsec_test';

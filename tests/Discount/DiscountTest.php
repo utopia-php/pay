@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Tests\Discount;
 
 use PHPUnit\Framework\TestCase;
@@ -18,7 +20,7 @@ class DiscountTest extends TestCase
 
     public function testPercentageDiscount(): void
     {
-        $discount = new Discount('percentage', 10, type: Discount::TYPE_PERCENTAGE);
+        $discount = new Discount('percentage', 10, type: \Utopia\Pay\Discount\Type::Percentage);
         $this->assertSame(20.0, $discount->calculateDiscount(200));
         $this->assertSame(0.0, $discount->calculateDiscount(0));
         $this->assertSame(0.0, $discount->calculateDiscount(-50));
@@ -26,7 +28,7 @@ class DiscountTest extends TestCase
 
     public function testSerialization(): void
     {
-        $data = ['id' => 'discount', 'value' => 30.0, 'description' => 'Discount', 'type' => Discount::TYPE_FIXED];
+        $data = ['id' => 'discount', 'value' => 30.0, 'description' => 'Discount', 'type' => \Utopia\Pay\Discount\Type::Fixed->value];
         $this->assertSame($data, Discount::fromArray($data)->toArray());
         $this->assertSame(25.0, Discount::fromArray(['$id' => 'discount', 'value' => 25])->calculateDiscount(100));
     }

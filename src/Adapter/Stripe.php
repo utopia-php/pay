@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Adapter;
 
 use Psr\Http\Client\ClientExceptionInterface;
@@ -8,12 +10,26 @@ use Utopia\Client\Adapter\Curl\Client as Curl;
 use Utopia\Client\Client;
 use Utopia\Pay\Adapter;
 use Utopia\Pay\Address;
+use Utopia\Pay\CardDetails;
+use Utopia\Pay\CardMandate;
+use Utopia\Pay\Customer;
+use Utopia\Pay\Dispute;
 use Utopia\Pay\Exception;
-use Utopia\Psr7\ContentType;
+use Utopia\Pay\Mandate;
+use Utopia\Pay\Payload;
+use Utopia\Pay\Payment;
+use Utopia\Pay\Payment\Options;
+use Utopia\Pay\PaymentError;
+use Utopia\Pay\PaymentMethod;
+use Utopia\Pay\Refund;
+use Utopia\Pay\Refund\Reason;
+use Utopia\Pay\SetupIntent;
 use Utopia\Psr7\Header;
 use Utopia\Psr7\Method;
 use Utopia\Psr7\Request\Factory as RequestFactory;
 
+/** @phpstan-import-type CardOptions from CardMandate
+ * @phpstan-type Params array<string, scalar|null|CardOptions|array<array-key, scalar|null|array<string, scalar|null|list<string>>>> */
 class Stripe extends Adapter
 {
     private const BASE_URL = 'https://api.stripe.com/v1';
@@ -22,11 +38,7 @@ class Stripe extends Adapter
 
     private readonly RequestFactory $requests;
 
-    /**
-     * The default client keeps one cURL handle for the lifetime of the adapter
-     * and reuses its connection across calls. Pass your own to control the
-     * transport — a pool, a retry decorator, timeouts, a test double.
-     */
+    /** The default client reuses its connection; inject a client to control transport or pooling. */
     public function __construct(private readonly string $secretKey, private readonly string $currency = 'USD', ?ClientInterface $client = null)
     {
         $this->client = $client ?? new Client(new Curl())
@@ -38,10 +50,7 @@ class Stripe extends Adapter
         $this->requests = new RequestFactory();
     }
 
-    /**
-     * Make a purchase request
-     */
-    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, ?Options $options = null): Payment
     {
         $path = '/payment_intents';
         $requestBody = [
@@ -53,17 +62,13 @@ class Stripe extends Adapter
             'confirm' => 'true',
         ];
 
-        $requestBody = $this->filterMandate(array_merge($requestBody, $additionalParams));
+        $requestBody = $this->filterMandate(array_merge($requestBody, $options?->toArray() ?? []));
         $result = $this->execute(Method::POST, $path, $requestBody);
 
-        return $result;
+        return Payment::fromPayload($result);
     }
 
-    /**
-     * Authorize a payment (hold funds without capturing)
-     * Creates a payment intent with capture_method set to manual
-     */
-    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, ?Options $options = null): Payment
     {
         $path = '/payment_intents';
         $requestBody = [
@@ -76,16 +81,13 @@ class Stripe extends Adapter
             'confirm' => 'true',
         ];
 
-        $requestBody = $this->filterMandate(array_merge($requestBody, $additionalParams));
+        $requestBody = $this->filterMandate(array_merge($requestBody, $options?->toArray() ?? []));
         $result = $this->execute(Method::POST, $path, $requestBody);
 
-        return $result;
+        return Payment::fromPayload($result);
     }
 
-    /**
-     * Capture a previously authorized payment
-     */
-    public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array
+    public function capture(string $paymentId, ?int $amount = null, ?Options $options = null): Payment
     {
         $path = '/payment_intents/'.$paymentId.'/capture';
         $requestBody = [];
@@ -94,32 +96,21 @@ class Stripe extends Adapter
             $requestBody['amount_to_capture'] = $amount;
         }
 
-        $requestBody = array_merge($requestBody, $additionalParams);
+        $requestBody = array_merge($requestBody, $options?->toArray() ?? []);
         $result = $this->execute(Method::POST, $path, $requestBody);
 
-        return $result;
+        return Payment::fromPayload($result);
     }
 
-    /**
-     * Cancel/void a payment authorization
-     */
-    public function cancelAuthorization(string $paymentId, array $additionalParams = []): array
+    public function cancelAuthorization(string $paymentId, ?Options $options = null): Payment
     {
         $path = '/payment_intents/'.$paymentId.'/cancel';
-        $result = $this->execute(Method::POST, $path, $additionalParams);
+        $result = $this->execute(Method::POST, $path, $options?->toArray() ?? []);
 
-        return $result;
+        return Payment::fromPayload($result);
     }
 
-    /**
-     * Retry a purchase for a payment intent
-     *
-     * @param  string  $paymentId The payment intent ID to retry
-     * @param  string|null  $paymentMethodId The payment method to use (optional)
-     * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
-     * @return array<mixed> The result of the retry attempt
-     */
-    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, ?Options $options = null): Payment
     {
         $path = '/payment_intents/'.$paymentId.'/confirm';
         $requestBody = [];
@@ -129,16 +120,13 @@ class Stripe extends Adapter
             ];
         }
 
-        $requestBody = $this->filterMandate(array_merge($requestBody, $additionalParams), $paymentId);
+        $requestBody = $this->filterMandate(array_merge($requestBody, $options?->toArray() ?? []), $paymentId);
         $result = $this->execute(Method::POST, $path, $requestBody);
 
-        return $result;
+        return Payment::fromPayload($result);
     }
 
-    /**
-     * Refund payment
-     */
-    public function refund(string $paymentId, ?int $amount = null, ?string $reason = null): array
+    public function refund(string $paymentId, ?int $amount = null, ?Reason $reason = null): Refund
     {
         $path = '/refunds';
         $requestBody = ['payment_intent' => $paymentId];
@@ -147,36 +135,20 @@ class Stripe extends Adapter
         }
 
         if ($reason != null) {
-            $requestBody['reason'] = $reason;
+            $requestBody['reason'] = $reason->value;
         }
 
-        return $this->execute(Method::POST, $path, $requestBody);
+        return Refund::fromPayload($this->execute(Method::POST, $path, $requestBody));
     }
 
-    /**
-     * Get a payment details
-     *
-     * @param  string  $paymentId
-     * @return array<mixed>
-     */
-    public function getPayment(string $paymentId): array
+    public function getPayment(string $paymentId): Payment
     {
         $path = '/payment_intents/'.$paymentId;
 
-        return $this->execute(Method::GET, $path);
+        return Payment::fromPayload($this->execute(Method::GET, $path));
     }
 
-    /**
-     * Update a payment intent
-     *
-     * @param  string  $paymentId Payment intent ID
-     * @param  string|null  $paymentMethodId Payment method ID (optional)
-     * @param  int|null  $amount Amount to update (optional)
-     * @param  string|null  $currency Currency to update (optional)
-     * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the update
-     */
-    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): array
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, ?Options $options = null): Payment
     {
         $path = '/payment_intents/'.$paymentId;
         $requestBody = [];
@@ -191,64 +163,49 @@ class Stripe extends Adapter
             $requestBody['currency'] = $currency;
         }
 
-        $requestBody = array_merge($requestBody, $additionalParams);
+        $requestBody = array_merge($requestBody, $options?->toArray() ?? []);
 
-        return $this->execute(Method::POST, $path, $requestBody);
+        return Payment::fromPayload($this->execute(Method::POST, $path, $requestBody));
     }
 
-    /**
-     * Add a credit card for customer
-     */
-    public function createPaymentMethod(string $customerId, string $type, array $paymentMethodDetails): array
+    public function createPaymentMethod(string $customerId, CardDetails $details): PaymentMethod
     {
         $path = '/payment_methods';
 
         $requestBody = [
-            'type' => $type,
-            $type => $paymentMethodDetails,
+            'type' => 'card',
+            'card' => $details->toArray(),
         ];
 
         // Create payment method
         $paymentMethod = $this->execute(Method::POST, $path, $requestBody);
-        $paymentMethodId = $paymentMethod['id'];
+        $paymentMethodId = $paymentMethod->string('id');
+        if ($paymentMethodId === null || $paymentMethodId === '') {
+            throw new Exception(message: 'Missing payment method ID', code: 502);
+        }
 
         // attach payment method to the customer
         $path .= '/'.$paymentMethodId.'/attach';
 
-        return $this->execute(Method::POST, $path, ['customer' => $customerId]);
+        return PaymentMethod::fromPayload($this->execute(Method::POST, $path, ['customer' => $customerId]));
     }
 
-    /**
-     * List cards
-     */
+    /** @return list<PaymentMethod> */
     public function listPaymentMethods(string $customerId): array
     {
         $path = '/customers/'.$customerId.'/payment_methods';
 
-        return $this->execute(Method::GET, $path);
+        return array_map(PaymentMethod::fromPayload(...), $this->execute(Method::GET, $path)->objects('data'));
     }
 
-    /**
-     * List Customer Payment Methods
-     */
-    public function getPaymentMethod(string $customerId, string $paymentMethodId): array
+    public function getPaymentMethod(string $customerId, string $paymentMethodId): PaymentMethod
     {
         $path = '/customers/'.$customerId.'/payment_methods/'.$paymentMethodId;
 
-        return $this->execute(Method::GET, $path);
+        return PaymentMethod::fromPayload($this->execute(Method::GET, $path));
     }
 
-    /**
-     * Update billing details
-     *
-     * @param  string  $paymentMethodId
-     * @param  string|null  $name
-     * @param  string|null  $email
-     * @param  string|null  $phone
-     * @param  array<mixed>|null  $address
-     * @return array<mixed>
-     */
-    public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): array
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?Address $address = null): PaymentMethod
     {
         $path = '/payment_methods/'.$paymentMethodId;
         $requestBody = [];
@@ -263,26 +220,23 @@ class Stripe extends Adapter
             $requestBody['billing_details']['phone'] = $phone;
         }
         if (! is_null($address)) {
-            $requestBody['billing_details']['address'] = $address;
+            $requestBody['billing_details']['address'] = $address->asArray();
         }
 
-        return $this->execute(Method::POST, $path, $requestBody);
+        return PaymentMethod::fromPayload($this->execute(Method::POST, $path, $requestBody));
     }
 
-    public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
+    public function updatePaymentMethod(string $paymentMethodId, CardDetails $details): PaymentMethod
     {
         $path = '/payment_methods/'.$paymentMethodId;
 
         $requestBody = [
-            $type => $details,
+            'card' => $details->toArray(),
         ];
 
-        return $this->execute(Method::POST, $path, $requestBody);
+        return PaymentMethod::fromPayload($this->execute(Method::POST, $path, $requestBody));
     }
 
-    /**
-     * Delete a credit card record
-     */
     public function deletePaymentMethod(string $paymentMethodId): bool
     {
         $path = '/payment_methods/'.$paymentMethodId.'/detach';
@@ -291,13 +245,7 @@ class Stripe extends Adapter
         return true;
     }
 
-    /**
-     * Add new customer in the gateway database
-     * returns the newly created customer
-     *
-     * @throws \Exception
-     */
-    public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer
     {
         $path = '/customers';
         $requestBody = [
@@ -308,36 +256,28 @@ class Stripe extends Adapter
             $requestBody['payment_method'] = $paymentMethod;
         }
         if (! empty($address)) {
-            $requestBody['address'] = $address;
+            $requestBody['address'] = $address->asArray();
         }
         $result = $this->execute(Method::POST, $path, $requestBody);
 
-        return $result;
+        return Customer::fromPayload($result);
     }
 
-    /**
-     * List customers
-     */
+    /** @return list<Customer> */
     public function listCustomers(): array
     {
-        return $this->execute(Method::GET, '/customers');
+        return array_map(Customer::fromPayload(...), $this->execute(Method::GET, '/customers')->objects('data'));
     }
 
-    /**
-     * Get customer details by ID
-     */
-    public function getCustomer(string $customerId): array
+    public function getCustomer(string $customerId): Customer
     {
         $path = '/customers/'.$customerId;
         $result = $this->execute(Method::GET, $path);
 
-        return $result;
+        return Customer::fromPayload($result);
     }
 
-    /**
-     * Update customer details
-     */
-    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer
     {
         $path = '/customers/'.$customerId;
         $requestBody = [
@@ -351,21 +291,19 @@ class Stripe extends Adapter
             $requestBody['address'] = $address->asArray();
         }
 
-        return $this->execute(Method::POST, $path, $requestBody);
+        return Customer::fromPayload($this->execute(Method::POST, $path, $requestBody));
     }
 
-    /**
-     * Delete customer by ID
-     */
     public function deleteCustomer(string $customerId): bool
     {
         $path = '/customers/'.$customerId;
         $result = $this->execute(Method::DELETE, $path);
 
-        return $result['deleted'] ?? false;
+        return $result->boolean('deleted') ?? false;
     }
 
-    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    /** @param list<string> $paymentMethodTypes */
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], ?CardMandate $mandate = null, ?string $paymentMethodConfiguration = null): SetupIntent
     {
         $path = '/setup_intents';
         $requestBody = [
@@ -385,23 +323,24 @@ class Stripe extends Adapter
             unset($requestBody['payment_method_types']);
         }
 
-        if (! empty($paymentMethodOptions)) {
-            $requestBody['payment_method_options'] = $paymentMethodOptions;
+        if (! empty($mandate)) {
+            $requestBody['payment_method_options'] = $mandate->toArray();
         }
 
         $result = $this->execute(Method::POST, $path, $requestBody);
 
-        return $result;
+        return SetupIntent::fromPayload($result);
     }
 
-    public function getFuturePayment(string $id): array
+    public function getFuturePayment(string $id): SetupIntent
     {
         $path = '/setup_intents/'.$id;
 
-        return $this->execute(Method::GET, $path);
+        return SetupIntent::fromPayload($this->execute(Method::GET, $path));
     }
 
-    public function listFuturePayments(?string $customerId = null, ?string $pyamentMethodId = null): array
+    /** @return list<SetupIntent> */
+    public function listFuturePayments(?string $customerId = null, ?string $paymentMethodId = null): array
     {
         $path = '/setup_intents';
         $requestBody = [];
@@ -409,15 +348,15 @@ class Stripe extends Adapter
             $requestBody['customer'] = $customerId;
         }
 
-        if ($pyamentMethodId != null) {
-            $requestBody['payment_method'] = $pyamentMethodId;
+        if ($paymentMethodId != null) {
+            $requestBody['payment_method'] = $paymentMethodId;
         }
         $result = $this->execute(Method::GET, $path, $requestBody);
 
-        return $result['data'];
+        return array_map(SetupIntent::fromPayload(...), $result->objects('data'));
     }
 
-    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, ?CardMandate $mandate = null, ?string $paymentMethodConfiguration = null): SetupIntent
     {
         $path = '/setup_intents/'.$id;
         $requestBody = [];
@@ -430,35 +369,21 @@ class Stripe extends Adapter
         if ($paymentMethodConfiguration != null) {
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
         }
-        if (! empty($paymentMethodOptions)) {
-            $requestBody['payment_method_options'] = $paymentMethodOptions;
+        if (! empty($mandate)) {
+            $requestBody['payment_method_options'] = $mandate->toArray();
         }
 
-        return $this->execute(Method::POST, $path, $requestBody);
+        return SetupIntent::fromPayload($this->execute(Method::POST, $path, $requestBody));
     }
 
-    /**
-     * Get mandate
-     *
-     * @param  string  $id
-     * @return array<mixed>
-     */
-    public function getMandate(string $id): array
+    public function getMandate(string $id): Mandate
     {
         $path = '/mandates/'.$id;
 
-        return $this->execute(Method::GET, $path);
+        return Mandate::fromPayload($this->execute(Method::GET, $path));
     }
 
-    /**
-     * List disputes
-     *
-     * @param  int|null  $limit
-     * @param  string|null  $paymentIntentId
-     * @param  string|null  $chargeId
-     * @param  int|null  $createdAfter
-     * @return array
-     */
+    /** @return list<Dispute> */
     public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
     {
         $path = '/disputes';
@@ -482,15 +407,12 @@ class Stripe extends Adapter
 
         $result = $this->execute(Method::GET, $path, $requestBody);
 
-        return $result['data'];
+        return array_map(Dispute::fromPayload(...), $result->objects('data'));
     }
 
-    /**
-     * A mandate can only be used with the card it was issued for. Stale or
-     * unavailable mandates are omitted so Stripe can charge without one.
-     *
-     * @param  array<mixed>  $params
-     * @return array<mixed>
+    /** A stale or unavailable mandate is omitted so it cannot prevent the charge.
+     * @param Params $params
+     * @return Params
      */
     private function filterMandate(array $params, ?string $paymentId = null): array
     {
@@ -502,8 +424,8 @@ class Stripe extends Adapter
 
         try {
             $mandate = $this->getMandate($params['mandate']);
-            $methodId = $params['payment_method'] ?? ($paymentId === null ? null : ($this->getPayment($paymentId)['payment_method'] ?? null));
-            if ($mandate['status'] === 'active' && ($mandate['payment_method'] ?? null) === $methodId && $methodId !== null) {
+            $methodId = $params['payment_method'] ?? ($paymentId === null ? null : $this->getPayment($paymentId)->paymentMethodId);
+            if ($mandate->status === \Utopia\Pay\Mandate\Status::Active && $mandate->paymentMethodId === $methodId && $methodId !== null) {
                 return $params;
             }
         } catch (\Throwable) {
@@ -515,19 +437,9 @@ class Stripe extends Adapter
         return $params;
     }
 
-    /**
-     * Execute
-     *
-     * Stripe reads GET filters from the query string and every other body as
-     * form-urlencoded, with nested params in PHP's bracket notation.
-     *
-     * @param  string  $method
-     * @param  string  $path
-     * @param  array<mixed>  $requestBody
-     * @param  array<mixed>  $headers
-     * @return array<mixed>
-     */
-    private function execute(string $method, string $path, array $requestBody = [], array $headers = []): array
+    /** Stripe uses query filters for GET and form bodies with bracket notation otherwise.
+     * @param Params $requestBody */
+    private function execute(string $method, string $path, array $requestBody = []): Payload
     {
         $url = self::BASE_URL.$path;
 
@@ -537,45 +449,32 @@ class Stripe extends Adapter
 
         $request = $request->withHeader(Header::AUTHORIZATION, 'Bearer '.$this->secretKey);
 
-        foreach ($headers as $key => $value) {
-            $request = $request->withHeader($key, $value);
-        }
-
         try {
             $response = $this->client->sendRequest($request);
         } catch (ClientExceptionInterface $e) {
-            $this->handleError(0, $e->getMessage());
-
-            throw $e;
+            throw new Exception(message: $e->getMessage(), code: 0, previous: $e);
         }
 
         $body = (string) $response->getBody();
-
-        if (str_contains($response->getHeaderLine(Header::CONTENT_TYPE), ContentType::JSON)) {
-            $body = json_decode($body, true);
-        }
-
-        if ($response->getStatusCode() >= 400) {
-            $this->handleError($response->getStatusCode(), $body);
-        }
-
-        return $body;
-    }
-
-    protected function handleError(int $code, mixed $response)
-    {
-        if (is_array($response)) {
-            // stripe error is inside `error`
-            $error = is_array($response['error'] ?? null) ? $response['error'] : [];
-            $type = $error['code'] ?? Exception::GENERAL_UNKNOWN;
-            $stripeType = $error['type'] ?? '';
-            if ($stripeType == 'card_error') {
-                $type = $error['decline_code'] ?? $type;
+        try {
+            $decoded = json_decode($body, flags: JSON_THROW_ON_ERROR);
+            if (!$decoded instanceof \stdClass) {
+                throw new \UnexpectedValueException('Expected a processor JSON object');
             }
-            $message = $error['message'] ?? 'Unknown error';
-            throw new Exception($type, $message, $code, $error);
+            $payload = new Payload($decoded);
+            if ($response->getStatusCode() >= 400) {
+                $error = $payload->object('error');
+                $details = $error === null ? new PaymentError() : PaymentError::fromPayload($error);
+                throw new Exception(
+                    type: ($details->type === 'card_error' ? $details->declineCode : null) ?? $details->code ?? Exception::GENERAL_UNKNOWN,
+                    message: $details->message ?? 'Unknown processor error',
+                    code: $response->getStatusCode(),
+                    error: $details,
+                );
+            }
+            return $payload;
+        } catch (\JsonException|\UnexpectedValueException|\ValueError $e) {
+            throw new Exception(message: 'Invalid processor response: '.$e->getMessage(), code: $response->getStatusCode() >= 400 ? $response->getStatusCode() : 502, previous: $e);
         }
-
-        throw new Exception($response, $code);
     }
 }

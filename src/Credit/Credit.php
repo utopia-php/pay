@@ -1,20 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Credit;
 
 final readonly class Credit
 {
-    public const STATUS_ACTIVE = 'active';
-
-    public const STATUS_APPLIED = 'applied';
-
-    public const STATUS_EXPIRED = 'expired';
-
     public function __construct(
         public string $id,
         public float $credits,
         public float $creditsUsed = 0,
-        public string $status = self::STATUS_ACTIVE,
+        public Status $status = Status::Active,
     ) {
     }
 
@@ -33,23 +29,23 @@ final readonly class Credit
         $used = min($amount, max(0.0, $this->credits));
         $remaining = $this->credits - $used;
 
-        return new self($this->id, $remaining, $this->creditsUsed + $used, $remaining <= 0 ? self::STATUS_APPLIED : $this->status);
+        return new self($this->id, $remaining, $this->creditsUsed + $used, $remaining <= 0 ? Status::Applied : $this->status);
     }
 
     public function isFullyUsed(): bool
     {
-        return $this->credits <= 0 || $this->status === self::STATUS_APPLIED;
+        return $this->credits <= 0 || $this->status === Status::Applied;
     }
 
     /** @param array{id?: string, '$id'?: string, credits?: float, creditsUsed?: float, status?: string} $data */
     public static function fromArray(array $data): self
     {
-        return new self($data['id'] ?? $data['$id'] ?? uniqid('credit_'), $data['credits'] ?? 0.0, $data['creditsUsed'] ?? 0.0, $data['status'] ?? self::STATUS_ACTIVE);
+        return new self($data['id'] ?? $data['$id'] ?? uniqid('credit_'), $data['credits'] ?? 0.0, $data['creditsUsed'] ?? 0.0, isset($data['status']) ? Status::from($data['status']) : Status::Active);
     }
 
     /** @return array{id: string, credits: float, creditsUsed: float, status: string} */
     public function toArray(): array
     {
-        return ['id' => $this->id, 'credits' => $this->credits, 'creditsUsed' => $this->creditsUsed, 'status' => $this->status];
+        return ['id' => $this->id, 'credits' => $this->credits, 'creditsUsed' => $this->creditsUsed, 'status' => $this->status->value];
     }
 }

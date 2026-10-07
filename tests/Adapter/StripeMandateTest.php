@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Tests\Adapter;
 
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -37,7 +39,7 @@ class StripeMandateTest extends TestCase
         $client->expects($this->exactly($useSavedMethod ? 3 : 2))->method('sendRequest')->willReturnCallback(
             function (RequestInterface $request) use (&$charge, $status, $mandateMethod, $lookupStatus): ResponseInterface {
                 if ($request->getMethod() === 'GET' && $request->getUri()->getPath() === '/v1/payment_intents/pi_existing') {
-                    return (new Response(200, body: new Stream('{"payment_method":"pm_current"}')))->withHeader('Content-Type', 'application/json');
+                    return (new Response(200, body: new Stream('{"id":"pi_existing","amount":5000,"amount_received":0,"currency":"usd","status":"requires_confirmation","payment_method":"pm_current"}')))->withHeader('Content-Type', 'application/json');
                 }
                 if ($request->getMethod() === 'GET') {
                     $this->assertSame('/v1/mandates/mandate_saved', $request->getUri()->getPath());
@@ -51,11 +53,11 @@ class StripeMandateTest extends TestCase
 
                 $charge = $request;
 
-                return (new Response(200, body: new Stream('{}')))->withHeader('Content-Type', 'application/json');
+                return (new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}')))->withHeader('Content-Type', 'application/json');
             }
         );
         $pay = new Pay(new Stripe('sk_test_probe', client: $client));
-        $options = ['mandate' => 'mandate_saved'];
+        $options = new \Utopia\Pay\Payment\Options(mandate: 'mandate_saved');
         if ($operation === 'retryPurchase') {
             $pay->retryPurchase('pi_existing', $useSavedMethod ? null : 'pm_current', $options);
         } else {
@@ -80,7 +82,7 @@ class StripeMandateTest extends TestCase
                 $this->assertArrayNotHasKey('mandate', $params);
                 $this->assertSame('pm_current', $params['payment_method']);
 
-                return (new Response(200, body: new Stream('{}')))->withHeader('Content-Type', 'application/json');
+                return (new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}')))->withHeader('Content-Type', 'application/json');
             }
         );
         new Pay(new Stripe('sk_test_probe', client: $client))->purchase(5000, 'cus_current', 'pm_current');
@@ -104,7 +106,7 @@ class StripeMandateTest extends TestCase
                     if ($request->getMethod() === 'GET') {
                         $body = $request->getUri()->getPath() === $malformedPath
                             ? 'invalid json'
-                            : '{"status":"active","payment_method":"pm_current"}';
+                            : '{"id":"mandate_saved","status":"active","payment_method":"pm_current"}';
 
                         return (new Response(200, body: new Stream($body)))->withHeader('Content-Type', 'application/json');
                     }
@@ -115,10 +117,10 @@ class StripeMandateTest extends TestCase
                     $this->assertArrayNotHasKey('mandate', $params);
                     $charged = true;
 
-                    return (new Response(200, body: new Stream('{}')))->withHeader('Content-Type', 'application/json');
+                    return (new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}')))->withHeader('Content-Type', 'application/json');
                 }
             );
-        new Pay(new Stripe('sk_test_probe', client: $client))->retryPurchase('pi_existing', additionalParams: ['mandate' => 'mandate_saved']);
+        new Pay(new Stripe('sk_test_probe', client: $client))->retryPurchase('pi_existing', options: new \Utopia\Pay\Payment\Options(mandate: 'mandate_saved'));
         $this->assertTrue($charged);
     }
 

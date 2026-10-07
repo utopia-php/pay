@@ -1,18 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Discount;
 
 final readonly class Discount
 {
-    public const TYPE_FIXED = 'fixed';
-
-    public const TYPE_PERCENTAGE = 'percentage';
-
     public function __construct(
         private string $id,
         private float $value,
         private string $description = '',
-        public string $type = self::TYPE_FIXED,
+        public Type $type = Type::Fixed,
     ) {
         if ($value < 0) {
             throw new \InvalidArgumentException('Discount value cannot be negative');
@@ -26,16 +24,15 @@ final readonly class Discount
         }
 
         return match ($this->type) {
-            self::TYPE_FIXED => min($this->value, $amount),
-            self::TYPE_PERCENTAGE => ($this->value / 100) * $amount,
-            default => 0,
+            Type::Fixed => min($this->value, $amount),
+            Type::Percentage => ($this->value / 100) * $amount,
         };
     }
 
     /** @return array{id: string, value: float, description: string, type: string} */
     public function toArray(): array
     {
-        return ['id' => $this->id, 'value' => $this->value, 'description' => $this->description, 'type' => $this->type];
+        return ['id' => $this->id, 'value' => $this->value, 'description' => $this->description, 'type' => $this->type->value];
     }
 
     /** @param array{id?: string, '$id'?: string, value?: float|null, description?: string, type?: string} $data */
@@ -45,6 +42,6 @@ final readonly class Discount
             throw new \InvalidArgumentException('Discount value cannot be null');
         }
 
-        return new self($data['id'] ?? $data['$id'] ?? '', $data['value'], $data['description'] ?? '', $data['type'] ?? self::TYPE_FIXED);
+        return new self($data['id'] ?? $data['$id'] ?? '', $data['value'], $data['description'] ?? '', isset($data['type']) ? Type::from($data['type']) : Type::Fixed);
     }
 }

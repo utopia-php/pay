@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay;
+
+use Utopia\Pay\Payment\Options;
 
 class Pay
 {
@@ -8,332 +12,131 @@ class Pay
     {
     }
 
-    /**
-     * Purchase
-     * Make a purchase request
-     * Returns payment ID on successfull payment
-     *
-     * @param  int  $amount
-     * @param  string  $customerId
-     * @param  string|null  $paymentMethodId
-     * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
-     */
-    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function purchase(int $amount, string $customerId, ?string $paymentMethodId = null, ?Options $options = null): Payment
     {
-        return $this->adapter->purchase($amount, $customerId, $paymentMethodId, $additionalParams);
+        return $this->adapter->purchase($amount, $customerId, $paymentMethodId, $options);
     }
 
-    /**
-     * Authorize
-     * Authorize a payment (hold funds without capturing)
-     * Useful for scenarios where you need to ensure payment availability before providing service
-     * Returns authorization ID on successful authorization
-     *
-     * @param  int  $amount
-     * @param  string  $customerId
-     * @param  string|null  $paymentMethodId
-     * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
-     */
-    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function authorize(int $amount, string $customerId, ?string $paymentMethodId = null, ?Options $options = null): Payment
     {
-        return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $additionalParams);
+        return $this->adapter->authorize($amount, $customerId, $paymentMethodId, $options);
     }
 
-    /**
-     * Capture
-     * Capture a previously authorized payment
-     * Completes the payment and transfers funds from customer
-     *
-     * @param  string  $paymentId
-     * @param  int|null  $amount
-     * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
-     */
-    public function capture(string $paymentId, ?int $amount = null, array $additionalParams = []): array
+    public function capture(string $paymentId, ?int $amount = null, ?Options $options = null): Payment
     {
-        return $this->adapter->capture($paymentId, $amount, $additionalParams);
+        return $this->adapter->capture($paymentId, $amount, $options);
     }
 
-    /**
-     * Cancel Authorization
-     * Cancel/void a payment authorization
-     * Releases the hold on funds without capturing
-     *
-     * @param  string  $paymentId
-     * @param  array<mixed>  $additionalParams
-     * @return array<mixed>
-     */
-    public function cancelAuthorization(string $paymentId, array $additionalParams = []): array
+    public function cancelAuthorization(string $paymentId, ?Options $options = null): Payment
     {
-        return $this->adapter->cancelAuthorization($paymentId, $additionalParams);
+        return $this->adapter->cancelAuthorization($paymentId, $options);
     }
 
-    /**
-     * Retry a purchase for a payment intent
-     *
-     * @param  string  $paymentId The payment intent ID to retry
-     * @param  string|null  $paymentMethodId The payment method to use (optional)
-     * @param  array<mixed>  $additionalParams Additional parameters for the retry (optional)
-     * @return array<mixed> The result of the retry attempt
-     */
-    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, array $additionalParams = []): array
+    public function retryPurchase(string $paymentId, ?string $paymentMethodId = null, ?Options $options = null): Payment
     {
-        return $this->adapter->retryPurchase($paymentId, $paymentMethodId, $additionalParams);
+        return $this->adapter->retryPurchase($paymentId, $paymentMethodId, $options);
     }
 
-    /**
-     * Refund Payment
-     *
-     * @param  string  $paymentId
-     * @param  int  $amount
-     * @return array<mixed>
-     */
-    public function refund(string $paymentId, int $amount): array
+    public function refund(string $paymentId, int $amount): Refund
     {
         return $this->adapter->refund($paymentId, $amount);
     }
 
-    /**
-     * Get a payment details
-     *
-     * @param  string  $paymentId
-     * @return array<mixed>
-     */
-    public function getPayment(string $paymentId): array
+    public function getPayment(string $paymentId): Payment
     {
         return $this->adapter->getPayment($paymentId);
     }
 
-    /**
-     * Update a payment intent
-     *
-     * @param  string  $paymentId Payment intent ID
-     * @param  string|null  $paymentMethodId Payment method ID (optional)
-     * @param  int|null  $amount Amount to update (optional)
-     * @param  string|null  $currency Currency to update (optional)
-     * @param  array<mixed>  $additionalParams Additional parameters (optional)
-     * @return array<mixed> Result of the update
-     */
-    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, array $additionalParams = []): array
+    public function updatePayment(string $paymentId, ?string $paymentMethodId = null, ?int $amount = null, ?string $currency = null, ?Options $options = null): Payment
     {
-        return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $additionalParams);
+        return $this->adapter->updatePayment($paymentId, $paymentMethodId, $amount, $currency, $options);
     }
 
-    /**
-     * Delete Payment Method
-     *
-     * @param  string  $paymentMethodId
-     * @return bool
-     */
     public function deletePaymentMethod(string $paymentMethodId): bool
     {
         return $this->adapter->deletePaymentMethod($paymentMethodId);
     }
 
-    /**
-     * Create Payment Method
-     *
-     * @param  string  $customerId
-     * @param  string  $type
-     * @param  array<mixed>  $details
-     * @return array<mixed>
-     */
-    public function createPaymentMethod(string $customerId, string $type, array $details): array
+    public function createPaymentMethod(string $customerId, CardDetails $details): PaymentMethod
     {
-        return $this->adapter->createPaymentMethod($customerId, $type, $details);
+        return $this->adapter->createPaymentMethod($customerId, $details);
     }
 
-    /**
-     * Update Payment Method Billing Details
-     *
-     * @param  string  $paymentMethodId
-     * @param  string  $type
-     * @param  string  $name
-     * @param  string  $email
-     * @param  string  $phone
-     * @param  array<mixed>  $address
-     * @return array<mixed>
-     */
-    public function updatePaymentMethodBillingDetails(string $paymentMethodId, string $type, ?string $name = null, ?string $email = null, ?string $phone = null, ?array $address = null): array
+    public function updatePaymentMethodBillingDetails(string $paymentMethodId, ?string $name = null, ?string $email = null, ?string $phone = null, ?Address $address = null): PaymentMethod
     {
         return $this->adapter->updatePaymentMethodBillingDetails($paymentMethodId, $name, $email, $phone, $address);
     }
 
-    /**
-     * Update Payment Method
-     *
-     * @param  string  $paymentMethodId
-     * @param  string  $type
-     * @param  array<mixed>  $details
-     * @return array<mixed>
-     */
-    public function updatePaymentMethod(string $paymentMethodId, string $type, array $details): array
+    public function updatePaymentMethod(string $paymentMethodId, CardDetails $details): PaymentMethod
     {
-        return $this->adapter->updatePaymentMethod($paymentMethodId, $type, $details);
+        return $this->adapter->updatePaymentMethod($paymentMethodId, $details);
     }
 
-    /**
-     * Get Payment Method
-     *
-     * @param  string  $customerId
-     * @param  string  $paymentMethodId
-     * @return array<mixed>
-     */
-    public function getPaymentMethod(string $customerId, string $paymentMethodId): array
+    public function getPaymentMethod(string $customerId, string $paymentMethodId): PaymentMethod
     {
         return $this->adapter->getPaymentMethod($customerId, $paymentMethodId);
     }
 
-    /**
-     * List Payment Methods
-     *
-     * @param  string  $customerId
-     * @return array<mixed>
-     */
+    /** @return list<PaymentMethod> */
     public function listPaymentMethods(string $customerId): array
     {
         return $this->adapter->listPaymentMethods($customerId);
     }
 
-    /**
-     * List Customers
-     *
-     * @return array<mixed>
-     */
+    /** @return list<Customer> */
     public function listCustomers(): array
     {
         return $this->adapter->listCustomers();
     }
 
-    /**
-     * Create Customer
-     *
-     * Add new customer in the gateway database
-     * returns the details of the newly created customer
-     *
-     * @param  string  $name
-     * @param  string  $email
-     * @param  array<mixed>  $address
-     * @param  string|null  $paymentMethod
-     * @return array<mixed>
-     */
-    public function createCustomer(string $name, string $email, array $address = [], ?string $paymentMethod = null): array
+    public function createCustomer(string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer
     {
         return $this->adapter->createCustomer($name, $email, $address, $paymentMethod);
     }
 
-    /**
-     * Get Customer
-     *
-     * @param  string  $customerId
-     * @return array<mixed>
-     */
-    public function getCustomer(string $customerId): array
+    public function getCustomer(string $customerId): Customer
     {
         return $this->adapter->getCustomer($customerId);
     }
 
-    /**
-     * Update Customer
-     *
-     * @param  string  $customerId
-     * @param  string  $name
-     * @param  string  $email
-     * @param  string  $paymentMethod
-     * @param  Address  $address
-     * @return array<mixed>
-     */
-    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): array
+    public function updateCustomer(string $customerId, string $name, string $email, ?Address $address = null, ?string $paymentMethod = null): Customer
     {
         return $this->adapter->updateCustomer($customerId, $name, $email, $address, $paymentMethod);
     }
 
-    /**
-     * Delete Customer
-     *
-     * @param  string  $customerId
-     * @return bool
-     */
     public function deleteCustomer(string $customerId): bool
     {
         return $this->adapter->deleteCustomer($customerId);
     }
 
-    /**
-     * Create Setup for accepting future payments
-     *
-     * @param  string  $customerId
-     * @param  string|null  $paymentMethod
-     * @param  array<mixed>  $paymentMethodTypes
-     * @param  array<mixed>  $paymentMethodOptions
-     * @param  string  $paymentMethodConfiguration
-     * @return array<mixed>
-     */
-    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    /** @param list<string> $paymentMethodTypes */
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], ?CardMandate $mandate = null, ?string $paymentMethodConfiguration = null): SetupIntent
     {
-        return $this->adapter->createFuturePayment($customerId, $paymentMethod, $paymentMethodTypes, $paymentMethodOptions, $paymentMethodConfiguration);
+        return $this->adapter->createFuturePayment($customerId, $paymentMethod, $paymentMethodTypes, $mandate, $paymentMethodConfiguration);
     }
 
-    /**
-     * Get future payment
-     *
-     * @param  string  $id
-     * @return array<mixed>
-     */
-    public function getFuturePayment(string $id): array
+    public function getFuturePayment(string $id): SetupIntent
     {
         return $this->adapter->getFuturePayment($id);
     }
 
-    /**
-     * Update Future payment
-     *
-     * @param  string  $id
-     * @param  string|null  $customerId
-     * @param  string|null  $paymentMethod
-     * @param  array<mixed>  $paymentMethodOptions
-     * @param  string|null  $paymentMethodConfiguration
-     * @return array<mixed>
-     */
-    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, array $paymentMethodOptions = [], ?string $paymentMethodConfiguration = null): array
+    public function updateFuturePayment(string $id, ?string $customerId = null, ?string $paymentMethod = null, ?CardMandate $mandate = null, ?string $paymentMethodConfiguration = null): SetupIntent
     {
-        return $this->adapter->updateFuturePayment($id, $customerId, $paymentMethod, $paymentMethodOptions, $paymentMethodConfiguration);
+        return $this->adapter->updateFuturePayment($id, $customerId, $paymentMethod, $mandate, $paymentMethodConfiguration);
     }
 
-    /**
-     * List future payment
-     *
-     * @param  string|null  $customerId
-     * @param  string|null  $paymentMethodId
-     * @return array<mixed>
-     */
+    /** @return list<SetupIntent> */
     public function listFuturePayment(?string $customerId, ?string $paymentMethodId = null): array
     {
         return $this->adapter->listFuturePayments($customerId, $paymentMethodId);
     }
 
-    /**
-     * Get mandate
-     *
-     * @param  string  $id
-     * @return array<mixed>
-     */
-    public function getMandate(string $id): array
+    public function getMandate(string $id): Mandate
     {
         return $this->adapter->getMandate($id);
     }
 
-    /**
-     * List disputes
-     *
-     * @param  int|null  $limit
-     * @param  string|null  $paymentIntentId
-     * @param  string|null  $chargeId
-     * @param  int|null  $createdAfter
-     * @return array
-     */
+    /** @return list<Dispute> */
     public function listDisputes(?int $limit = null, ?string $paymentIntentId = null, ?string $chargeId = null, ?int $createdAfter = null): array
     {
         return $this->adapter->listDisputes($limit, $paymentIntentId, $chargeId, $createdAfter);

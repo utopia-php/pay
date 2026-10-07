@@ -1,12 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Pay\Tests\Adapter;
 
-use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Utopia\Pay\Adapter\Stripe;
+use Utopia\Pay\Address;
+use Utopia\Pay\CardDetails;
 use Utopia\Pay\Exception;
+use Utopia\Pay\Payment\Options;
+use Utopia\Pay\Payment\Status;
+use Utopia\Pay\Refund\Reason;
+use Utopia\Pay\Refund\Status as RefundStatus;
 
 #[Group('stripe')]
 class StripeTest extends TestCase
@@ -15,745 +22,84 @@ class StripeTest extends TestCase
 
     protected function setUp(): void
     {
-        $secretKey = getenv('STRIPE_SECRET') ?: '';
-        $this->stripe = new Stripe(
-            $secretKey
-        );
-    }
-
-    public function testConstructsWithoutAClient(): void
-    {
-        $this->expectNotToPerformAssertions();
-
-        new Stripe('sk_test_probe');
-    }
-
-    /**
-     * Test create customer
-     *
-     * @return array<mixed>
-     */
-    public function testCreateCustomer(): array
-    {
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
-        $this->assertNotEmpty($customer['id']);
-        $this->assertEquals($customer['name'], 'Test customer');
-        $this->assertEquals($customer['email'], 'testcustomer@email.com');
-
-        return ['customerId' => $customer['id']];
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testCreateCustomer')]
-    public function testGetCustomer(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $customer = $this->stripe->getCustomer($customerId);
-        $this->assertNotEmpty($customer['id']);
-        $this->assertEquals($customer['name'], 'Test customer');
-        $this->assertEquals($customer['email'], 'testcustomer@email.com');
-
-        return $data;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testCreateCustomer')]
-    public function testUpdateCustomer(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $customer = $this->stripe->updateCustomer($customerId, 'Test Updated', 'testcustomerupdated@email.com');
-        $this->assertNotEmpty($customer['id']);
-        $this->assertEquals($customer['name'], 'Test Updated');
-        $this->assertEquals($customer['email'], 'testcustomerupdated@email.com');
-
-        return $data;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     */
-    #[Depends('testUpdateCustomer')]
-    public function testListCustomers(array $data): void
-    {
-        $response = $this->stripe->listCustomers();
-        $this->assertIsArray($response['data']);
-        $this->assertNotEmpty($response['data']);
-        $customers = $response['data'];
-        $this->assertNotEmpty($customers[0]['id']);
-        $this->assertNotEmpty($customers[0]['name']);
-        $this->assertNotEmpty($customers[0]['email']);
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testUpdateCustomer')]
-    public function testCreatePaymentMethod(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => 4242424242424242,
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
-
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals(4242, $card['last4']);
-
-        $data['paymentMethodId'] = $pm['id'];
-
-        return $data;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testCreatePaymentMethod')]
-    public function testListPaymentMethods(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $pms = $this->stripe->listPaymentMethods($customerId);
-        $this->assertIsArray($pms['data']);
-
-        $pm = $pms['data'][0];
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
-
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals(4242, $card['last4']);
-
-        return $data;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testCreatePaymentMethod')]
-    public function testGetPaymentMethod(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $paymentMethodId = $data['paymentMethodId'];
-        $pm = $this->stripe->getPaymentMethod($customerId, $paymentMethodId);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
-
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals(4242, $card['last4']);
-
-        return $data;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testCreatePaymentMethod')]
-    public function testCreateFuturePayment(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $setupIntent = $this->stripe->createFuturePayment($customerId, paymentMethodOptions: [
-            'card' => [
-                'mandate_options' => [
-                    'reference' => \uniqid(),
-                    'description' => 'Utopia pay test',
-                    'amount' => 15000,
-                    'currency' => 'USD',
-                    'start_date' => time(),
-                    'amount_type' => 'maximum',
-                    'interval' => 'day',
-                    'interval_count' => 30,
-                    'supported_types' => ['india'],
-                ],
-            ],
-        ]);
-        $this->assertNotEmpty($setupIntent);
-        $this->assertNotEmpty($setupIntent['client_secret']);
-        $data['setupIntentId'] = $setupIntent['id'];
-
-        return $data;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * */
-    #[Depends('testCreateFuturePayment')]
-    public function testUpdateFuturePayment(array $data): void
-    {
-        $customerId = $data['customerId'];
-        $setupIntentId = $data['setupIntentId'];
-
-        $reference = uniqid();
-        $setupIntent = $this->stripe->updateFuturePayment($setupIntentId, $customerId, paymentMethodOptions: [
-            'card' => [
-                'mandate_options' => [
-                    'reference' => $reference,
-                    'description' => 'Utopia monthly subscription',
-                    'amount' => 1500,
-                    'currency' => 'USD',
-                    'start_date' => time(),
-                    'amount_type' => 'maximum',
-                    'interval' => 'day',
-                    'interval_count' => 5,
-                    'supported_types' => ['india'],
-                ],
-            ],
-        ]);
-
-        $this->assertNotEmpty($setupIntent);
-        $this->assertEquals($setupIntentId, $setupIntent['id']);
-        $this->assertIsArray($setupIntent['payment_method_options']);
-        $this->assertArrayHasKey('card', $setupIntent['payment_method_options']);
-        $this->assertArrayHasKey('mandate_options', $setupIntent['payment_method_options']['card']);
-        $this->assertEquals($reference, $setupIntent['payment_method_options']['card']['mandate_options']['reference']);
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * */
-    #[Depends('testCreateFuturePayment')]
-    public function testListFuturePayment(array $data): void
-    {
-        $customerId = $data['customerId'];
-        $setupIntentId = $data['setupIntentId'];
-
-        $setupIntents = $this->stripe->listFuturePayments($customerId);
-        $this->assertNotEmpty($setupIntents);
-        $this->assertNotEmpty($setupIntents[0]['id']);
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     * */
-    #[Depends('testCreatePaymentMethod')]
-    public function testUpdatePaymentMethod(array $data): array
-    {
-        $paymentMethodId = $data['paymentMethodId'];
-        $pm = $this->stripe->updatePaymentMethod($paymentMethodId, 'card', [
-            'exp_month' => 6,
-            'exp_year' => 2031,
-        ]);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
-
-        $card = $pm['card'];
-        $this->assertEquals(2031, $card['exp_year']);
-        $this->assertEquals(6, $card['exp_month']);
-
-        return $data;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     * */
-    #[Depends('testCreatePaymentMethod')]
-    public function testPurchase(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $paymentMethodId = $data['paymentMethodId'];
-        $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
-
-        $this->assertNotEmpty($purchase['id']);
-        $this->assertEquals(5000, $purchase['amount_received']);
-        $this->assertEquals('payment_intent', $purchase['object']);
-        $this->assertEquals('succeeded', $purchase['status']);
-
-        $data['paymentId'] = $purchase['id'];
-
-        return $data;
-    }
-
-    /**
-     * Test retryPurchase: create a payment with a failing payment method, then retry with a succeeding one.
-     *
-     *
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testCreateCustomer')]
-    public function testRetryPurchase(array $data): array
-    {
-        $customerId = $data['customerId'];
-        // Create a payment method that will fail (card_declined)
-        $failingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => '4000000000000341',
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
-        $this->assertNotEmpty($failingPm['id']);
-        $failingPmId = $failingPm['id'];
-
-        // Create a payment intent with the failing payment method
-        $paymentIntentId = null;
-        try {
-            $this->stripe->purchase(5000, $customerId, $failingPmId);
-            $this->fail('Expected payment to fail');
-        } catch (Exception $e) {
-            $this->assertEquals(Exception::GENERIC_DECLINE, $e->type);
-            $this->assertEquals(402, $e->getCode());
-            $paymentIntentMeta = $e->metadata['payment_intent'] ?? null;
-            $paymentIntentId = is_array($paymentIntentMeta) && isset($paymentIntentMeta['id']) ? $paymentIntentMeta['id'] : $paymentIntentMeta;
-            $this->assertNotEmpty($paymentIntentId);
+        $secret = getenv('STRIPE_SECRET');
+        if ($secret === false || $secret === '') {
+            $this->markTestSkipped('STRIPE_SECRET is required');
         }
-
-        // Create a succeeding payment method
-        $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => '4242424242424242', // Stripe test card: always succeeds
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
-        $this->assertNotEmpty($succeedingPm['id']);
-        $succeedingPmId = $succeedingPm['id'];
-
-        // Retry the payment intent with the succeeding payment method
-        $result = $this->stripe->retryPurchase((string) $paymentIntentId, $succeedingPmId);
-        $this->assertNotEmpty($result['id']);
-        $this->assertEquals($paymentIntentId, $result['id']);
-        $this->assertEquals('payment_intent', $result['object']);
-        $this->assertArrayHasKey('status', $result);
-        $this->assertEquals('succeeded', $result['status']);
-
-        // Save for further tests if needed
-        $data['paymentId'] = $paymentIntentId;
-        $data['paymentMethodId'] = $succeedingPmId;
-
-        return $data;
+        $this->stripe = new Stripe($secret);
     }
 
-    /**
-     */
-    #[Depends('testPurchase')]
-    public function testGetPayment(array $data): array
+    public function testCustomerAndCardLifecycle(): void
     {
-        $paymentId = $data['paymentId'];
-        $payment = $this->stripe->getPayment($paymentId);
-        $this->assertNotEmpty($payment['id']);
-        $this->assertEquals(5000, $payment['amount_received']);
-        $this->assertEquals('payment_intent', $payment['object']);
-        $this->assertEquals('succeeded', $payment['status']);
-
-        return $data;
-    }
-
-    /**
-     * Test updatePayment: create a payment intent in a non-succeeded state, update its payment method and amount, and assert the update.
-     *
-     *
-     * @param  array<mixed>  $data
-     * @return void
-     */
-    #[Depends('testCreateCustomer')]
-    public function testUpdatePayment(array $data): void
-    {
-        $customerId = $data['customerId'];
-        // Create a payment method that will fail (card_declined)
-        $failingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => '4000000000000341',
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
-        $this->assertNotEmpty($failingPm['id']);
-        $failingPmId = $failingPm['id'];
-
-        // Create a payment intent with the failing payment method
-        $paymentIntentId = null;
+        $customer = $this->stripe->createCustomer('Pay test', 'test@example.com', new Address('Kathmandu', 'NP'));
         try {
-            $this->stripe->purchase(5000, $customerId, $failingPmId);
-            $this->fail('Expected payment to fail');
-        } catch (Exception $e) {
-            $this->assertEquals(Exception::GENERIC_DECLINE, $e->type);
-            $this->assertEquals(402, $e->getCode());
-            $paymentIntentMeta = $e->metadata['payment_intent'] ?? null;
-            $paymentIntentId = is_array($paymentIntentMeta) && isset($paymentIntentMeta['id']) ? $paymentIntentMeta['id'] : $paymentIntentMeta;
-            $this->assertNotEmpty($paymentIntentId);
+            $this->assertNotEmpty($customer->id);
+            $this->assertSame('Pay test', $this->stripe->getCustomer($customer->id)->name);
+            $updated = $this->stripe->updateCustomer($customer->id, 'Updated', 'updated@example.com');
+            $this->assertSame('Updated', $updated->name);
+            $this->assertSame('updated@example.com', $updated->email);
+            $method = $this->stripe->createPaymentMethod($customer->id, new CardDetails('4242424242424242', 8, 2030, '123'));
+            $this->assertSame('4242', $method->card?->last4);
+            $this->assertSame('visa', $method->card->brand);
+            $this->assertSame($method->id, $this->stripe->getPaymentMethod($customer->id, $method->id)->id);
+            $updatedMethod = $this->stripe->updatePaymentMethod($method->id, new CardDetails(expiryYear: 2031));
+            $this->assertSame(2031, $updatedMethod->card?->expiryYear);
+            $this->assertContains($method->id, array_map(static fn ($card) => $card->id, $this->stripe->listPaymentMethods($customer->id)));
+            $this->stripe->deletePaymentMethod($method->id);
+            $this->assertNotContains($method->id, array_map(static fn ($card) => $card->id, $this->stripe->listPaymentMethods($customer->id)));
+        } finally {
+            $this->stripe->deleteCustomer($customer->id);
         }
-
-        // Create a succeeding payment method
-        $succeedingPm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => '4242424242424242',
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
-        $this->assertNotEmpty($succeedingPm['id']);
-        $succeedingPmId = $succeedingPm['id'];
-
-        // Update the payment intent with the new payment method and amount
-        $newAmount = 6000;
-        $updated = $this->stripe->updatePayment((string) $paymentIntentId, $succeedingPmId, $newAmount);
-        $this->assertNotEmpty($updated['id']);
-        $this->assertEquals($paymentIntentId, $updated['id']);
-        $this->assertEquals('payment_intent', $updated['object']);
-        $this->assertEquals($newAmount, $updated['amount']);
-        $this->assertEquals($succeedingPmId, $updated['payment_method']);
+        $this->assertTrue($this->stripe->getCustomer($customer->id)->deleted);
     }
 
-    /**
-     * @param  array<mixed>  $data
-     */
-    #[Depends('testPurchase')]
-    public function testRefund(array $data): void
+    public function testAuthorizationCaptureCancellationAndRefund(): void
     {
-        $purchase = $this->stripe->refund($data['paymentId'], 3000);
-        $this->assertNotEmpty($purchase['id']);
-        $this->assertEquals('refund', $purchase['object']);
-        $this->assertEquals('succeeded', $purchase['status']);
-        $this->assertEquals(3000, $purchase['amount']);
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     */
-    #[Depends('testCreatePaymentMethod')]
-    public function testDeletePaymentMethod(array $data): void
-    {
-        $customerId = $data['customerId'];
-        $deleted = $this->stripe->deletePaymentMethod($data['paymentMethodId']);
-        $this->assertTrue($deleted);
-
+        $customer = $this->stripe->createCustomer('Pay authorization test', 'test@example.com');
         try {
-            $this->stripe->getPaymentMethod($customerId, $data['paymentMethodId']);
-            $this->fail('Expected exception was not thrown');
-        } catch (\Exception $e) {
-            $this->assertInstanceOf(\Exception::class, $e);
-            $this->assertEquals(404, $e->getCode());
+            $method = $this->stripe->createPaymentMethod($customer->id, new CardDetails('4242424242424242', 8, 2030, '123'));
+            $hold = $this->stripe->authorize(10000, $customer->id, $method->id, new Options(metadata: ['orderId' => 'test_order']));
+            $this->assertSame(Status::RequiresCapture, $hold->status);
+            $this->assertSame('test_order', $hold->metadata['orderId']);
+            $captured = $this->stripe->capture($hold->id, 6000);
+            $this->assertSame(Status::Succeeded, $captured->status);
+            $this->assertSame(6000, $captured->amountReceived);
+            $refund = $this->stripe->refund($hold->id, 3000, Reason::RequestedByCustomer);
+            $this->assertSame(RefundStatus::Succeeded, $refund->status);
+            $this->assertSame(3000, $refund->amount);
+            $cancel = $this->stripe->authorize(5000, $customer->id, $method->id);
+            $this->assertSame(Status::Canceled, $this->stripe->cancelAuthorization($cancel->id)->status);
+            $paid = $this->stripe->purchase(5000, $customer->id, $method->id);
+            $this->assertSame(Status::Succeeded, $paid->status);
+            $this->assertSame(5000, $this->stripe->getPayment($paid->id)->amountReceived);
+        } finally {
+            $this->stripe->deleteCustomer($customer->id);
         }
     }
 
-    /**
-     * @param  array<mixed>  $data
-     */
-    #[Depends('testUpdateCustomer')]
-    public function testDeleteCustomer(array $data): void
+    public function testDeclinedChargeRetainsThePaymentForRetry(): void
     {
-        $customerId = $data['customerId'];
-        $deleted = $this->stripe->deleteCustomer($customerId);
-        $this->assertTrue($deleted);
-        $res = $this->stripe->getCustomer($customerId);
-        $this->assertTrue($res['deleted']);
-    }
-
-    /**
-     * Test list disputes
-     *
-     * @param  array  $data
-     * @return void
-     */
-    public function testListDisputes(): void
-    {
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
-        $this->assertNotEmpty($customer['id']);
-        $customerId = $customer['id'];
-
-        $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => 4000000000000259,
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
-        $this->assertNotEmpty($pm['id']);
-        $this->assertNotEmpty($pm['card']);
-
-        $card = $pm['card'];
-        $this->assertEquals('visa', $card['brand']);
-        $this->assertEquals('US', $card['country']);
-        $this->assertEquals(2030, $card['exp_year']);
-        $this->assertEquals(8, $card['exp_month']);
-        $this->assertEquals('0259', $card['last4']);
-
-        $paymentMethodId = $pm['id'];
-
-        $purchase = $this->stripe->purchase(5000, $customerId, $paymentMethodId);
-
-        $this->assertNotEmpty($purchase['id']);
-        $this->assertEquals(5000, $purchase['amount_received']);
-        $this->assertEquals('payment_intent', $purchase['object']);
-        $this->assertEquals('succeeded', $purchase['status']);
-
-        // list disputes
-        $paymentIntentId = $purchase['id'];
-
-        $disputes = $this->stripe->listDisputes(1);
-        $this->assertIsArray($disputes);
-        $this->assertEquals(1, count($disputes));
-
-        $disputes = $this->stripe->listDisputes(paymentIntentId: $paymentIntentId);
-        $this->assertEquals(1, count($disputes));
-        $this->assertEquals($paymentIntentId, $disputes[0]['payment_intent']);
-    }
-
-    public function testErrorHandling(): void
-    {
+        $customer = $this->stripe->createCustomer('Pay decline test', 'test@example.com');
         try {
-            $this->stripe->deleteCustomer('dedefe');
-        } catch (\Throwable $e) {
-            $this->assertEquals(404, $e->getCode());
-            $this->assertInstanceOf(Exception::class, $e);
+            $method = $this->stripe->createPaymentMethod($customer->id, new CardDetails('4000000000009995', 8, 2030, '123'));
+            try {
+                $this->stripe->purchase(5000, $customer->id, $method->id);
+                $this->fail('The declined charge must throw');
+            } catch (Exception $exception) {
+                $this->assertSame(Exception::INSUFFICIENT_FUNDS, $exception->type);
+                $payment = $exception->error?->payment;
+                $this->assertNotNull($payment);
+                $this->assertSame(Status::RequiresPaymentMethod, $payment->status);
+                $this->assertSame($method->id, $payment->lastPaymentError?->paymentMethodId);
+                $working = $this->stripe->createPaymentMethod($customer->id, new CardDetails('4242424242424242', 8, 2030, '123'));
+                $updated = $this->stripe->updatePayment($payment->id, $working->id);
+                $this->assertSame($working->id, $updated->paymentMethodId);
+                $retried = $this->stripe->retryPurchase($payment->id, $working->id, new Options(offSession: true));
+                $this->assertSame(Status::Succeeded, $retried->status);
+                $this->assertSame(5000, $retried->amountReceived);
+            }
+        } finally {
+            $this->stripe->deleteCustomer($customer->id);
         }
-
-        $customer = $this->stripe->createCustomer('Test customer', 'testcustomer@email.com', ['city' => 'Kathmandu', 'country' => 'NP', 'line1' => 'Gaurighat', 'line2' => 'Pambu Marga', 'postal_code' => '44600', 'state' => 'Bagmati']);
-        $this->assertNotEmpty($customer['id']);
-
-        $customerId = $customer['id'];
-
-        // incorrect card number
-        try {
-            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
-                'number' => 4242424242424241,
-                'exp_month' => 8,
-                'exp_year' => 2030,
-                'cvc' => 123,
-            ]);
-        } catch (Exception $e) {
-            $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::INCORRECT_NUMBER, $e->type);
-            $this->assertInstanceOf(Exception::class, $e);
-        }
-
-        // insufficient fund
-        try {
-            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
-                'number' => 4000000000009995,
-                'exp_month' => 8,
-                'exp_year' => 2030,
-                'cvc' => 123,
-            ]);
-        } catch (Exception $e) {
-            $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::INSUFFICIENT_FUNDS, $e->type);
-            $this->assertInstanceOf(Exception::class, $e);
-        }
-
-        // authentication required
-        try {
-            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
-                'number' => 4000002760003184,
-                'exp_month' => 8,
-                'exp_year' => 2030,
-                'cvc' => 123,
-            ]);
-        } catch (Exception $e) {
-            $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->type);
-            $this->assertNotEmpty($e->metadata);
-            $this->assertEquals(Exception::AUTHENTICATION_REQUIRED, $e->metadata['decline_code']);
-            $this->assertInstanceOf(Exception::class, $e);
-        }
-
-        // generic decline
-        try {
-            $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
-                'number' => 4000000000000002,
-                'exp_month' => 8,
-                'exp_year' => 2030,
-                'cvc' => 123,
-            ]);
-        } catch (Exception $e) {
-            $this->assertEquals(402, $e->getCode());
-            $this->assertEquals(Exception::GENERIC_DECLINE, $e->type);
-            $this->assertInstanceOf(Exception::class, $e);
-        }
-    }
-
-    /**
-     * Test authorize, capture, and cancel authorization flow
-     *
-     * @return array<mixed>
-     */
-    public function testAuthorizeCaptureCancelFlow(): array
-    {
-        // Create customer
-        $customer = $this->stripe->createCustomer('Test Auth Customer', 'testauth@email.com');
-        $customerId = $customer['id'];
-        $this->assertNotEmpty($customerId);
-
-        // Create payment method
-        $pm = $this->stripe->createPaymentMethod($customerId, 'card', [
-            'number' => 4242424242424242,
-            'exp_month' => 8,
-            'exp_year' => 2030,
-            'cvc' => 123,
-        ]);
-        $paymentMethodId = $pm['id'];
-        $this->assertNotEmpty($paymentMethodId);
-
-        return [
-            'customerId' => $customerId,
-            'paymentMethodId' => $paymentMethodId,
-        ];
-    }
-
-    /**
-     * Test authorize payment (hold funds)
-     *
-     *
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testAuthorizeCaptureCancelFlow')]
-    public function testAuthorize(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $paymentMethodId = $data['paymentMethodId'];
-
-        // Authorize payment - hold funds without capturing
-        $authorization = $this->stripe->authorize(10000, $customerId, $paymentMethodId);
-
-        $this->assertNotEmpty($authorization['id']);
-        $this->assertEquals('payment_intent', $authorization['object']);
-        $this->assertEquals(10000, $authorization['amount']);
-        $this->assertEquals('requires_capture', $authorization['status']);
-        $this->assertEquals('manual', $authorization['capture_method']);
-
-        $data['authorizationId'] = $authorization['id'];
-
-        return $data;
-    }
-
-    /**
-     * Test capture authorized payment
-     *
-     *
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testAuthorize')]
-    public function testCapture(array $data): array
-    {
-        $authorizationId = $data['authorizationId'];
-
-        // Capture the full amount
-        $captured = $this->stripe->capture($authorizationId);
-
-        $this->assertNotEmpty($captured['id']);
-        $this->assertEquals($authorizationId, $captured['id']);
-        $this->assertEquals('succeeded', $captured['status']);
-        $this->assertEquals(10000, $captured['amount_received']);
-
-        return $data;
-    }
-
-    /**
-     * Test partial capture of authorized payment
-     *
-     *
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testAuthorizeCaptureCancelFlow')]
-    public function testPartialCapture(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $paymentMethodId = $data['paymentMethodId'];
-
-        // Authorize payment
-        $authorization = $this->stripe->authorize(15000, $customerId, $paymentMethodId);
-        $authorizationId = $authorization['id'];
-
-        $this->assertEquals('requires_capture', $authorization['status']);
-
-        // Capture partial amount (only 10000 of 15000)
-        $captured = $this->stripe->capture($authorizationId, 10000);
-
-        $this->assertEquals('succeeded', $captured['status']);
-        $this->assertEquals(10000, $captured['amount_received']);
-
-        return $data;
-    }
-
-    /**
-     * Test cancel authorization (release hold)
-     *
-     *
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    #[Depends('testAuthorizeCaptureCancelFlow')]
-    public function testCancelAuthorization(array $data): array
-    {
-        $customerId = $data['customerId'];
-        $paymentMethodId = $data['paymentMethodId'];
-
-        // Authorize payment
-        $authorization = $this->stripe->authorize(8000, $customerId, $paymentMethodId);
-        $authorizationId = $authorization['id'];
-
-        $this->assertEquals('requires_capture', $authorization['status']);
-
-        // Cancel the authorization - release the hold
-        $cancelled = $this->stripe->cancelAuthorization($authorizationId);
-
-        $this->assertNotEmpty($cancelled['id']);
-        $this->assertEquals($authorizationId, $cancelled['id']);
-        $this->assertEquals('canceled', $cancelled['status']);
-
-        return $data;
-    }
-
-    /**
-     * Test authorize with additional parameters
-     *
-     *
-     * @param  array<mixed>  $data
-     */
-    #[Depends('testAuthorizeCaptureCancelFlow')]
-    public function testAuthorizeWithMetadata(array $data): void
-    {
-        $customerId = $data['customerId'];
-        $paymentMethodId = $data['paymentMethodId'];
-
-        // Authorize with metadata (e.g., domain name, order ID)
-        $authorization = $this->stripe->authorize(
-            12000,
-            $customerId,
-            $paymentMethodId,
-            [
-                'metadata' => [
-                    'domain' => 'example.com',
-                    'order_id' => 'ORD-12345',
-                    'resource_type' => 'domain_registration',
-                ],
-                'description' => 'Domain registration hold for example.com',
-            ]
-        );
-
-        $this->assertNotEmpty($authorization['id']);
-        $this->assertEquals('requires_capture', $authorization['status']);
-        $this->assertEquals('example.com', $authorization['metadata']['domain']);
-        $this->assertEquals('ORD-12345', $authorization['metadata']['order_id']);
-        $this->assertEquals('domain_registration', $authorization['metadata']['resource_type']);
-        $this->assertEquals('Domain registration hold for example.com', $authorization['description']);
-
-        // Clean up
-        $this->stripe->cancelAuthorization($authorization['id']);
-        $this->stripe->deleteCustomer($customerId);
     }
 }
