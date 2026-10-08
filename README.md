@@ -13,15 +13,17 @@ composer require utopia-php/pay
 
 ```php
 use Utopia\Pay\Adapter\Stripe;
-use Utopia\Pay\Pay;
+use Utopia\Pay\Adapter\Stripe\Currency;
 
-$pay = new Pay(new Stripe('SECRET_KEY', currency: 'USD'));
+$pay = new Stripe('SECRET_KEY', currency: Currency::USD);
 
 $customer = $pay->createCustomer('Customer One', 'customer@example.com');
 $purchase = $pay->purchase(5000, $customer->id, $paymentMethodId);
 ```
 
 `authorize()` holds funds that `capture()` charges or `cancelAuthorization()` releases; customers, payment methods, refunds, future payments (setup intents) and disputes have their own methods on `Pay`.
+
+`Pay` is the abstract processor contract; `Adapter\Stripe` implements it directly. Initialize Stripe at the application boundary and type consumers against `Pay`. The forwarding wrapper and the separate `Adapter` base class have been removed. Custom processors now extend `Pay`; direct Stripe callers use `listFuturePayment()` to match the existing Pay contract.
 
 Configuration is supplied in constructors. Request and result objects are readonly. Exception details are available through readonly `$exception->type` and `$exception->error` properties.
 
@@ -39,13 +41,13 @@ if ($payment->status === Status::RequiresConfirmation) {
 }
 ```
 
-Processor methods expose the fields Pay uses through readonly payment, customer, payment-method, setup-intent, mandate or refund objects. List methods return lists of objects. Processor statuses are backed enums. Processor JSON is validated on entry. Decline codes, IDs, currency codes and metadata keys remain strings.
+Processor methods expose the fields Pay uses through readonly payment, customer, payment-method, setup-intent, mandate or refund objects. List methods return lists of objects. Processor statuses are backed enums. Processor JSON is validated on entry. Stripe constructor configuration uses `Adapter\Stripe\Currency`, backed by Stripe’s lowercase presentment currency codes. Currency availability still depends on the Stripe account and payment method. Shared Pay contracts and result objects keep currency codes as strings; decline codes, IDs and metadata keys also remain strings.
 
 This replaces the raw array API: use object properties instead of array offsets, typed request objects instead of arbitrary processor parameter bags, and `$exception->error?->payment` or `paymentId` instead of error metadata arrays. The supported card request fields and subscription mandate policy are explicit in `CardDetails` and `CardMandate`.
 
 The unused `Invoice`, `Credit` and `Discount` models and their enums have been removed. Invoice calculation and lifecycle orchestration remain in the consuming application.
 
-Pay is checked at PHPStan's maximum level over source and tests, with no baseline or ignored errors.
+Pay is checked at PHPStan's maximum level over source and tests, with no baseline or ignored errors. Package checks also enforce Rector's PHP 8.5 modernization, code quality, dead code, type declaration, style and PHPUnit suites through `rector.php`.
 
 ## Tests
 

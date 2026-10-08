@@ -9,13 +9,16 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Utopia\Pay\Adapter\Stripe;
+use Utopia\Pay\Adapter\Stripe\Currency;
 use Utopia\Pay\Exception;
 use Utopia\Pay\Pay;
 use Utopia\Psr7\Response;
 use Utopia\Psr7\Stream;
 
-class StripeConfigurationTest extends TestCase
+final class StripeConfigurationTest extends TestCase
 {
+    private Pay $pay;
+
     public function testConstructorConfigurationReachesRepeatedCharges(): void
     {
         $client = $this->createMock(ClientInterface::class);
@@ -23,15 +26,15 @@ class StripeConfigurationTest extends TestCase
             function (RequestInterface $request): ResponseInterface {
                 $this->assertSame('Bearer sk_test_config', $request->getHeaderLine('Authorization'));
                 parse_str((string) $request->getBody(), $params);
-                $this->assertSame('EUR', $params['currency']);
+                $this->assertSame('eur', $params['currency']);
                 $this->assertSame('5000', $params['amount']);
 
-                return (new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}')))->withHeader('Content-Type', 'application/json');
+                return new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"eur","status":"succeeded"}'))->withHeader('Content-Type', 'application/json');
             }
         );
-        $pay = new Pay(new Stripe('sk_test_config', currency: 'EUR', client: $client));
-        $pay->purchase(5000, 'cus_current', 'pm_current');
-        $pay->authorize(5000, 'cus_current', 'pm_current');
+        $this->pay = new Stripe('sk_test_config', currency: Currency::EUR, client: $client);
+        $this->assertSame('eur', $this->pay->purchase(5000, 'cus_current', 'pm_current')->currency);
+        $this->assertSame('eur', $this->pay->authorize(5000, 'cus_current', 'pm_current')->currency);
     }
 
     public function testProcessorFailureExposesDetailsForTheCaller(): void
@@ -39,11 +42,11 @@ class StripeConfigurationTest extends TestCase
         $error = ['type' => 'card_error', 'code' => 'card_declined', 'decline_code' => 'authentication_required', 'message' => 'Authenticate this payment', 'payment_intent' => ['id' => 'pi_failed', 'amount' => 5000, 'amount_received' => 0, 'currency' => 'usd', 'status' => 'requires_action']];
         $client = $this->createMock(ClientInterface::class);
         $client->expects($this->once())->method('sendRequest')->willReturn(
-            (new Response(402, body: new Stream(json_encode(['error' => $error], JSON_THROW_ON_ERROR))))->withHeader('Content-Type', 'application/json')
+            new Response(402, body: new Stream(json_encode(['error' => $error], JSON_THROW_ON_ERROR)))->withHeader('Content-Type', 'application/json')
         );
 
         try {
-            new Pay(new Stripe('sk_test_config', client: $client))->purchase(5000, 'cus_current', 'pm_current');
+            new Stripe('sk_test_config', client: $client)->purchase(5000, 'cus_current', 'pm_current');
             $this->fail('The failed charge must throw');
         } catch (Exception $exception) {
             $this->assertSame(Exception::AUTHENTICATION_REQUIRED, $exception->type);

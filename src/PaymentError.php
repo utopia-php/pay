@@ -27,8 +27,8 @@ final readonly class PaymentError
             type: $data->string('type'),
             message: $data->string('message'),
             paymentMethodId: $data->reference('payment_method'),
-            paymentId: $data->reference('payment_intent'),
             payment: ($object = $data->expandedObject('payment_intent')) === null ? null : Payment::fromPayload($object),
+            paymentId: $data->reference('payment_intent'),
         );
     }
 }

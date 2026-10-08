@@ -16,7 +16,7 @@ use Utopia\Pay\Refund\Reason;
 use Utopia\Pay\Refund\Status as RefundStatus;
 
 #[Group('stripe')]
-class StripeTest extends TestCase
+final class StripeTest extends TestCase
 {
     private Stripe $stripe;
 
@@ -44,9 +44,9 @@ class StripeTest extends TestCase
             $this->assertSame($method->id, $this->stripe->getPaymentMethod($customer->id, $method->id)->id);
             $updatedMethod = $this->stripe->updatePaymentMethod($method->id, new CardDetails(expiryYear: 2031));
             $this->assertSame(2031, $updatedMethod->card?->expiryYear);
-            $this->assertContains($method->id, array_map(static fn ($card) => $card->id, $this->stripe->listPaymentMethods($customer->id)));
+            $this->assertContains($method->id, array_map(static fn (\Utopia\Pay\PaymentMethod $card): string => $card->id, $this->stripe->listPaymentMethods($customer->id)));
             $this->stripe->deletePaymentMethod($method->id);
-            $this->assertNotContains($method->id, array_map(static fn ($card) => $card->id, $this->stripe->listPaymentMethods($customer->id)));
+            $this->assertNotContains($method->id, array_map(static fn (\Utopia\Pay\PaymentMethod $card): string => $card->id, $this->stripe->listPaymentMethods($customer->id)));
         } finally {
             $this->stripe->deleteCustomer($customer->id);
         }
@@ -88,7 +88,7 @@ class StripeTest extends TestCase
             } catch (Exception $exception) {
                 $this->assertSame(Exception::INSUFFICIENT_FUNDS, $exception->type);
                 $payment = $exception->error?->payment;
-                $this->assertNotNull($payment);
+                $this->assertInstanceOf(\Utopia\Pay\Payment::class, $payment);
                 $this->assertSame(Status::RequiresPaymentMethod, $payment->status);
                 $this->assertSame($method->id, $payment->lastPaymentError?->paymentMethodId);
                 $working = $this->stripe->createPaymentMethod($customer->id, new CardDetails('4242424242424242', 8, 2030, '123'));

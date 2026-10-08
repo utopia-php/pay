@@ -10,11 +10,10 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Utopia\Pay\Adapter\Stripe;
-use Utopia\Pay\Pay;
 use Utopia\Psr7\Response;
 use Utopia\Psr7\Stream;
 
-class StripeMandateTest extends TestCase
+final class StripeMandateTest extends TestCase
 {
     /**
      * @return iterable<string, array{string, string, string, int, bool, 5?: bool}>
@@ -39,29 +38,29 @@ class StripeMandateTest extends TestCase
         $client->expects($this->exactly($useSavedMethod ? 3 : 2))->method('sendRequest')->willReturnCallback(
             function (RequestInterface $request) use (&$charge, $status, $mandateMethod, $lookupStatus): ResponseInterface {
                 if ($request->getMethod() === 'GET' && $request->getUri()->getPath() === '/v1/payment_intents/pi_existing') {
-                    return (new Response(200, body: new Stream('{"id":"pi_existing","amount":5000,"amount_received":0,"currency":"usd","status":"requires_confirmation","payment_method":"pm_current"}')))->withHeader('Content-Type', 'application/json');
+                    return new Response(200, body: new Stream('{"id":"pi_existing","amount":5000,"amount_received":0,"currency":"usd","status":"requires_confirmation","payment_method":"pm_current"}'))->withHeader('Content-Type', 'application/json');
                 }
                 if ($request->getMethod() === 'GET') {
                     $this->assertSame('/v1/mandates/mandate_saved', $request->getUri()->getPath());
 
-                    return (new Response($lookupStatus, body: new Stream(json_encode($lookupStatus === 200 ? [
+                    return new Response($lookupStatus, body: new Stream(json_encode($lookupStatus === 200 ? [
                         'id' => 'mandate_saved',
                         'status' => $status,
                         'payment_method' => $mandateMethod,
-                    ] : ['error' => ['message' => 'No such mandate']], JSON_THROW_ON_ERROR))))->withHeader('Content-Type', 'application/json');
+                    ] : ['error' => ['message' => 'No such mandate']], JSON_THROW_ON_ERROR)))->withHeader('Content-Type', 'application/json');
                 }
 
                 $charge = $request;
 
-                return (new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}')))->withHeader('Content-Type', 'application/json');
+                return new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}'))->withHeader('Content-Type', 'application/json');
             }
         );
-        $pay = new Pay(new Stripe('sk_test_probe', client: $client));
+        $stripe = new Stripe('sk_test_probe', client: $client);
         $options = new \Utopia\Pay\Payment\Options(mandate: 'mandate_saved');
         if ($operation === 'retryPurchase') {
-            $pay->retryPurchase('pi_existing', $useSavedMethod ? null : 'pm_current', $options);
+            $stripe->retryPurchase('pi_existing', $useSavedMethod ? null : 'pm_current', $options);
         } else {
-            $pay->$operation(5000, 'cus_current', 'pm_current', $options);
+            $stripe->$operation(5000, 'cus_current', 'pm_current', $options);
         }
 
         $this->assertInstanceOf(RequestInterface::class, $charge);
@@ -80,12 +79,13 @@ class StripeMandateTest extends TestCase
                 $this->assertSame('POST', $request->getMethod());
                 parse_str((string) $request->getBody(), $params);
                 $this->assertArrayNotHasKey('mandate', $params);
+                $this->assertSame('usd', $params['currency']);
                 $this->assertSame('pm_current', $params['payment_method']);
 
-                return (new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}')))->withHeader('Content-Type', 'application/json');
+                return new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}'))->withHeader('Content-Type', 'application/json');
             }
         );
-        new Pay(new Stripe('sk_test_probe', client: $client))->purchase(5000, 'cus_current', 'pm_current');
+        new Stripe('sk_test_probe', client: $client)->purchase(5000, 'cus_current', 'pm_current');
     }
 
     /** @return iterable<string, array{string}> */
@@ -108,7 +108,7 @@ class StripeMandateTest extends TestCase
                             ? 'invalid json'
                             : '{"id":"mandate_saved","status":"active","payment_method":"pm_current"}';
 
-                        return (new Response(200, body: new Stream($body)))->withHeader('Content-Type', 'application/json');
+                        return new Response(200, body: new Stream($body))->withHeader('Content-Type', 'application/json');
                     }
 
                     $this->assertSame('POST', $request->getMethod());
@@ -117,10 +117,10 @@ class StripeMandateTest extends TestCase
                     $this->assertArrayNotHasKey('mandate', $params);
                     $charged = true;
 
-                    return (new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}')))->withHeader('Content-Type', 'application/json');
+                    return new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"usd","status":"succeeded"}'))->withHeader('Content-Type', 'application/json');
                 }
             );
-        new Pay(new Stripe('sk_test_probe', client: $client))->retryPurchase('pi_existing', options: new \Utopia\Pay\Payment\Options(mandate: 'mandate_saved'));
+        new Stripe('sk_test_probe', client: $client)->retryPurchase('pi_existing', options: new \Utopia\Pay\Payment\Options(mandate: 'mandate_saved'));
         $this->assertTrue($charged);
     }
 

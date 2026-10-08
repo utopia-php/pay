@@ -14,14 +14,13 @@ use Utopia\Pay\Address;
 use Utopia\Pay\CardDetails;
 use Utopia\Pay\CardMandate;
 use Utopia\Pay\Exception;
-use Utopia\Pay\Pay;
 use Utopia\Pay\Payment\Options;
 use Utopia\Pay\Payment\Status;
 use Utopia\Pay\Setup\Status as SetupStatus;
 use Utopia\Psr7\Response;
 use Utopia\Psr7\Stream;
 
-class StripeTypesTest extends TestCase
+final class StripeTypesTest extends TestCase
 {
     public function testOnSessionChargeAndExpandedReferences(): void
     {
@@ -35,7 +34,7 @@ class StripeTypesTest extends TestCase
                 return new Response(200, body: new Stream('{"id":"pi_live","status":"requires_confirmation","amount":1200,"amount_received":0,"currency":"usd","client_secret":"secret","payment_method":{"id":"pm_expanded"},"charges":{"data":[{"id":"ch_old","amount_refunded":500}]}}'));
             }
         );
-        $payment = new Pay(new Stripe('sk_test', client: $client))->purchase(1200, 'cus', 'pm', new Options(offSession: false, confirm: false, metadata: ['invoiceId' => 'invoice']));
+        $payment = new Stripe('sk_test', client: $client)->purchase(1200, 'cus', 'pm', new Options(offSession: false, confirm: false, metadata: ['invoiceId' => 'invoice']));
         $this->assertSame(Status::RequiresConfirmation, $payment->status);
         $this->assertSame('pm_expanded', $payment->paymentMethodId);
         $this->assertSame(1200, $payment->amount);
@@ -66,10 +65,10 @@ class StripeTypesTest extends TestCase
                 return new Response(200, body: new Stream('{"id":"pm_created","card":{"brand":"visa","country":"DE","last4":"4242","exp_month":8,"exp_year":2031},"billing_details":{"address":{"city":"Berlin","country":"DE","postal_code":"10115"}}}'));
             }
         );
-        $pay = new Pay(new Stripe('sk_test', client: $client));
-        $method = $pay->createPaymentMethod('cus', new CardDetails('4242424242424242', 8, 2031, '123'));
-        $this->assertSame('4242', $method->card?->last4);
-        $updated = $pay->updatePaymentMethodBillingDetails($method->id, address: new Address('Berlin', 'DE', postalCode: '10115'));
+        $stripe = new Stripe('sk_test', client: $client);
+        $paymentMethod = $stripe->createPaymentMethod('cus', new CardDetails('4242424242424242', 8, 2031, '123'));
+        $this->assertSame('4242', $paymentMethod->card?->last4);
+        $updated = $stripe->updatePaymentMethodBillingDetails($paymentMethod->id, address: new Address('Berlin', 'DE', postalCode: '10115'));
         $this->assertSame('Berlin', $updated->billingAddress?->city);
         $this->assertSame('10115', $updated->billingAddress->postalCode);
     }
@@ -100,14 +99,14 @@ class StripeTypesTest extends TestCase
                 return new Response(200, body: new Stream('{"data":[{"id":"dp","payment_intent":"pi","metadata":{"invoiceId":"invoice"}}]}'));
             }
         );
-        $pay = new Pay(new Stripe('sk_test', client: $client));
-        $setup = $pay->createFuturePayment('cus', mandate: new CardMandate('reference', 15000, 'USD', 1723597289), paymentMethodConfiguration: 'pmc');
-        $this->assertSame(SetupStatus::RequiresPaymentMethod, $setup->status);
-        $this->assertSame('setup_secret', $setup->clientSecret);
-        $saved = $pay->listFuturePayment('cus');
+        $stripe = new Stripe('sk_test', client: $client);
+        $setupIntent = $stripe->createFuturePayment('cus', mandate: new CardMandate('reference', 15000, 'USD', 1723597289), paymentMethodConfiguration: 'pmc');
+        $this->assertSame(SetupStatus::RequiresPaymentMethod, $setupIntent->status);
+        $this->assertSame('setup_secret', $setupIntent->clientSecret);
+        $saved = $stripe->listFuturePayment('cus');
         $this->assertSame(SetupStatus::Succeeded, $saved[0]->status);
         $this->assertSame('mandate_saved', $saved[0]->mandateId);
-        $disputes = $pay->listDisputes();
+        $disputes = $stripe->listDisputes();
         $this->assertSame('pi', $disputes[0]->paymentId);
         $this->assertSame('invoice', $disputes[0]->metadata['invoiceId']);
     }
@@ -135,7 +134,7 @@ class StripeTypesTest extends TestCase
         $client = $this->createMock(ClientInterface::class);
         $client->expects($this->once())->method('sendRequest')->willReturn(new Response(200, body: new Stream($body)));
         try {
-            new Pay(new Stripe('sk_test', client: $client))->getPayment('pi');
+            new Stripe('sk_test', client: $client)->getPayment('pi');
             $this->fail('An invalid response must not become a payment');
         } catch (Exception $exception) {
             $this->assertSame(502, $exception->getCode());
@@ -148,7 +147,7 @@ class StripeTypesTest extends TestCase
         $client = $this->createMock(ClientInterface::class);
         $client->expects($this->once())->method('sendRequest')->willReturn(new Response(402, body: new Stream('{"error":{"code":"card_declined","decline_code":"new_processor_decline","type":"card_error","payment_intent":"pi_failed"}}')));
         try {
-            new Pay(new Stripe('sk_test', client: $client))->purchase(1200, 'cus', 'pm');
+            new Stripe('sk_test', client: $client)->purchase(1200, 'cus', 'pm');
             $this->fail('The declined charge must throw');
         } catch (Exception $exception) {
             $this->assertSame('new_processor_decline', $exception->type);
@@ -167,7 +166,7 @@ class StripeTypesTest extends TestCase
             }
         );
         try {
-            new Pay(new Stripe('sk_test', client: $client))->createPaymentMethod('cus', new CardDetails('4242424242424242', 8, 2031, '123'));
+            new Stripe('sk_test', client: $client)->createPaymentMethod('cus', new CardDetails('4242424242424242', 8, 2031, '123'));
             $this->fail('A method without an ID must never be attached');
         } catch (Exception $exception) {
             $this->assertSame(502, $exception->getCode());

@@ -15,7 +15,7 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? null;
         if ($value !== null && !is_string($value)) {
-            throw new Exception(code: 502, message: "Expected string: $key");
+            throw new Exception(message: "Expected string: $key", code: 502);
         }
         return $value;
     }
@@ -42,7 +42,7 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? null;
         if ($value !== null && !is_int($value)) {
-            throw new Exception(code: 502, message: "Expected integer: $key");
+            throw new Exception(message: "Expected integer: $key", code: 502);
         }
         return $value;
     }
@@ -51,7 +51,7 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? null;
         if ($value !== null && !is_bool($value)) {
-            throw new Exception(code: 502, message: "Expected boolean: $key");
+            throw new Exception(message: "Expected boolean: $key", code: 502);
         }
         return $value;
     }
@@ -63,7 +63,7 @@ final readonly class Payload
             return null;
         }
         if (!$value instanceof \stdClass) {
-            throw new Exception(code: 502, message: "Expected object: $key");
+            throw new Exception(message: "Expected object: $key", code: 502);
         }
         return new self($value);
     }
@@ -79,11 +79,11 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? [];
         if (!is_array($value) || !array_is_list($value)) {
-            throw new Exception(code: 502, message: "Expected list: $key");
+            throw new Exception(message: "Expected list: $key", code: 502);
         }
         return array_map(static function (mixed $item): self {
             if (!$item instanceof \stdClass) {
-                throw new Exception(code: 502, message: 'Expected list of objects');
+                throw new Exception(message: 'Expected list of objects', code: 502);
             }
             return new self($item);
         }, $value);
@@ -94,12 +94,12 @@ final readonly class Payload
     {
         $value = $this->data->metadata ?? new \stdClass();
         if (!$value instanceof \stdClass) {
-            throw new Exception(code: 502, message: 'Expected metadata object');
+            throw new Exception(message: 'Expected metadata object', code: 502);
         }
         $metadata = [];
         foreach (get_object_vars($value) as $key => $item) {
             if (!is_string($item)) {
-                throw new Exception(code: 502, message: 'Expected string metadata values');
+                throw new Exception(message: 'Expected string metadata values', code: 502);
             }
             $metadata[$key] = $item;
         }

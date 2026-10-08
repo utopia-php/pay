@@ -21,7 +21,6 @@ class Webhook
      * @param  string  $secret secret used to generate the signature
      * @param  int  $tolerance maximum difference allowed between the header's
      *  timestamp and the current time
-     * @return bool
      */
     public function isValid(string $payload, string $header, string $secret, ?int $tolerance = null): bool
     {
@@ -31,7 +30,7 @@ class Webhook
         if (-1 === $timestamp) {
             return false;
         }
-        if (empty($signatures)) {
+        if ($signatures === []) {
             return false;
         }
 
@@ -39,24 +38,12 @@ class Webhook
         // header
         $signedPayload = "{$timestamp}.{$payload}";
         $expectedSignature = $this->computeSignature($signedPayload, $secret);
-        $signatureFound = false;
-        foreach ($signatures as $signature) {
-            if (\hash_equals($expectedSignature, $signature)) {
-                $signatureFound = true;
-
-                break;
-            }
-        }
+        $signatureFound = array_any($signatures, fn ($signature): bool => \hash_equals($expectedSignature, $signature));
         if (! $signatureFound) {
             return false;
         }
-
         // Check if timestamp is within tolerance
-        if (($tolerance > 0) && (\abs(\time() - $timestamp) > $tolerance)) {
-            return false;
-        }
-
-        return true;
+        return $tolerance <= 0 || \abs(\time() - $timestamp) <= $tolerance;
     }
 
     /**
