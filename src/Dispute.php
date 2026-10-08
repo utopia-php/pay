@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Utopia\Pay;
 
+use Utopia\Pay\Exception\InvalidResponse;
+
 final readonly class Dispute
 {
     /** @param array<array-key, string> $metadata */
@@ -17,7 +19,7 @@ final readonly class Dispute
     public static function fromPayload(Payload $data): self
     {
         return new self(
-            id: $data->string('id') ?? throw new Exception(message: 'Missing processor object ID', code: 502),
+            id: $data->string('id') ?? throw new InvalidResponse(message: 'Missing processor object ID', code: 502),
             paymentId: $data->reference('payment_intent'),
             metadata: $data->metadata(),
         );

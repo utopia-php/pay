@@ -14,6 +14,7 @@ use Utopia\Pay\Address;
 use Utopia\Pay\CardDetails;
 use Utopia\Pay\CardMandate;
 use Utopia\Pay\Exception;
+use Utopia\Pay\Exception\InvalidResponse;
 use Utopia\Pay\Payment\Options;
 use Utopia\Pay\Payment\Status;
 use Utopia\Pay\Setup\Status as SetupStatus;
@@ -138,6 +139,7 @@ final class StripeTypesTest extends TestCase
             $this->fail('An invalid response must not become a payment');
         } catch (Exception $exception) {
             $this->assertSame(502, $exception->getCode());
+            $this->assertInstanceOf(InvalidResponse::class, $exception);
             $this->assertNull($exception->error);
         }
     }
@@ -170,6 +172,7 @@ final class StripeTypesTest extends TestCase
             $this->fail('A method without an ID must never be attached');
         } catch (Exception $exception) {
             $this->assertSame(502, $exception->getCode());
+            $this->assertInstanceOf(InvalidResponse::class, $exception);
         }
     }
 }

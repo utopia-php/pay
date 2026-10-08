@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Utopia\Pay;
 
+use Utopia\Pay\Exception\InvalidResponse;
+
 /** Validates untrusted processor JSON before it enters the typed API. @internal */
 final readonly class Payload
 {
@@ -15,7 +17,7 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? null;
         if ($value !== null && !is_string($value)) {
-            throw new Exception(message: "Expected string: $key", code: 502);
+            throw new InvalidResponse(message: "Expected string: $key", code: 502);
         }
         return $value;
     }
@@ -28,7 +30,7 @@ final readonly class Payload
     public function enumValue(string $key, string $enum): ?\BackedEnum
     {
         $value = $this->string($key);
-        return $value === null ? null : ($enum::tryFrom($value) ?? throw new Exception(message: "Unknown processor value for $key: $value", code: 502));
+        return $value === null ? null : ($enum::tryFrom($value) ?? throw new InvalidResponse(message: "Unknown processor value for $key: $value", code: 502));
     }
 
     /** Expandable references may be an ID or an object. */
@@ -42,7 +44,7 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? null;
         if ($value !== null && !is_int($value)) {
-            throw new Exception(message: "Expected integer: $key", code: 502);
+            throw new InvalidResponse(message: "Expected integer: $key", code: 502);
         }
         return $value;
     }
@@ -51,7 +53,7 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? null;
         if ($value !== null && !is_bool($value)) {
-            throw new Exception(message: "Expected boolean: $key", code: 502);
+            throw new InvalidResponse(message: "Expected boolean: $key", code: 502);
         }
         return $value;
     }
@@ -63,7 +65,7 @@ final readonly class Payload
             return null;
         }
         if (!$value instanceof \stdClass) {
-            throw new Exception(message: "Expected object: $key", code: 502);
+            throw new InvalidResponse(message: "Expected object: $key", code: 502);
         }
         return new self($value);
     }
@@ -79,11 +81,11 @@ final readonly class Payload
     {
         $value = $this->data->$key ?? [];
         if (!is_array($value) || !array_is_list($value)) {
-            throw new Exception(message: "Expected list: $key", code: 502);
+            throw new InvalidResponse(message: "Expected list: $key", code: 502);
         }
         return array_map(static function (mixed $item): self {
             if (!$item instanceof \stdClass) {
-                throw new Exception(message: 'Expected list of objects', code: 502);
+                throw new InvalidResponse(message: 'Expected list of objects', code: 502);
             }
             return new self($item);
         }, $value);
@@ -94,12 +96,12 @@ final readonly class Payload
     {
         $value = $this->data->metadata ?? new \stdClass();
         if (!$value instanceof \stdClass) {
-            throw new Exception(message: 'Expected metadata object', code: 502);
+            throw new InvalidResponse(message: 'Expected metadata object', code: 502);
         }
         $metadata = [];
         foreach (get_object_vars($value) as $key => $item) {
             if (!is_string($item)) {
-                throw new Exception(message: 'Expected string metadata values', code: 502);
+                throw new InvalidResponse(message: 'Expected string metadata values', code: 502);
             }
             $metadata[$key] = $item;
         }

@@ -22,6 +22,7 @@ class Exception extends \Exception
         ?int $code = null,
         public readonly ?PaymentError $error = null,
         ?\Throwable $previous = null,
+        public readonly ?string $requestId = null,
     ) {
         parent::__construct($message ?? 'Unknown error', $code ?? 500, $previous);
     }

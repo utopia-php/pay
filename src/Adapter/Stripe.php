@@ -8,13 +8,27 @@ use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Utopia\Client\Adapter\Curl\Client as Curl;
 use Utopia\Client\Client;
+use Utopia\Pay\Adapter\Stripe\CaptureMethod;
+use Utopia\Pay\Adapter\Stripe\CardMandate as StripeCardMandate;
 use Utopia\Pay\Adapter\Stripe\Currency;
+use Utopia\Pay\Adapter\Stripe\ErrorType;
+use Utopia\Pay\Adapter\Stripe\PaymentMethodType;
 use Utopia\Pay\Address;
 use Utopia\Pay\CardDetails;
 use Utopia\Pay\CardMandate;
 use Utopia\Pay\Customer;
 use Utopia\Pay\Dispute;
 use Utopia\Pay\Exception;
+use Utopia\Pay\Exception\AuthenticationRequired;
+use Utopia\Pay\Exception\Conflict;
+use Utopia\Pay\Exception\Declined;
+use Utopia\Pay\Exception\InvalidRequest;
+use Utopia\Pay\Exception\InvalidResponse;
+use Utopia\Pay\Exception\NotFound;
+use Utopia\Pay\Exception\PermissionDenied;
+use Utopia\Pay\Exception\ProcessorFailure;
+use Utopia\Pay\Exception\RateLimited;
+use Utopia\Pay\Exception\TransportFailure;
 use Utopia\Pay\Mandate;
 use Utopia\Pay\Pay;
 use Utopia\Pay\Payload;
@@ -29,7 +43,7 @@ use Utopia\Psr7\Header;
 use Utopia\Psr7\Method;
 use Utopia\Psr7\Request\Factory as RequestFactory;
 
-/** @phpstan-import-type CardOptions from CardMandate
+/** @phpstan-import-type CardOptions from StripeCardMandate
  * @phpstan-type Params array<string, scalar|null|CardOptions|array<array-key, scalar|null|array<string, scalar|null|list<string>>>> */
 class Stripe extends Pay
 {
@@ -78,7 +92,7 @@ class Stripe extends Pay
             'currency' => $this->currency->value,
             'customer' => $customerId,
             'payment_method' => $paymentMethodId,
-            'capture_method' => 'manual',
+            'capture_method' => CaptureMethod::Manual->value,
             'off_session' => 'true',
             'confirm' => 'true',
         ];
@@ -176,7 +190,7 @@ class Stripe extends Pay
         $path = '/payment_methods';
 
         $requestBody = [
-            'type' => 'card',
+            'type' => PaymentMethodType::Card->value,
             'card' => $details->toArray(),
         ];
 
@@ -184,7 +198,7 @@ class Stripe extends Pay
         $payload = $this->execute(Method::POST, $path, $requestBody);
         $paymentMethodId = $payload->string('id');
         if ($paymentMethodId === null || $paymentMethodId === '') {
-            throw new Exception(message: 'Missing payment method ID', code: 502);
+            throw new InvalidResponse(message: 'Missing payment method ID', code: 502);
         }
 
         // attach payment method to the customer
@@ -305,13 +319,18 @@ class Stripe extends Pay
         return $payload->boolean('deleted') ?? false;
     }
 
-    /** @param list<string> $paymentMethodTypes */
-    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = ['card'], ?CardMandate $mandate = null, ?string $paymentMethodConfiguration = null): SetupIntent
+    /** @param list<string|PaymentMethodType> $paymentMethodTypes */
+    public function createFuturePayment(string $customerId, ?string $paymentMethod = null, array $paymentMethodTypes = [PaymentMethodType::Card], ?CardMandate $mandate = null, ?string $paymentMethodConfiguration = null): SetupIntent
     {
         $path = '/setup_intents';
         $requestBody = [
             'customer' => $customerId,
-            'payment_method_types' => $paymentMethodTypes,
+            'payment_method_types' => array_map(static function (string|PaymentMethodType $type): string {
+                if (is_string($type)) {
+                    $type = PaymentMethodType::tryFrom($type) ?? throw new InvalidRequest(message: 'Unsupported Stripe payment method type: '.$type, code: 400);
+                }
+                return $type->value;
+            }, $paymentMethodTypes),
         ];
 
         if ($paymentMethod != null) {
@@ -327,7 +346,7 @@ class Stripe extends Pay
         }
 
         if (! empty($mandate)) {
-            $requestBody['payment_method_options'] = $mandate->toArray();
+            $requestBody['payment_method_options'] = new StripeCardMandate($mandate)->toArray();
         }
 
         $payload = $this->execute(Method::POST, $path, $requestBody);
@@ -373,7 +392,7 @@ class Stripe extends Pay
             $requestBody['payment_method_configuration'] = $paymentMethodConfiguration;
         }
         if (! empty($mandate)) {
-            $requestBody['payment_method_options'] = $mandate->toArray();
+            $requestBody['payment_method_options'] = new StripeCardMandate($mandate)->toArray();
         }
 
         return SetupIntent::fromPayload($this->execute(Method::POST, $path, $requestBody));
@@ -455,7 +474,7 @@ class Stripe extends Pay
         try {
             $response = $this->client->sendRequest($request);
         } catch (ClientExceptionInterface $clientException) {
-            throw new Exception(message: $clientException->getMessage(), code: 0, previous: $clientException);
+            throw new TransportFailure(message: $clientException->getMessage(), code: 0, previous: $clientException);
         }
 
         $body = (string) $response->getBody();
@@ -468,16 +487,33 @@ class Stripe extends Pay
             if ($response->getStatusCode() >= 400) {
                 $error = $payload->object('error');
                 $details = $error === null ? new PaymentError() : PaymentError::fromPayload($error);
-                throw new Exception(
-                    type: ($details->type === 'card_error' ? $details->declineCode : null) ?? $details->code ?? Exception::GENERAL_UNKNOWN,
+                $errorType = ErrorType::tryFrom($details->type ?? '');
+                $processorCode = ($errorType === ErrorType::Card ? $details->declineCode : null) ?? $details->code ?? Exception::GENERAL_UNKNOWN;
+                $failure = match (true) {
+                    $response->getStatusCode() === 401, $response->getStatusCode() === 403 => PermissionDenied::class,
+                    $response->getStatusCode() === 404 => NotFound::class,
+                    $response->getStatusCode() === 409 => Conflict::class,
+                    $response->getStatusCode() === 429 => RateLimited::class,
+                    $response->getStatusCode() >= 500, $response->getStatusCode() === 424 => ProcessorFailure::class,
+                    $errorType === ErrorType::Card => $processorCode === Exception::AUTHENTICATION_REQUIRED ? AuthenticationRequired::class : Declined::class,
+                    $errorType === ErrorType::InvalidRequest => InvalidRequest::class,
+                    $errorType === ErrorType::Idempotency => Conflict::class,
+                    $errorType === ErrorType::Api => ProcessorFailure::class,
+                    default => Exception::class,
+                };
+                throw new $failure(
+                    type: $processorCode,
                     message: $details->message ?? 'Unknown processor error',
                     code: $response->getStatusCode(),
                     error: $details,
+                    requestId: $response->getHeaderLine('Request-Id') ?: null,
                 );
             }
             return $payload;
+        } catch (InvalidResponse $e) {
+            throw new InvalidResponse(message: $e->getMessage(), code: $response->getStatusCode() >= 400 ? $response->getStatusCode() : 502, previous: $e, requestId: $response->getHeaderLine('Request-Id') ?: null);
         } catch (\JsonException|\UnexpectedValueException|\ValueError $e) {
-            throw new Exception(message: 'Invalid processor response: '.$e->getMessage(), code: $response->getStatusCode() >= 400 ? $response->getStatusCode() : 502, previous: $e);
+            throw new InvalidResponse(message: 'Invalid processor response: '.$e->getMessage(), code: $response->getStatusCode() >= 400 ? $response->getStatusCode() : 502, previous: $e, requestId: $response->getHeaderLine('Request-Id') ?: null);
         }
     }
 }

@@ -21,13 +21,15 @@ final class StripeConfigurationTest extends TestCase
 
     public function testConstructorConfigurationReachesRepeatedCharges(): void
     {
+        $requests = 0;
         $client = $this->createMock(ClientInterface::class);
         $client->expects($this->exactly(2))->method('sendRequest')->willReturnCallback(
-            function (RequestInterface $request): ResponseInterface {
+            function (RequestInterface $request) use (&$requests): ResponseInterface {
                 $this->assertSame('Bearer sk_test_config', $request->getHeaderLine('Authorization'));
                 parse_str((string) $request->getBody(), $params);
                 $this->assertSame('eur', $params['currency']);
                 $this->assertSame('5000', $params['amount']);
+                $this->assertSame(++$requests === 2 ? 'manual' : null, $params['capture_method'] ?? null);
 
                 return new Response(200, body: new Stream('{"id":"pi_charged","amount":5000,"amount_received":5000,"currency":"eur","status":"succeeded"}'))->withHeader('Content-Type', 'application/json');
             }
