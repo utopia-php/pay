@@ -6,6 +6,7 @@ namespace Utopia\Pay\Adapter;
 
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
+use Psr\Http\Client\NetworkExceptionInterface;
 use Utopia\Client\Adapter\Curl\Client as Curl;
 use Utopia\Client\Client;
 use Utopia\Pay\Adapter\Stripe\CaptureMethod;
@@ -471,8 +472,18 @@ class Stripe extends Pay
 
         $request = $request->withHeader(Header::AUTHORIZATION, 'Bearer '.$this->secretKey);
 
+        // One key per call, kept across the retry, so Stripe replays a POST it already applied instead of applying it twice.
+        if ($method === Method::POST) {
+            $request = $request->withHeader('Idempotency-Key', bin2hex(random_bytes(16)));
+        }
+
         try {
-            $response = $this->client->sendRequest($request);
+            try {
+                $response = $this->client->sendRequest($request);
+            } catch (NetworkExceptionInterface) {
+                // A timeout or dropped connection leaves no response; the idempotency key makes resending safe.
+                $response = $this->client->sendRequest($request);
+            }
         } catch (ClientExceptionInterface $clientException) {
             throw new TransportFailure(message: $clientException->getMessage(), code: 0, previous: $clientException);
         }

@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Utopia\Client\Exception\TimeoutException;
 use Utopia\Pay\Adapter\Stripe;
 use Utopia\Pay\Exception;
 use Utopia\Pay\Exception\AuthenticationRequired;
@@ -81,6 +84,67 @@ final class StripeFailuresTest extends TestCase
             $this->assertSame(0, $processorFailure->getCode());
             $this->assertNull($processorFailure->error);
             $this->assertNull($processorFailure->requestId);
+        }
+    }
+
+    public function testTimedOutPostIsResentOnceWithTheSameIdempotencyKey(): void
+    {
+        $keys = [];
+        $client = $this->createMock(ClientInterface::class);
+        $client->expects($this->exactly(2))->method('sendRequest')->willReturnCallback(
+            function (RequestInterface $request) use (&$keys): ResponseInterface {
+                $keys[] = $request->getHeaderLine('Idempotency-Key');
+                if (\count($keys) === 1) {
+                    throw new TimeoutException($request, 'Operation timed out', \CURLE_OPERATION_TIMEDOUT);
+                }
+                return new Response(200, body: new Stream('{"id":"seti","status":"requires_payment_method"}'));
+            }
+        );
+
+        $setupIntent = new Stripe('sk_test', client: $client)->createFuturePayment('cus');
+
+        $this->assertSame('seti', $setupIntent->id);
+        $this->assertCount(2, $keys);
+        $this->assertNotSame('', $keys[0]);
+        $this->assertSame($keys[0], $keys[1]);
+    }
+
+    public function testEachPostGetsItsOwnIdempotencyKeyAndGetsNone(): void
+    {
+        $keys = [];
+        $client = $this->createMock(ClientInterface::class);
+        $client->expects($this->exactly(3))->method('sendRequest')->willReturnCallback(
+            function (RequestInterface $request) use (&$keys): ResponseInterface {
+                $keys[] = $request->getHeaderLine('Idempotency-Key');
+                return new Response(200, body: new Stream('{"id":"cus","name":"Name","email":"user@example.com"}'));
+            }
+        );
+
+        $stripe = new Stripe('sk_test', client: $client);
+        $stripe->createCustomer('Name', 'user@example.com');
+        $stripe->createCustomer('Name', 'user@example.com');
+        $stripe->getCustomer('cus');
+
+        $this->assertNotSame('', $keys[0]);
+        $this->assertNotSame('', $keys[1]);
+        $this->assertNotSame($keys[0], $keys[1]);
+        $this->assertSame('', $keys[2]);
+    }
+
+    public function testSecondTimeoutSurfacesAsTransportFailureWithoutAThirdAttempt(): void
+    {
+        $client = $this->createMock(ClientInterface::class);
+        $client->expects($this->exactly(2))->method('sendRequest')->willReturnCallback(
+            fn (RequestInterface $request): never => throw new TimeoutException($request, 'Operation timed out', \CURLE_OPERATION_TIMEDOUT)
+        );
+
+        try {
+            new Stripe('sk_test', client: $client)->createFuturePayment('cus');
+            $this->fail('A transport failure must not return a setup intent');
+        } catch (TransportFailure $transportFailure) {
+            $this->assertInstanceOf(TimeoutException::class, $transportFailure->getPrevious());
+            $this->assertSame('Operation timed out', $transportFailure->getMessage());
+            $this->assertNull($transportFailure->requestId);
         }
     }
 
