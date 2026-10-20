@@ -29,7 +29,7 @@ final class StripeTypesTest extends TestCase
         $client->expects($this->once())->method('sendRequest')->willReturnCallback(
             function (RequestInterface $request): ResponseInterface {
                 parse_str((string) $request->getBody(), $params);
-                $this->assertSame('false', $params['off_session']);
+                $this->assertArrayNotHasKey('off_session', $params);
                 $this->assertSame('false', $params['confirm']);
                 $this->assertSame(['invoiceId' => 'invoice'], $params['metadata']);
                 return new Response(200, body: new Stream('{"id":"pi_live","status":"requires_confirmation","amount":1200,"amount_received":0,"currency":"usd","client_secret":"secret","payment_method":{"id":"pm_expanded"},"charges":{"data":[{"id":"ch_old","amount_refunded":500}]}}'));

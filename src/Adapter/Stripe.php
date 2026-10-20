@@ -78,7 +78,12 @@ class Stripe extends Pay
             'confirm' => 'true',
         ];
 
-        $requestBody = $this->filterMandate(array_merge($requestBody, $options?->toArray() ?? []));
+        $requestBody = array_merge($requestBody, $options?->toArray() ?? []);
+        // Stripe accepts off_session only when confirming, including false values.
+        if ($requestBody['confirm'] === 'false') {
+            unset($requestBody['off_session']);
+        }
+        $requestBody = $this->filterMandate($requestBody);
 
         $payload = $this->execute(Method::POST, $path, $requestBody);
 
