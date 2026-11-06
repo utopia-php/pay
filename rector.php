@@ -3,11 +3,9 @@
 declare(strict_types=1);
 
 use Rector\CodeQuality\Rector\Attribute\ExplicitAttributeNamedArgsRector;
-use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
+use Rector\CodeQuality\Rector\If_\ExplicitNullableObjectInstanceRector;
 use Rector\CodingStyle\Rector\Stmt\NewlineAfterStatementRector;
 use Rector\Config\RectorConfig;
-use Rector\Naming\Rector\ClassMethod\RenameParamToMatchTypeRector;
-use Rector\TypeDeclaration\Rector\Empty_\EmptyOnNullableObjectToInstanceOfRector;
 
 return RectorConfig::configure()
     ->withPaths([
@@ -22,7 +20,6 @@ return RectorConfig::configure()
         typeDeclarations: true,
         typeDeclarationDocblocks: true,
         privatization: true,
-        naming: true,
         namedArgs: true,
         instanceOf: true,
         phpunitCodeQuality: true,
@@ -31,13 +28,10 @@ return RectorConfig::configure()
     )
     ->withComposerBased(phpunit: true)
     ->withSkip([
-        // Public parameter names are part of the named-argument API.
-        RenameParamToMatchTypeRector::class,
         // PHPUnit attributes explicitly disallow named arguments.
         ExplicitAttributeNamedArgsRector::class,
         // Native nullable types already guarantee the alternatives to null.
-        FlipTypeControlToUseExclusiveTypeRector::class,
-        EmptyOnNullableObjectToInstanceOfRector::class,
+        ExplicitNullableObjectInstanceRector::class,
         // Pint owns formatting; avoid inserting blank lines between every guard.
         NewlineAfterStatementRector::class,
     ]);
