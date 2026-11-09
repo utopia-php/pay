@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   redirect:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Close pull request
         if: github.event_name == 'pull_request_target'
