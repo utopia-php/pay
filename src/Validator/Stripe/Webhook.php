@@ -24,6 +24,11 @@ class Webhook
      */
     public function isValid(string $payload, string $header, string $secret, ?int $tolerance = null): bool
     {
+        // Anyone can sign over an empty key, so a missing secret must not verify.
+        if (\trim($secret) === '') {
+            return false;
+        }
+
         // Extract timestamp and signatures from header
         $timestamp = $this->getTimestamp($header);
         $signatures = $this->getSignatures($header, self::EXPECTED_SCHEME);

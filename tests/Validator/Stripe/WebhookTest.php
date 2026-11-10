@@ -34,4 +34,16 @@ final class WebhookTest extends TestCase
         $isValid = $webhook->isValid('{"id": "pi_abcdefg"}', $header, $secret.'ef', PHP_INT_MAX);
         $this->assertFalse($isValid);
     }
+
+    public function testEmptySecretIsRejected(): void
+    {
+        $timestamp = \time();
+        $webhook = new Webhook();
+
+        foreach (['', " \t "] as $secret) {
+            $header = "t={$timestamp},v1=" . \hash_hmac('sha256', "{$timestamp}." . '{"id": "pi_abcdefg"}', $secret);
+
+            $this->assertFalse($webhook->isValid('{"id": "pi_abcdefg"}', $header, $secret, PHP_INT_MAX));
+        }
+    }
 }
